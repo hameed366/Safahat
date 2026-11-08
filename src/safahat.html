@@ -723,6 +723,9 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .ltart{display:inline-block;vertical-align:middle;margin-inline-end:10px}.ltart .fart{width:40px;height:48px}
 .fsheet{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}.fprev{flex:none;width:130px;display:grid;place-items:center;padding:10px;border-radius:16px;background:var(--raise)}
 .fopts{flex:1 1 220px;display:grid;gap:12px;min-width:0}
+
+.ghsteps{display:grid;gap:4px;padding:10px 12px;border-radius:12px;background:var(--raise);border:1px solid var(--line);font-size:12.8px;line-height:1.7}
+.ghsteps p{margin:0;color:var(--muted)}.ghsteps b{color:var(--ink)}
 </style>
 
 <div class="app" dir="rtl" id="app">
@@ -4291,14 +4294,47 @@ SYNC.ready=(async()=>{try{if(!(window.claude&&claude.use))return false;
   const [a,d,u]=await Promise.all([claude.use('assets').catch(()=>null),claude.use('db').catch(()=>null),claude.use('user').catch(()=>null)]);
   SYNC.assets=a;SYNC.db=d;SYNC.user=u;if(!a||!d||!u)return false;SYNC.uid=await u.id();return !!SYNC.uid;}catch(e){return false;}})();
 const syncDoc=()=>SYNC.db.doc(`data/users/${SYNC.uid}/sync`);
-async function syncRemote(){const snap=await syncDoc().get();SYNC.remote=snap.exists?snap.data():null;return SYNC.remote;}
+async function claudeRemote(){const snap=await syncDoc().get();SYNC.remote=snap.exists?snap.data():null;return SYNC.remote;}
+/* ---- GitHub provider: works in the iPhone/iPad/Android app (private repo + fine-grained token) ---- */
+const ghCfg=()=>{try{const c=JSON.parse(localStorage.getItem('safahat-gh')||'null');return c&&c.repo&&c.token?c:null;}catch(e){return null;}};
+const ghSet=c=>{try{c?localStorage.setItem('safahat-gh',JSON.stringify(c)):localStorage.removeItem('safahat-gh');}catch(e){}SYNC.prov=undefined;};
+const GH_DIR='safahat-sync';
+async function gh(path,{method='GET',raw=false,body=null,cfg=null}={}){const c=cfg||ghCfg();if(!c)throw Object.assign(new Error('no gh'),{code:'not_granted'});
+  const url=path.startsWith('/')?'https://api.github.com'+path:`https://api.github.com/repos/${c.repo}/contents/${path}`;
+  const r=await fetch(url+(method==='GET'&&!path.startsWith('/')?(url.includes('?')?'&':'?')+'t='+Date.now():''),{method,cache:'no-store',headers:{Authorization:'Bearer '+c.token,Accept:raw?'application/vnd.github.raw':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):null});
+  if(r.status===401||r.status===403)throw Object.assign(new Error('auth'),{code:'gh_auth',status:r.status});
+  return r;}
+async function ghTest(cfg){const r=await gh('/repos/'+cfg.repo,{cfg});if(r.status===404)return 'المستودع غير موجود أو الرمز لا يملك صلاحية عليه';if(!r.ok)return 'تعذّر الاتصال بـ GitHub ('+r.status+')';
+  const j=await r.json();if(j.permissions&&j.permissions.push===false)return 'الرمز لا يملك صلاحية الكتابة. فعّل Contents: Read and write';if(!j.private)return 'private-warning';return '';}
+async function ghRemote(){const r=await gh(GH_DIR+'/manifest.json',{raw:true});if(r.status===404)return null;if(!r.ok)throw new Error('gh '+r.status);return JSON.parse(await r.text());}
+async function ghPull(key,remote){const parts=[];for(const pt of remote.parts){const r=await gh(pt.path,{raw:true});if(!r.ok)throw new Error('gh part '+r.status);parts.push(new Uint8Array(await r.arrayBuffer()));}
+  const n=parts.reduce((a,b)=>a+b.length,0),u=new Uint8Array(n);let o=0;for(const q of parts){u.set(q,o);o+=q.length;}
+  const plain=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64u8(remote.iv)},key,u));const {R}=await restoreZip(plain,{});store.set('safahat-sync-pulled',remote.updated);return R;}
+async function ghPush(key,salt,remote,onProgress){
+  const {bytes,man}=await buildBackupZip({onProgress:f=>onProgress&&onProgress(f*.45)});
+  const iv=crypto.getRandomValues(new Uint8Array(12));const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,bytes));
+  const ts=Date.now(),CH=15*1024*1024,parts=[];
+  for(let o=0,k=0;o<ct.length;o+=CH,k++){const path=`${GH_DIR}/p-${ts}-${k}.bin`;const r=await gh(path,{method:'PUT',body:{message:'صفحات: مزامنة',content:u8b64(ct.subarray(o,o+CH))}});
+    if(!r.ok)throw Object.assign(new Error('gh put '+r.status),{code:r.status===413||r.status===422?'too_large':'gh'});const j=await r.json();parts.push({path,sha:j.content.sha});onProgress&&onProgress(.5+.4*Math.min(1,(o+CH)/ct.length));}
+  const doc={v:3,salt:u8b64(salt),iter:BK.iter,iv:u8b64(iv),parts,updated:ts,size:ct.length,docs:man.docs.length,device:deviceName()};
+  const cur=await gh(GH_DIR+'/manifest.json');const sha=cur.ok?(await cur.json()).sha:undefined;
+  const w=await gh(GH_DIR+'/manifest.json',{method:'PUT',body:{message:'صفحات: مزامنة',content:u8b64(new TextEncoder().encode(JSON.stringify(doc))),...(sha?{sha}:{})}});
+  if(!w.ok)throw new Error('gh manifest '+w.status);
+  if(remote&&remote.parts)for(const pt of remote.parts){try{await gh(pt.path,{method:'DELETE',body:{message:'صفحات: تنظيف',sha:pt.sha}});}catch(e){}}
+  store.set('safahat-sync-pulled',doc.updated);store.set('safahat-sync-pushed',doc.updated);SYNC.remote=doc;onProgress&&onProgress(1);return doc;}
+async function ghWipe(remote){if(remote)for(const pt of remote.parts||[]){try{await gh(pt.path,{method:'DELETE',body:{message:'صفحات: حذف',sha:pt.sha}});}catch(e){}}
+  const cur=await gh(GH_DIR+'/manifest.json');if(cur.ok){const sha=(await cur.json()).sha;await gh(GH_DIR+'/manifest.json',{method:'DELETE',body:{message:'صفحات: حذف',sha}});}}
+/* ---- provider dispatch ---- */
+async function syncProvider(){if(SYNC.prov!==undefined&&SYNC.prov!==null)return SYNC.prov;
+  const ok=await Promise.race([SYNC.ready,new Promise(r=>setTimeout(()=>r(false),4000))]);SYNC.prov=ok?'claude':ghCfg()?'github':null;return SYNC.prov;}
+async function syncRemote(){return (await syncProvider())==='github'?ghRemote():claudeRemote();}
 async function syncKeyFor(remote,pass){const salt=remote&&remote.salt?b64u8(remote.salt):crypto.getRandomValues(new Uint8Array(16));return {salt,key:await bkKey(pass,salt,(remote&&remote.iter)||BK.iter)};}
 async function rememberedSyncKey(salt){try{const r=await metaGet('syncKey');if(r&&u8b64(r.salt)===salt)return r.key;}catch(e){}return null;}
-async function syncPull(key,remote){
+async function syncPull(key,remote){if((await syncProvider())==='github')return ghPull(key,remote);
   const parts=[];for(const id of remote.chunks){const r=await fetch('/_blob/'+id);if(!r.ok)throw new Error('fetch '+r.status);parts.push(await r.text());}
   const u=b64u8(parts.join(''));const plain=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64u8(remote.iv)},key,u));
   const {R}=await restoreZip(plain,{});store.set('safahat-sync-pulled',remote.updated);return R;}
-async function syncPush(key,salt,remote,onProgress){
+async function syncPush(key,salt,remote,onProgress){if((await syncProvider())==='github')return ghPush(key,salt,remote,onProgress);
   const {bytes,man}=await buildBackupZip({onProgress:f=>onProgress&&onProgress(f*.5)});
   const iv=crypto.getRandomValues(new Uint8Array(12));const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,bytes));
   const b64=u8b64(ct),CH=12*1024*1024,ids=[];
@@ -4308,40 +4344,64 @@ async function syncPush(key,salt,remote,onProgress){
   if(remote&&remote.chunks)for(const id of remote.chunks)if(!ids.includes(id)){try{await SYNC.assets.delete(id);}catch(e){}}
   store.set('safahat-sync-pulled',doc.updated);store.set('safahat-sync-pushed',doc.updated);SYNC.remote=doc;return doc;}
 function deviceName(){const u=navigator.userAgent;if(/iPad|Macintosh/.test(u)&&navigator.maxTouchPoints>1)return 'آيباد';if(/iPhone/.test(u))return 'آيفون';if(/Mac/.test(u))return 'ماك';if(/Android/.test(u))return 'أندرويد';if(/Windows/.test(u))return 'ويندوز';return 'جهاز';}
+function ghSetupSheet(){const c=ghCfg()||{};
+  openSheet(`<h3>${ic('layers')} المزامنة عبر GitHub</h3>
+    <p class="hint" style="margin:0">مجانية وخاصة بك، وتعمل بين الآيفون والآيباد وأندرويد. تُشفَّر مكتبتك على جهازك قبل رفعها، فلا يستطيع أحد قراءتها حتى GitHub.</p>
+    <div class="ghsteps"><b>مرة واحدة فقط:</b>
+      <p>١. أنشئ على GitHub مستودعاً <b>خاصاً (Private)</b> جديداً، مثلاً باسم <span dir="ltr">safahat-sync</span>.</p>
+      <p>٢. أنشئ رمز وصول: Settings ← Developer settings ← Personal access tokens ← <span dir="ltr">Fine-grained tokens</span> ← Generate new token.</p>
+      <p>٣. في Repository access اختر <b>Only select repositories</b> وحدّد المستودع، وفي Permissions اجعل <span dir="ltr">Contents</span> = <b>Read and write</b>، ثم انسخ الرمز.</p>
+      <p>٤. الصق هنا اسم المستودع والرمز، واستخدم البيانات نفسها على أجهزتك الأخرى.</p></div>
+    <label>المستودع (الحساب/الاسم)<input type="text" id="ghRepo" dir="ltr" placeholder="hameed366/safahat-sync" value="${esc(c.repo||'')}" autocapitalize="off" autocorrect="off"></label>
+    <label>رمز الوصول<input type="password" id="ghTok" dir="ltr" placeholder="github_pat_…" value="${esc(c.token||'')}" autocomplete="off"></label>
+    <p class="hint" style="margin:0">يُحفظ الرمز على هذا الجهاز فقط، وصلاحيته محصورة في هذا المستودع.</p>
+    <div class="acts"><button class="hbtn primary" id="ghSave">${ic('check')} حفظ ومتابعة</button>${c.repo?`<button class="hbtn" id="ghDel">${ic('trash')} فصل GitHub</button>`:''}${cancelBtn}</div>`);
+  wireClose();
+  const d=$('#ghDel');if(d)d.onclick=()=>{ghSet(null);closeSheet();toast('فُصلت المزامنة عن GitHub على هذا الجهاز');};
+  $('#ghSave').onclick=async()=>{let repo=$('#ghRepo').value.trim().replace(/^https?:\/\/github\.com\//i,'').replace(/\.git$/,'').replace(/\/$/,''),token=$('#ghTok').value.trim();
+    if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){toast('اكتب المستودع بالشكل: اسم الحساب/اسم المستودع');return;}if(token.length<20){toast('الصق رمز الوصول كاملاً');return;}
+    const b=$('#ghSave');b.disabled=true;b.lastChild.textContent=' جارٍ التحقق…';let err='';
+    try{err=await ghTest({repo,token});}catch(e){err=e&&e.code==='gh_auth'?'الرمز غير صحيح أو منتهي الصلاحية':'تعذّر الاتصال بـ GitHub. تحقق من الإنترنت';}
+    b.disabled=false;b.lastChild.textContent=' حفظ ومتابعة';
+    if(err&&err!=='private-warning'){toast(err,4200);return;}
+    ghSet({repo,token});closeSheet();if(err==='private-warning')toast('تنبيه: المستودع عام. المكتبة مشفّرة، لكن الأفضل جعله خاصاً',5200);syncSheet();};
+}
 async function syncSheet(){
-  const ok=await Promise.race([SYNC.ready,new Promise(r=>setTimeout(()=>r(false),4000))]);
+  const prov=await syncProvider();const ok=!!prov;
+  if(!ok&&window.SAFAHAT_NATIVE){ghSetupSheet();return;}
   if(!ok){openSheet(`<h3>${ic('layers')} المزامنة بين أجهزتك</h3><p class="hint" style="margin:0">المزامنة تعمل عند فتح «صفحات» داخل Claude وأنت مسجّل الدخول بحسابك، على الآيفون والآيباد والماك. هذا العرض لا يتيحها، فاستخدم «النسخ الاحتياطي» لنقل ملفاتك يدوياً.</p><div class="acts"><button class="hbtn primary" id="syBk">${ic('save')} النسخ الاحتياطي</button>${cancelBtn}</div>`);wireClose();$('#syBk').onclick=()=>{closeSheet();backupSheet();};return;}
-  let remote=null;try{remote=await syncRemote();}catch(e){}
-  let usage=null;try{usage=(await SYNC.assets.list()).usage;}catch(e){}
+  let remote=null,remErr=null;try{remote=await syncRemote();}catch(e){remErr=e;}
+  if(remErr&&prov==='github'){toast(remErr.code==='gh_auth'?'رمز GitHub غير صالح، أدخله من جديد':'تعذّر الاتصال بـ GitHub. تحقق من الإنترنت',4200);if(remErr.code==='gh_auth'){ghSetupSheet();return;}}
+  let usage=null;if(prov==='claude'){try{usage=(await SYNC.assets.list()).usage;}catch(e){}}
   const rk=remote?await rememberedSyncKey(remote.salt):null;
   openSheet(`<h3>${ic('layers')} المزامنة بين أجهزتك</h3>
-    <p class="hint" style="margin:0">اختيارية ومشفّرة من طرف إلى طرف: تُشفَّر مكتبتك على جهازك بعبارة سر لا يعرفها غيرك، ثم تُحفظ في مساحة خاصة بحسابك في Claude. افتح «صفحات» على جهازك الآخر بالحساب نفسه واضغط «مزامنة الآن» بالعبارة نفسها.</p>
+    <p class="hint" style="margin:0">اختيارية ومشفّرة من طرف إلى طرف: تُشفَّر مكتبتك على جهازك بعبارة سر لا يعرفها غيرك، ثم تُحفظ في ${prov==='github'?'مستودعك الخاص على GitHub ('+esc(ghCfg().repo)+')':'مساحة خاصة بحسابك في Claude'}. افتح «صفحات» على جهازك الآخر بالحساب نفسه واضغط «مزامنة الآن» بالعبارة نفسها.</p>
     <div class="syst">${remote?`<div><b>آخر مزامنة في السحابة</b><span>${fmtWhen(remote.updated)} من ${esc(remote.device||'جهاز')} · ${cnt(remote.docs||0,'file')} · ${fmtSize(remote.size||0)}</span></div>`:'<div><b>لا توجد نسخة في السحابة بعد</b><span>أول مزامنة ترفع مكتبة هذا الجهاز.</span></div>'}
       ${usage?`<div><b>المساحة المستخدمة</b><span>${fmtSize(usage.bytes)}${usage.maxBytes?' من '+fmtSize(usage.maxBytes):''}</span></div>`:''}</div>
     ${rk?'<p class="hint" style="margin:0">عبارة السر محفوظة على هذا الجهاز.</p>':`<label>عبارة سر المزامنة${remote?'':' (اخترها الآن واحفظها)'}<input type="password" id="syP" autocomplete="${remote?'current-password':'new-password'}"></label>${remote?'':'<label>تأكيد العبارة<input type="password" id="syP2" autocomplete="new-password"></label>'}
     <label class="cbx"><input type="checkbox" id="syRem" checked>تذكّر العبارة على هذا الجهاز (بمفتاح غير قابل للاستخراج)</label>`}
     <label class="cbx"><input type="checkbox" id="syAuto" ${syncAutoOn()?'checked':''}>مزامنة تلقائية: تحديث هذا الجهاز عند فتح التطبيق، ورفع تعديلاتك بعد دقائق من حفظها (تحتاج تذكّر العبارة)</label>
-    <div class="acts"><button class="hbtn primary" id="syGo">${ic('layers')} مزامنة الآن</button>${remote?`<button class="hbtn" id="syOff">${ic('trash')} حذف النسخة من السحابة</button>`:''}${rk?`<button class="hbtn" id="syForget">نسيان العبارة هنا</button>`:''}${cancelBtn}</div>`);
+    <div class="acts"><button class="hbtn primary" id="syGo">${ic('layers')} مزامنة الآن</button>${prov==='github'?`<button class="hbtn" id="syGh">${ic('textedit')} إعدادات GitHub</button>`:''}${remote?`<button class="hbtn" id="syOff">${ic('trash')} حذف النسخة من السحابة</button>`:''}${rk?`<button class="hbtn" id="syForget">نسيان العبارة هنا</button>`:''}${cancelBtn}</div>`);
   wireClose();
   $('#syAuto').onchange=e=>store.set('safahat-sync-auto',e.target.checked);
+  const sg=$('#syGh');if(sg)sg.onclick=()=>{closeSheet();ghSetupSheet();};
   const f=$('#syForget');if(f)f.onclick=async()=>{await metaDel('syncKey').catch(()=>{});closeSheet();toast('نُسيت عبارة السر على هذا الجهاز');};
-  const off=$('#syOff');if(off)off.onclick=()=>{closeSheet();confirmSheet('حذف النسخة من السحابة؟','تبقى ملفاتك على أجهزتك كما هي. تُحذف النسخة المشفّرة من مساحة حسابك فقط.','حذف',async()=>{try{for(const id of remote.chunks||[]){try{await SYNC.assets.delete(id);}catch(e){}}await syncDoc().delete();toast('حُذفت النسخة من السحابة');}catch(e){toast('تعذّر الحذف');}});};
+  const off=$('#syOff');if(off)off.onclick=()=>{closeSheet();confirmSheet('حذف النسخة من السحابة؟','تبقى ملفاتك على أجهزتك كما هي. تُحذف النسخة المشفّرة من مساحة حسابك فقط.','حذف',async()=>{try{if(prov==='github')await ghWipe(remote);else{for(const id of remote.chunks||[]){try{await SYNC.assets.delete(id);}catch(e){}}await syncDoc().delete();}toast('حُذفت النسخة من السحابة');}catch(e){toast('تعذّر الحذف');}});};
   $('#syGo').onclick=async()=>{let key=rk,salt=remote?b64u8(remote.salt):null;
     if(!key){const p=$('#syP').value;if(p.length<8){toast('عبارة السر ٨ خانات على الأقل');return;}if(!remote&&p!==$('#syP2').value){toast('العبارتان غير متطابقتين');return;}
       const rem=$('#syRem').checked;closeSheet();showBusy('جارٍ تجهيز المفتاح…');const kk=await syncKeyFor(remote,p);key=kk.key;salt=kk.salt;
-      if(remote){try{const t=await fetch('/_blob/'+remote.chunks[0]);if(!t.ok)throw 0;}catch(e){}}
       if(rem)await metaSet('syncKey',{salt,key}).catch(()=>{});}
     else{closeSheet();showBusy('جارٍ المزامنة…');}
     try{let pulled=null;
       if(remote){setBusy(.1);try{pulled=await syncPull(key,remote);}catch(e){hideBusy();if(e&&e.name==='OperationError'){await metaDel('syncKey').catch(()=>{});toast('عبارة السر غير صحيحة',3600);}else toast('تعذّر تنزيل النسخة من السحابة',3600);return;}}
       await syncPush(key,salt,remote,f=>setBusy(.3+f*.7));hideBusy();if(!$('#lib').hidden)renderLib();
       toast(pulled?'تمت المزامنة. '+restoreSummary(pulled):'رُفعت مكتبتك مشفّرة. افتح «صفحات» على جهازك الآخر واضغط «مزامنة الآن»',5200);}
-    catch(e){console.error(e);hideBusy();const c=e&&e.code;toast(c==='too_large'?'المكتبة أكبر من المساحة المتاحة للمزامنة. احذف ملفات كبيرة أو أفرغ المحذوفة':c==='quota_exceeded'?'امتلأت مساحة المزامنة':c==='not_granted'?'لم يُسمح بالمزامنة في هذا العرض':'تعذّرت المزامنة',4200);}};
+    catch(e){console.error(e);hideBusy();const c=e&&e.code;toast(c==='gh_auth'?'رمز GitHub غير صالح أو بلا صلاحية كتابة':c==='too_large'?'المكتبة أكبر من المساحة المتاحة للمزامنة. احذف ملفات كبيرة أو أفرغ المحذوفة':c==='quota_exceeded'?'امتلأت مساحة المزامنة':c==='not_granted'?'لم يُسمح بالمزامنة في هذا العرض':'تعذّرت المزامنة',4200);}};
 }
 let syncBusy=false,autoPushT=0;
 const syncAutoOn=()=>store.get('safahat-sync-auto',true)!==false;
-async function syncAutoKey(remote){if(!(await SYNC.ready))return null;const r=remote||await syncRemote().catch(()=>null);if(!r||!r.salt)return null;const k=await rememberedSyncKey(r.salt);return k?{key:k,remote:r}:null;}
-async function syncCheckOnOpen(){try{if(!(await SYNC.ready))return;const r=await syncRemote();if(!r)return;const pulled=store.get('safahat-sync-pulled',0);
+async function syncAutoKey(remote){if(!(await syncProvider()))return null;const r=remote||await syncRemote().catch(()=>null);if(!r||!r.salt)return null;const k=await rememberedSyncKey(r.salt);return k?{key:k,remote:r}:null;}
+async function syncCheckOnOpen(){try{if(!(await syncProvider()))return;const r=await syncRemote();if(!r)return;const pulled=store.get('safahat-sync-pulled',0);
   if(r.updated<=pulled+1000)return;
   const ak=syncAutoOn()?await syncAutoKey(r):null;
   if(ak&&!syncBusy){syncBusy=true;try{const R=await syncPull(ak.key,r);if(!$('#lib').hidden)renderLib();const n=(R.docs||0)+(R.folders||0)+(R.files||0)+(R.locked||0);if(n)toast('مزامنة تلقائية من '+(r.device||'جهاز آخر')+': '+restoreSummary(R),5000);}catch(e){console.warn(e);}finally{syncBusy=false;}return;}
