@@ -106,6 +106,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.65;str
 .sw{width:28px;height:28px;border-radius:50%;border:2.5px solid var(--surface);box-shadow:0 0 0 1px var(--line-strong);flex:none;padding:0;position:relative;transition:transform .12s}
 .sw:hover{transform:scale(1.08)}
 .sw.on{box-shadow:0 0 0 2.5px var(--ink)}
+.sw.same{background:var(--bg);color:var(--ink);font:700 15px/1 system-ui;display:grid;place-items:center}
 .sw.on::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--surface);opacity:.92}
 .sw.hl{border-radius:7px;width:34px;height:24px}
 .sw.hl.on::after{inset:6px 10px;border-radius:3px}
@@ -549,6 +550,7 @@ body.inlib::before{background:var(--bg)}
 .plist b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .plist small{color:var(--muted);font-size:12px}
 .hbtn.danger{background:var(--danger);border-color:var(--danger);color:#fff;font-weight:700}
+.hbtn.dng{color:var(--danger);border-color:var(--danger-soft)}
 .docst .dirty[data-st="saved"]{color:var(--accent-strong)}
 .docst .dirty[data-st="saved"]::before{background:var(--accent)}
 .docst .dirty[data-st="error"]{color:var(--danger)}
@@ -695,6 +697,10 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .locnote{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:12px;background:var(--accent-soft);color:var(--accent-strong)}
 .locnote>span svg{width:18px;height:18px}.locnote small{flex:1 1 200px;font-size:12.5px;line-height:1.6;color:var(--ink)}
 .noai[hidden],.locnote[hidden]{display:none}
+.trwrap{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:stretch}.trq{display:grid;place-items:center;align-content:center;gap:4px;min-width:84px;padding:8px 12px;border-radius:14px;background:var(--accent-soft);color:var(--accent-strong)}.trq b{font:700 56px/1 var(--f-display);color:var(--ink)}.trq small{font-size:12px;color:var(--muted)}
+#trPad{width:100%;height:220px;border-radius:14px;border:1px solid var(--line-strong);background:#fff;touch-action:none;cursor:crosshair}
+.trfoot [hidden]{display:none}.trfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}.trfoot small{color:var(--muted)}
+@media (max-width:480px){.trwrap{grid-template-columns:1fr}.trq{grid-auto-flow:column;justify-content:start;gap:12px}.trq b{font-size:40px}}
 
 .calcrow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 12px;border-radius:12px;background:var(--raise);border:1px solid var(--line)}
 .calcrow .cres{display:flex;align-items:center;gap:8px;font-size:13.5px}.calcrow canvas{border-radius:8px;max-width:100%}
@@ -707,6 +713,7 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .seg.dashes button{padding:6px 10px;display:grid;place-items:center}
 .selbar .sbw{min-width:34px;justify-content:center}.selbar .sbw i{display:block;border-radius:50%;background:currentColor}
 .selbar .sbd{min-width:44px;justify-content:center}
+.selbar .fsw{width:19px;height:19px;border-radius:5px;border:2px solid currentColor;box-sizing:border-box}.selbar .fsw.soft{background:color-mix(in srgb,currentColor 32%,transparent)}.selbar .fsw.solid{background:currentColor}
 #erSz[hidden]{display:none}
 
 .fcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
@@ -829,7 +836,7 @@ const P={
  move:'M12 3v18M3 12h18M12 3 9 6m3-3 3 3m-3 15-3-3m3 3 3-3M3 12l3-3m-3 3 3 3m15-3-3-3m3 3-3 3',
  pen:'M4 20l4-1L19 8l-3-3L5 16zM14 6l3 3',
  marker:'M15 4l5 5-8 8H7v-5zM7 17l-3 3h6',
- rect:'M4 6h16v12H4z',
+ rect:'M4 6h16v12H4z',fill:'M5 11 11 5l7 7-6 6a2 2 0 0 1-3 0l-4-4a2 2 0 0 1 0-3zM5 13h13M20 15.5s2 2.3 2 3.4a2 2 0 0 1-4 0c0-1.1 2-3.4 2-3.4',
  ellipse:'M12 5c4.4 0 8 3.1 8 7s-3.6 7-8 7-8-3.1-8-7 3.6-7 8-7z',
  line:'M5 19 19 5',
  arrow:'M5 19 19 5m0 0h-8m8 0v8',
@@ -1314,14 +1321,14 @@ function drawA(c,a,W,H){
       if(a.type==='whiteout'){c.fillStyle='#ffffff';c.fillRect(X(x0),Y(y0),X(w),Y(h));}
       else if(a.type==='redact'){c.fillStyle='#000000';c.fillRect(X(x0),Y(y0),X(w),Y(h));}
       else{c.strokeStyle=a.color;c.lineWidth=a.w*W;
-        if(a.type==='rect')c.strokeRect(X(x0),Y(y0),X(w),Y(h));
-        else{c.beginPath();c.ellipse(X(x0+w/2),Y(y0+h/2),X(w/2),Y(h/2),0,0,Math.PI*2);c.stroke();}}
+        c.beginPath();if(a.type==='rect')c.rect(X(x0),Y(y0),X(w),Y(h));else c.ellipse(X(x0+w/2),Y(y0+h/2),X(w/2),Y(h/2),0,0,Math.PI*2);
+        fillA(c,a);c.stroke();}
       break;}
     case 'tri':case 'rtri':case 'axes':case 'numline':{
       const x0=X(Math.min(pts[0][0],pts[1][0])),y0=Y(Math.min(pts[0][1],pts[1][1])),x1=X(Math.max(pts[0][0],pts[1][0])),y1=Y(Math.max(pts[0][1],pts[1][1])),w=x1-x0,h=y1-y0;
       c.strokeStyle=a.color;c.fillStyle=a.color;c.lineWidth=a.w*W;const head=(x,y,ang)=>{const L=Math.max(a.w*W*4,8);c.beginPath();c.moveTo(x,y);c.lineTo(x-L*Math.cos(ang-.45),y-L*Math.sin(ang-.45));c.lineTo(x-L*Math.cos(ang+.45),y-L*Math.sin(ang+.45));c.closePath();c.fill();};
-      if(a.type==='tri'){c.beginPath();c.moveTo(x0+w/2,y0);c.lineTo(x1,y1);c.lineTo(x0,y1);c.closePath();c.stroke();}
-      else if(a.type==='rtri'){c.beginPath();c.moveTo(x1,y0);c.lineTo(x1,y1);c.lineTo(x0,y1);c.closePath();c.stroke();const q=Math.min(w,h)*.12;c.lineWidth=Math.max(1,a.w*W*.6);c.strokeRect(x1-q,y1-q,q,q);}
+      if(a.type==='tri'){c.beginPath();c.moveTo(x0+w/2,y0);c.lineTo(x1,y1);c.lineTo(x0,y1);c.closePath();fillA(c,a);c.stroke();}
+      else if(a.type==='rtri'){c.beginPath();c.moveTo(x1,y0);c.lineTo(x1,y1);c.lineTo(x0,y1);c.closePath();fillA(c,a);c.stroke();const q=Math.min(w,h)*.12;c.lineWidth=Math.max(1,a.w*W*.6);c.strokeRect(x1-q,y1-q,q,q);}
       else{const fs=Math.max(9,Math.min(w,h,W*.25)*.07);c.font=`500 ${fs}px ${FONT}`;c.lineWidth=a.w*W;
         if(a.type==='axes'){const cx=x0+w/2,cy=y0+h/2,n=10,st=Math.min(w,h)/n;c.beginPath();c.moveTo(x0,cy);c.lineTo(x1,cy);c.moveTo(cx,y1);c.lineTo(cx,y0);c.stroke();head(x1,cy,0);head(x0,cy,Math.PI);head(cx,y0,-Math.PI/2);head(cx,y1,Math.PI/2);
           c.lineWidth=Math.max(1,a.w*W*.6);const tk=Math.max(3,st*.18);c.beginPath();for(let k=1;cx+k*st<x1-st*.6;k++){c.moveTo(cx+k*st,cy-tk);c.lineTo(cx+k*st,cy+tk);c.moveTo(cx-k*st,cy-tk);c.lineTo(cx-k*st,cy+tk);}
@@ -1607,6 +1614,7 @@ function attachOverlay(o,id){
       const pr=S.props[PROP_KEY[t]]||{color:'#000',w:.004};
       const a={type:t==='hwrite'?'pen':t,pts:free?[pt]:[pt,pt],color:pr.color,w:pr.w||.004};
       if(t==='axes'||t==='numline')a.nums=S.props.shape.nums||'ar';
+      if(FILLABLE.includes(t)&&S.props.shape.fill&&S.props.shape.fill!=='none'){a.fill=S.props.shape.fill;if(S.props.shape.fc)a.fc=S.props.shape.fc;}
       if(pr.dash&&pr.dash!=='solid'&&t!=='marker'&&t!=='hwrite'&&t!=='axes'&&t!=='numline')a.dash=pr.dash;
       if(t==='pen'&&e.pointerType==='pen'&&PENCIL.pressure&&!pr.straight)a.pr=[Math.max(.05,e.pressure||.5)];
       if(t==='marker')a.op=pr.op;
@@ -1738,6 +1746,10 @@ function syncToolbar(){
 }
 /* ---------- properties panel (colour, thickness, opacity, straight line) ---------- */
 const SIZE_PRESETS={pen:[.0018,.0028,.004,.006,.009,.013],marker:[.012,.018,.025,.034,.046],shape:[.0018,.0028,.004,.006,.009]};
+const FILLABLE=['rect','ellipse','tri','rtri'];
+const FILLS=[['none','بدون'],['soft','شفاف'],['solid','مصمت']];
+const FILL_ALPHA={soft:.28,solid:1};
+function fillA(c,a){if(!a.fill||a.fill==='none'||!FILL_ALPHA[a.fill])return;c.save();c.setLineDash([]);c.globalAlpha=FILL_ALPHA[a.fill];c.fillStyle=a.fc||a.color;c.fill();c.restore();}
 const DASHES=[['solid','متصل','<svg viewBox="0 0 34 10" width="34" height="10"><path d="M2 5h30" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'],
   ['dash','متقطع','<svg viewBox="0 0 34 10" width="34" height="10"><path d="M2 5h30" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="7 5"/></svg>'],
   ['dot','منقّط','<svg viewBox="0 0 34 10" width="34" height="10"><path d="M3 5h29" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray=".1 5.5"/></svg>']];
@@ -1772,13 +1784,16 @@ function renderProps(){
   if(!t.sel&&RANGES[k]&&S.tool!=='hltext'){const [mn,mx]=RANGES[k];const PS=SIZE_PRESETS[k]||SIZE_PRESETS.pen;
     h+=`<div class="pgroup"><span class="plabel">السماكة</span><div class="sizes" id="psz">${PS.map((v,i)=>`<button type="button" data-ps="${v}" class="${Math.abs(pr.w-v)<1e-6?'on':''}" aria-label="حجم ${ar(i+1)}" title="حجم ${ar(i+1)}"><i style="width:${Math.round(4+i*4.2)}px;height:${Math.round(4+i*4.2)}px;background:${k==='marker'?pr.color:'currentColor'};border-radius:50%"></i></button>`).join('')}</div><div class="slider"><input type="range" id="pw" min="${mn}" max="${mx}" step="0.0005" value="${pr.w}"><output id="pwo"></output></div></div>`;
     if(k!=='marker'&&S.tool!=='hwrite'&&S.tool!=='axes'&&S.tool!=='numline')h+=`<div class="pgroup"><span class="plabel">نمط الخط</span><div class="seg dashes" id="pdash">${DASHES.map(([v,l,svg])=>`<button type="button" data-pd="${v}" class="${(pr.dash||'solid')===v?'on':''}" title="${l}" aria-label="${l}">${svg}</button>`).join('')}</div></div>`;}
+  {const ft=t.sel?t.sel.type:S.tool;if(FILLABLE.includes(ft)){const fv=t.sel?(t.sel.fill||'none'):(S.props.shape.fill||'none'),fc=t.sel?t.sel.fc:S.props.shape.fc;
+    h+=`<div class="pgroup"><span class="plabel">التعبئة (التظليل)</span><div class="seg" id="pfill">${FILLS.map(([v,l])=>`<button type="button" data-pf="${v}" class="${v===fv?'on':''}">${l}</button>`).join('')}</div></div>
+      <div class="pgroup"${fv==='none'?' hidden':''} id="pfcG"><span class="plabel">لون التعبئة</span><div class="swatches"><button class="sw same${!fc?' on':''}" data-pfc="" title="مثل لون الخط" aria-label="مثل لون الخط">=</button>${PEN_COLORS.concat(HL_COLORS).filter((x,i,arr)=>arr.findIndex(y=>y[0].toLowerCase()===x[0].toLowerCase())===i).map(([c,n])=>`<button class="sw${fc&&c.toLowerCase()===fc.toLowerCase()?' on':''}" data-pfc="${c}" style="background:${c}" title="${n}" aria-label="${n}"></button>`).join('')}</div></div>`;}}
   if(!t.sel&&k==='marker')
     h+=`<div class="pgroup"><span class="plabel">الشفافية</span><div class="slider"><input type="range" id="po" min="0.15" max="0.75" step="0.05" value="${pr.op}"><output id="poo"></output></div></div>`;
   if(!t.sel&&(k==='pen'||k==='marker')&&S.tool!=='hltext'&&S.tool!=='hwrite')
     h+=`<button class="toggle${pr.straight?' on':''}" id="pst" aria-pressed="${!!pr.straight}">${ic('line')}خط مستقيم</button>`;
   if(S.tool==='hwrite'&&!t.sel){const hm=store.get('safahat-hwmode','auto');
     h+=`<div class="pgroup"><span class="plabel">التحويل إلى</span><div class="seg">${[['auto','تلقائي'],['text','نص'],['math','معادلة رياضية']].map(([v,l])=>`<button type="button" data-hm="${v}" class="${v===hm?'on':''}">${l}</button>`).join('')}</div></div>
-      <button class="toggle${calcOn()?' on':''}" id="pcalc" aria-pressed="${calcOn()}">${ic('check')}حساب وكتابة الناتج</button>`;}
+      <button class="toggle${calcOn()?' on':''}" id="pcalc" aria-pressed="${calcOn()}">${ic('check')}حساب وكتابة الناتج</button><button class="toggle" id="ptrain">${ic('hw')}درّب على خطك</button>`;}
   if(!t.sel&&(S.tool==='axes'||S.tool==='numline')){const nm=S.props.shape.nums||'ar';
     h+=`<div class="pgroup"><span class="plabel">الأرقام والتسميات</span><div class="seg">${[['ar','عربية (س، ص، ١٢٣)'],['en','إنكليزية (x, y, 123)']].map(([v,l])=>`<button type="button" data-nm="${v}" class="${v===nm?'on':''}">${l}</button>`).join('')}</div></div>`;}
   if(!t.sel&&(DRAW.includes(S.tool)||S.tool==='eraser')&&(pencilSeen||isTouchDevice()))
@@ -1801,7 +1816,12 @@ function renderProps(){
   const po=$('#po');if(po)po.oninput=()=>{S.props[k].op=+po.value;outs();paintPreview(k,S.props[k]);saveProps();};
   const st=$('#pst');if(st)st.onclick=()=>{S.props[k].straight=!S.props[k].straight;st.classList.toggle('on',S.props[k].straight);st.setAttribute('aria-pressed',S.props[k].straight);saveProps();
     toast(S.props[k].straight?'خط مستقيم: اسحب من بداية السطر إلى نهايته':'رسم حر');};
+  const ptr=$('#ptrain');if(ptr)ptr.onclick=()=>inkTrainSheet();
   const pc=$('#pcalc');if(pc)pc.onclick=()=>{const v=!calcOn();store.set('safahat-calc',v);pc.classList.toggle('on',v);pc.setAttribute('aria-pressed',v);toast(v?'سيُحسب الناتج ويُكتب بعد كل تحويل':'لن يُكتب الناتج');};
+  const setFill=(f,fc)=>{if(t.sel){pushUndo('التعبئة');const a=t.sel;if(f!==undefined){if(f==='none')delete a.fill;else a.fill=f;}if(fc!==undefined){if(fc)a.fc=fc;else delete a.fc;}markDirty();drawOverlay(S.sel.id);}
+    else{const sp=S.props.shape;if(f!==undefined)sp.fill=f;if(fc!==undefined)sp.fc=fc||undefined;saveProps();paintPreview(k,sp);}};
+  box.querySelectorAll('[data-pf]').forEach(b=>b.onclick=()=>{setFill(b.dataset.pf);box.querySelectorAll('[data-pf]').forEach(x=>x.classList.toggle('on',x===b));const g=$('#pfcG');if(g)g.hidden=b.dataset.pf==='none';});
+  box.querySelectorAll('[data-pfc]').forEach(b=>b.onclick=()=>{setFill(undefined,b.dataset.pfc);box.querySelectorAll('[data-pfc]').forEach(x=>x.classList.toggle('on',x===b));});
   box.querySelectorAll('[data-nm]').forEach(b=>b.onclick=()=>{S.props.shape.nums=b.dataset.nm;saveProps();box.querySelectorAll('[data-nm]').forEach(x=>x.classList.toggle('on',x===b));});
   box.querySelectorAll('[data-hm]').forEach(b=>b.onclick=()=>{store.set('safahat-hwmode',b.dataset.hm);box.querySelectorAll('[data-hm]').forEach(x=>x.classList.toggle('on',x===b));});
   outs();paintPreview(k,pr);
@@ -1815,7 +1835,7 @@ function paintPreview(k,pr){
   else if(k==='text'){x.fillStyle=pr.color;x.font=`700 ${H*.42}px ${FONT}`;x.direction='rtl';x.textAlign='center';x.textBaseline='middle';x.fillText('نص',W/2,H/2);}
   else if(k==='tmark'){x.fillStyle='#222';x.font=`500 ${H*.34}px ${FONT}`;x.direction='rtl';x.textAlign='center';x.textBaseline='middle';x.fillText('نص مسطّر',W/2,H/2);
     x.strokeStyle=pr.color;x.lineWidth=Math.max(1.5,H*.05);x.beginPath();x.moveTo(W*.14,H*.74);x.lineTo(W*.86,H*.74);x.stroke();}
-  else if(k==='shape'){drawA(x,{type:'rect',pts:[[.2,.22],[.8,.78]],color:pr.color,w:Math.max(1/W,pr.w*scale/W),dash:pr.dash&&pr.dash!=='solid'?pr.dash:undefined},W,H);}
+  else if(k==='shape'){const sp=S.props.shape||{};drawA(x,{type:'rect',pts:[[.2,.22],[.8,.78]],color:pr.color,w:Math.max(1/W,pr.w*scale/W),dash:pr.dash&&pr.dash!=='solid'?pr.dash:undefined,fill:FILLABLE.includes(S.tool)?sp.fill:undefined,fc:sp.fc},W,H);}
   else{drawA(x,{type:'pen',pts:[[.1,.62],[.3,.3],[.5,.6],[.7,.32],[.9,.55]],color:pr.color,w:Math.max(1/W,pr.w*scale/W),dash:pr.dash&&pr.dash!=='solid'&&S.tool!=='hwrite'?pr.dash:undefined},W,H);}
 }
 function syncDots(){document.querySelectorAll('[data-cd]').forEach(d=>d.style.setProperty('--c',S.props[d.dataset.cd].color));}
@@ -4466,12 +4486,14 @@ function renderSelbar(mode){
     h=B('back','prev','رجوع')+SIZE_PRESETS.pen.map((v,i)=>`<button class="sbw" data-sbw="${i}" aria-label="سماكة ${ar(i+1)}" title="سماكة ${ar(i+1)}"><i style="width:${Math.round(4+i*3.6)}px;height:${Math.round(4+i*3.6)}px"></i></button>`).join('')+
       `<button data-sbz="0.8" title="أرفع">${ic('smaller')}<span>أرفع</span></button><button data-sbz="1.25" title="أعرض">${ic('bigger')}<span>أعرض</span></button>`+
       (mk?'':DASHES.map(([v,l,svg])=>`<button class="sbd" data-sbd="${v}" title="${l}" aria-label="${l}">${svg}</button>`).join(''));}
+  else if(mode==='fill'){const f=m.items.find(a=>FILLABLE.includes(a.type));const cur=f&&f.fill||'none';
+    h=B('back','prev','رجوع')+FILLS.map(([v,l])=>`<button data-sbf="${v}" class="${v===cur?'hi':''}"><i class="fsw ${v}"></i><span>${l}</span></button>`).join('')+`<button data-sbfc="" title="مثل لون الخط" aria-label="مثل لون الخط"><i class="fsw solid" style="color:${f&&f.color||'#111'}"></i><span>لون الخط</span></button>`+PEN_COLORS.map(([c,n])=>`<button class="sbc" data-sbfc="${c}" style="--c:${c}" aria-label="تعبئة ${n}" title="تعبئة ${n}"><i></i></button>`).join('');}
   else if(mode==='color')h=B('back','prev','رجوع')+PEN_COLORS.map(([c,n])=>`<button class="sbc" data-sbc="${c}" style="--c:${c}" aria-label="${n}" title="${n}"><i></i></button>`).join('');
   else if(m.items.length){const ink=m.items.some(a=>INK.includes(a.type));
     const one=m.items.length===1&&['text','math'].includes(m.items[0].type),txt=m.items.some(a=>a.type==='text'||a.type==='edit'),ax=m.items.some(a=>a.type==='axes'||a.type==='numline');
     const mth=m.items.length===1&&m.items[0].type==='math'&&MSOLVE.compute(m.items[0].tex,m.items[0].rtl);
     const hasW=m.items.some(a=>a.w&&a.type!=='image');
-    h=(ink?B('ink','hw','تحويل','hi'):'')+(one?B('editx','textedit','تعديل','hi'):'')+(hasW?B('thick','line','السماكة'):'')+(mth?B('calc','check','الحل','hi'):'')+(ax?B('nums','num','الأرقام'):'')+(txt?B('font','text','الخط'):'')+B('color','palette','اللون')+B('copy','copy','نسخ')+B('dup','plus','تكرار')+B('big','bigger','أكبر')+B('small','smaller','أصغر')+B('front','front','للأمام')+B('del','trash','حذف','dng');}
+    h=(ink?B('ink','hw','تحويل','hi'):'')+(one?B('editx','textedit','تعديل','hi'):'')+(hasW?B('thick','line','السماكة'):'')+(mth?B('calc','check','الحل','hi'):'')+(ax?B('nums','num','الأرقام'):'')+(m.items.some(a=>FILLABLE.includes(a.type))?B('fillm','fill','التعبئة'):'')+(txt?B('font','text','الخط'):'')+B('color','palette','اللون')+B('copy','copy','نسخ')+B('dup','plus','تكرار')+B('big','bigger','أكبر')+B('small','smaller','أصغر')+B('front','front','للأمام')+B('del','trash','حذف','dng');}
   else{const t=!!m.text;
     h=(t?B('copytext','copy','نسخ النص','hi')+B('hl','hltext','تظليل')+B('ul','under','تسطير')+B('st','strike','شطب'):'')+
       (AI?B('convert','hw','تحويل الكتابة',t?'':'hi')+B('read','ocr',t?'قراءة':'قراءة النص')+B('explain','bulb','شرح')+B('translate','globe','ترجمة'):'')+
@@ -4539,6 +4561,7 @@ function selAction(k,colorVal){
     case 'back':renderSelbar();break;
     case 'color':renderSelbar('color');break;
     case 'thick':renderSelbar('thick');break;
+    case 'fillm':renderSelbar('fill');break;
     case 'calc':{const a=m.items[0];pushUndo('كتابة الناتج');const r=applyCalc(p,a);if(!r){S.undo.pop();updUndo();toast('لم أستطع حساب هذه المعادلة');break;}markDirty();drawOverlay(m.id);selectItems(m.id,[a]);toast(r.mode==='line'?'كُتب الحل تحت المعادلة':r.mode==='check'?(r.ok?'الإجابة صحيحة ✓':'الإجابة غير صحيحة ✗'):'كُتب الناتج');break;}
     case 'nums':{pushUndo('الأرقام');const cur=m.items.find(a=>a.type==='axes'||a.type==='numline');const nv=(cur.nums||'ar')==='ar'?'en':'ar';for(const a of m.items)if(a.type==='axes'||a.type==='numline')a.nums=nv;markDirty();drawOverlay(m.id);toast(nv==='ar'?'أرقام عربية وتسميات س وص':'أرقام إنكليزية وتسميات x وy');break;}
     case 'font':openFontSheet(m.items.filter(a=>a.type==='text'||a.type==='edit'),m.id);break;
@@ -4547,7 +4570,7 @@ function selAction(k,colorVal){
     case 'dup':{pushUndo();const cp=JSON.parse(JSON.stringify(m.items));for(const a of cp){shiftA(a,.025,.025*r);p.annots.push(a);}markDirty();selectItems(m.id,cp);break;}
     case 'big':case 'small':{pushUndo();const f=k==='big'?1.15:1/1.15,cx=m.box.x+m.box.w/2,cy=m.box.y+m.box.h/2;for(const a of m.items)scaleA(a,f,cx,cy);markDirty();drawOverlay(m.id);positionSelbar();break;}
     case 'front':{pushUndo();p.annots=p.annots.filter(a=>!m.items.includes(a)).concat(m.items);markDirty();drawOverlay(m.id);toast('نُقل إلى الأمام');break;}
-    case 'editx':{const a=m.items[0];openConvert({id:m.id,items:[a],box:bbox(a,r),editA:a,init:a.type==='math'?{type:'math',value:a.tex,rtl:a.rtl}:{type:'text',value:a.text,rtl:true}});break;}
+    case 'editx':{const a=m.items[0];openConvert({id:m.id,items:[a],box:bbox(a,r),editA:a,learn:a.type==='math'?INK_SRC.get(a):null,init:a.type==='math'?{type:'math',value:a.tex,rtl:a.rtl}:{type:'text',value:a.text,rtl:true}});break;}
     case 'convert':openConvert({id:m.id,items:[],box:{...m.box},shot:()=>regionShot(p,m.box,true)});break;
     case 'ink':inkToText(m.id,m.items.filter(a=>INK.includes(a.type)));break;
     case 'copytext':if(m.text)copyText(m.text);break;
@@ -4710,16 +4733,45 @@ const INKM=(()=>{
     for(const s of strokes){let dir=0,ref=null;for(const [x,y] of s){const u=(x-x0)/w,v=(y-y0)/h;if(u<fx0-1e-6||u>fx1+1e-6||v<fy0-1e-6||v>fy1+1e-6){ref=null;dir=0;continue;}
       if(ref===null){ref=y;continue;}const d=y-ref;if(Math.abs(d)<tol)continue;const nd=d>0?1:-1;if(dir&&nd!==dir)n++;dir=nd;ref=y;}}
     return n;}
+  const segX=(p,q,r,t)=>{const d=(q[0]-p[0])*(t[1]-r[1])-(q[1]-p[1])*(t[0]-r[0]);if(Math.abs(d)<1e-12)return null;
+    const u=((r[0]-p[0])*(t[1]-r[1])-(r[1]-p[1])*(t[0]-r[0]))/d,v=((r[0]-p[0])*(q[1]-p[1])-(r[1]-p[1])*(q[0]-p[0]))/d;return u>=-.02&&u<=1.02&&v>=-.02&&v<=1.02?u:null;};
+  // fraction of stroke a's length at which it first meets stroke b (null if they never meet)
+  function crossAt(a,b){let L=0;const cum=[0];for(let i=1;i<a.length;i++){L+=Math.hypot(a[i][0]-a[i-1][0],a[i][1]-a[i-1][1]);cum.push(L);}if(!L)return null;
+    for(let i=1;i<a.length;i++)for(let j=1;j<b.length;j++){const u=segX(a[i-1],a[i],b[j-1],b[j]);if(u!=null)return (cum[i-1]+u*(cum[i]-cum[i-1]))/L;}return null;}
+  const touches=(A,B)=>{for(const a of A)for(const b of B){const sa=Math.max(1,a.pts.length>>4),sb=Math.max(1,b.pts.length>>4);
+      for(let i=sa;i<a.pts.length;i+=sa)for(let j=sb;j<b.pts.length;j+=sb)if(segX(a.pts[i-sa],a.pts[i],b.pts[j-sb],b.pts[j])!=null)return true;}return false;};
+  const pseg=(p,a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy;let t=l?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l:0;t=Math.max(0,Math.min(1,t));return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy);};
+  // an end of one stroke resting on another (the short arm of y, the bar of 4)
+  const meets=(A,B,tol)=>{for(const [P,Q] of [[A,B],[B,A]])for(const a of P)for(const e of [a.pts[0],a.pts[a.pts.length-1]])for(const b of Q)for(let j=1;j<b.pts.length;j++)if(pseg(e,b.pts[j-1],b.pts[j])<tol)return true;return false;};
   function refine(sym,strokes){
+    if((sym==='x'||sym==='y')&&strokes.length===2){let y0=1e9,y1=-1e9;for(const s of strokes)for(const p of s){y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);}const h=y1-y0||1;
+      const span=strokes.map(s=>{let a=1e9,b=-1e9;for(const p of s){a=Math.min(a,p[1]);b=Math.max(b,p[1]);}return (b-a)/h;});
+      const lo=Math.min(...span);if(lo>.8)return 'x';if(lo<.6)return 'y';
+      // where the strokes cross along the shorter one: the middle for x, its end for y
+      const k=span[0]<=span[1]?0:1,sh=strokes[k],ot=strokes[1-k];const c=crossAt(sh,ot);if(c!=null)return c>.22&&c<.78?'x':'y';}
     if(sym==='٢'||sym==='٣'){const t=turns(strokes,0,1,0,.42);return t>=3?'٣':'٢';}
     if(sym==='س'||sym==='ص'){const t=turns(strokes,.45,1,0,.65);return t>=3?'س':'ص';}
     if(sym==='8'||sym==='5'){if(strokes.length>=2)return '5';const st=strokes[0],a=st[0],b=st[st.length-1];let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const [x,y] of st){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}
       return Math.hypot(a[0]-b[0],a[1]-b[1])<Math.max(x1-x0,y1-y0)*.3?'8':'5';}
     return sym;}
+  /* ---------- the user's own handwriting (learned from corrections and training) ---------- */
+  const UKEY='safahat-ink-user',UMAX=24;let USER=[],URAW=[];
+  const unit=strokes=>{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const s of strokes)for(const [x,y] of s){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}
+    const k=Math.max(x1-x0,y1-y0)||1;return strokes.map(st=>{const step=Math.max(1,Math.ceil(st.length/24));const o=[];for(let i=0;i<st.length;i+=step)o.push(st[i]);if(o[o.length-1]!==st[st.length-1])o.push(st[st.length-1]);
+      return o.map(([x,y])=>[Math.round((x-x0)/k*1000)/1000,Math.round((y-y0)/k*1000)/1000]);});};
+  function rebuild(){USER=[];for(const r of URAW){const v=r.s;USER.push({sym:r.sym,P:cloud(v),user:true});for(let k=0;k<2;k++)USER.push({sym:r.sym,P:cloud(warp(v)),user:true});}}
+  function persist(){try{localStorage.setItem(UKEY,JSON.stringify(URAW));}catch(e){}}
+  function loadUser(){try{const v=JSON.parse(localStorage.getItem(UKEY)||'[]');if(Array.isArray(v))URAW=v.filter(r=>r&&ALL.has(r.sym)&&Array.isArray(r.s));}catch(e){URAW=[];}rebuild();}
+  function addSample(sym,strokes,save=true){if(!ALL.has(sym))return false;const st=strokes.filter(s=>s&&s.length);if(!st.length)return false;
+    URAW.push({sym,s:unit(st)});const mine=URAW.filter(r=>r.sym===sym);if(mine.length>UMAX)URAW.splice(URAW.indexOf(mine[0]),1);
+    rebuild();if(save)persist();return true;}
+  function resetUser(sym){URAW=sym?URAW.filter(r=>r.sym!==sym):[];rebuild();persist();}
+  const userCount=()=>{const c={};for(const r of URAW)c[r.sym]=(c[r.sym]||0)+1;return {total:URAW.length,by:c};};
   function classify(strokes,set){const P=cloud(strokes);let best=null,second=null;
-    for(const t of LIB){if(!set.has(t.sym))continue;const d=greedy(P,t.P);if(!best||d<best.d){if(best&&best.sym!==t.sym)second=best;best={sym:t.sym,d};}else if(t.sym!==best.sym&&(!second||d<second.d))second={sym:t.sym,d};}
-    if(best)best.sym=refine(best.sym,strokes);
-    return {...best,margin:second?second.d-best.d:1};}
+    for(const t of LIB.concat(USER)){if(!set.has(t.sym))continue;const d=greedy(P,t.P)*(t.user?.8:1);if(!best||d<best.d){if(best&&best.sym!==t.sym)second=best;best={sym:t.sym,d,user:!!t.user};}else if(t.sym!==best.sym&&(!second||d<second.d))second={sym:t.sym,d};}
+    const margin=second?second.d-best.d:1;
+    if(best&&!(best.user&&margin>.06))best.sym=refine(best.sym,strokes);
+    return {...best,margin};}
 
   /* ---------- geometry helpers ---------- */
   const box=s=>{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const [x,y] of s){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}return {x0,y0,x1,y1,w:x1-x0,h:y1-y0,cx:(x0+x1)/2,cy:(y0+y1)/2};};
@@ -4767,13 +4819,13 @@ const INKM=(()=>{
           const vgap=Math.max(0,Math.max(A.y0,B.y0)-Math.min(A.y1,B.y1));
           const dotsOnly=g[i].every(s=>s.dot)||g[j].every(s=>s.dot);
           const inside=(A.cx>=B.x0&&A.cx<=B.x1)||(B.cx>=A.x0&&B.cx<=A.x1);
-          const ok=(ov>mw*.42||(inside&&ov>=0)||(dotsOnly&&ov>-h0*.1))&&vgap<h0*.75;
+          const ok=((ov>mw*.42||(inside&&ov>=0)||(dotsOnly&&ov>-h0*.1))&&vgap<h0*.75)||(ov>mw*.15&&!dotsOnly&&vgap<h0*.3&&(touches(g[i],g[j])||meets(g[i],g[j],h0*.12)));
           if(ok){g[i]=g[i].concat(g[j]);g.splice(j,1);merged=true;}}}
       for(const G of g)out.push(symbolOf(G,mode));
       return out;}
     function symbolOf(G,mode){
       const b=fin(ubox(G.map(s=>s.b)));const lines=G.filter(s=>s.hline),dots=G.filter(s=>s.dot),verts=G.filter(s=>s.vline);
-      const sym=(ch,d=0)=>({kind:'sym',ch,b,d});
+      const sym=(ch,d=0)=>({kind:'sym',ch,b,d,st:G.map(s=>s.pts)});
       if(G.length===1&&G[0].dot)return sym('.');
       if(G.length===1&&G[0].hline)return sym('-');
       if(G.length===1&&G[0].vline)return sym('1');
@@ -4796,10 +4848,13 @@ const INKM=(()=>{
     // decide Latin vs Arabic numerals
     let mode=pref==='rtl'||pref==='ltr'?pref:'auto';
     const score=tree=>{let sum=0,n=0;const w=a=>{for(const t of a){if(t.sup){w([t.base]);w(t.items);continue;}if(t.kind==='frac'){w(t.num);w(t.den);continue;}if(t.kind==='sqrt'){w(t.body);continue;}if(t.d){sum+=t.d;n++;}}};w(tree);return n?sum/n:0;};
-    if(mode==='auto'){const L=score(parse(S,'ltr')),R=score(parse(S,'rtl'));mode=R<L*.97?'rtl':'ltr';}
+    // syntax sanity: an operator at the start, two operators together, etc. make a reading less likely
+    const bad=(tree,m)=>{const ops=new Set(['+','-','=','÷','.']);if(m==='rtl')ops.add('x');const seq=tree.map(t=>t.kind==='sym'?t.ch:'#');let n=0;
+      seq.forEach((c,i)=>{if(!ops.has(c))return;if(i===0&&c!=='-')n++;if(i===seq.length-1&&c!=='='&&c!=='.')n++;const nx=seq[i+1];if(nx&&ops.has(nx)&&!(c==='='&&nx==='-'))n++;});return n;};
+    if(mode==='auto'){const tl=parse(S,'ltr'),tr=parse(S,'rtl');const L=score(tl)*(1+.18*bad(tl,'ltr')),R=score(tr)*(1+.18*bad(tr,'rtl'));mode=R<L*.97?'rtl':'ltr';}
     const tree=parse(S,mode);
     // 4) LaTeX
-    let worst=0;
+    let worst=0;const seq=[];
     const conv=ch=>{if(mode==='rtl'){if(ch in HINDI)return HINDI[ch];if(/[0-9]/.test(ch))return '٠١٢٣٤٥٦٧٨٩'[+ch];if(ch==='√r')return '√';}return ch;};
     // line band from ordinary symbols, to tell a decimal point (low) from the Arabic zero ٠ (middle)
     const band=(()=>{const ys=[];const w=a=>{for(const t of a){if(t.sup){w([t.base]);continue;}if(t.kind==='sym'&&t.ch!=='.'&&t.ch!=='-'&&t.ch!=='=')ys.push([t.b.y0,t.b.y1]);}};w(tree);if(!ys.length)return null;ys.sort((a,b)=>a[0]-b[0]);const m=ys[ys.length>>1];return {y0:m[0],y1:m[1]};})();
@@ -4809,14 +4864,25 @@ const INKM=(()=>{
       if(t.kind==='sqrt'){s+='\\sqrt{'+tex(t.body)+'}';continue;}
       worst=Math.max(worst,t.d||0);let ch=conv(t.ch);
       if(ch==='.'){const low=band&&t.b.cy>band.y0+(band.y1-band.y0)*.72;ch=mode==='rtl'?(low?'٫':'٠'):'.';}
+      seq.push({ch,sym:t.ch,st:t.st});
       if(ch==='-'||ch==='+'||ch==='='||ch==='÷'||ch==='×'){s+=' '+(ch==='÷'?'\\div':ch==='×'?'\\times':ch==='-'?'-':ch)+' ';}
       else s+=ch;}
       return s.replace(/\s+/g,' ').trim();};
     const value=tex(tree);
     // a lone dot after digits in Arabic means decimal comma, between digits
-    return {type:'math',value,rtl:mode==='rtl',conf:Math.max(0,Math.min(1,1-worst/4))};
+    return {type:'math',value,rtl:mode==='rtl',seq,conf:Math.max(0,Math.min(1,1-worst/4))};
   }
-  return {recognize};
+  // compare the user's corrected formula with what was recognised, symbol by symbol, and keep the strokes of each fixed symbol
+  const TOK=tex=>{let t=String(tex).replace(/\\left|\\right/g,'').replace(/\\times|\\cdot/g,'×').replace(/\\div/g,'÷').replace(/\\frac|\\sqrt(\[[^\]]*\])?/g,'').replace(/−/g,'-').replace(/[{}^\s]/g,'');
+    if(/\\/.test(t))return null;return [...t];};
+  const TO_SYM={rtl:{'٢':'٢','٣':'٣','٤':'٤','٥':'0','٦':'٦','٧':'٧','٨':'٨','٩':'9','س':'س','ص':'ص','×':'x','x':'x','+':'+','(':'(',')':')'},
+    ltr:{'0':'0','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9','x':'x','×':'x','y':'y','+':'+','(':'(',')':')'}};
+  function learn(res,corrected){if(!res||!res.seq||!res.seq.length)return 0;const A=res.seq.map(q=>q.ch==='.'?null:q.ch),B=TOK(corrected);
+    if(!B||B.length!==A.length)return 0;const map=TO_SYM[res.rtl?'rtl':'ltr'];let n=0;
+    for(let i=0;i<A.length;i++){if(A[i]===B[i]||!A[i])continue;const sym=map[B[i]];const q=res.seq[i];if(!sym||!q.st||!q.st.length)continue;if(addSample(sym,q.st,false))n++;}
+    if(n)persist();return n;}
+  loadUser();
+  return {recognize,learn,addSample,resetUser,userCount,_classify:classify,_cloud:cloud,_turns:turns};
 })();
 
 /* ---------- calculate / solve recognised math (no eval; own parser) ---------- */
@@ -4964,7 +5030,7 @@ function openConvert(o){
     <div class="calcrow" id="cvCalcRow" hidden><span class="cres"><b>الحل:</b> <canvas id="cvRes"></canvas></span><label class="cbx"><input type="checkbox" id="cvCalc" ${calcOn()?'checked':''}>كتابة الناتج على الصفحة</label></div>
     <label><span id="cvLab">النص</span><textarea id="cvT" dir="auto" rows="3" placeholder="${o.shot?'جارٍ التعرّف على الكتابة…':''}"></textarea></label>
     <p class="hint" id="cvHelp" style="margin:0" hidden>الكسر: \\frac{١}{٢} · الأس: س^{٢} · الجذر: \\sqrt{س} · الجذر النوني: \\sqrt[٣]{س} · الضرب \\times والقسمة \\div وπ: \\pi</p>
-    <div class="locnote" id="cvLocal" hidden><span>${ic('check')}</span><small>تعرّف فوري على الجهاز دون إنترنت. راجع الصيغة وصحّحها إن لزم${AI?'، أو اضغط «بالمساعد» لتعرّف أدق':''}.</small>${AI?`<button class="hbtn" id="cvAi">${ic('spark')} بالمساعد</button>`:''}</div>
+    <div class="locnote" id="cvLocal" hidden><span>${ic('check')}</span><small>تعرّف فوري على الجهاز دون إنترنت. راجع الصيغة وصحّحها إن لزم${AI?'، أو اضغط «بالمساعد» لتعرّف أدق':''}. كل تصحيح تكتبه يتعلّم منه التطبيق خطك.</small><button class="hbtn" id="cvTrain">${ic('hw')} درّبه على خطك</button>${AI?`<button class="hbtn" id="cvAi">${ic('spark')} بالمساعد</button>`:''}</div>
     <div class="noai" id="cvNoAI" hidden><span>${ic('spark')}</span><div><b>لم يُحوَّل تلقائياً</b><small>${aiHelpText()}</small></div>${window.SAFAHAT_NATIVE?`<button class="hbtn primary" id="cvAiOn">تفعيل المساعد</button>`:''}</div>
     ${o.editA?'':`<label>بعد التحويل${seg('cvM',[['replace','استبدال الأصل'],['keep','إبقاء الأصل وإضافة الناتج تحته']],'replace')}</label>`}
     <div class="acts"><button class="hbtn primary" id="cvOk">${o.editA?'حفظ':'تحويل'}</button><button class="hbtn" id="cvCopy">${ic('copy')}نسخ</button>${cancelBtn}</div>`);
@@ -4991,9 +5057,11 @@ function openConvert(o){
     else if(st.type==='text'&&!AI&&!st.val.text){T.placeholder='تحويل الكتابة العربية إلى نص يحتاج المساعد الذكي. اكتب النص بنفسك هنا';const nb=$('#cvNoAI');if(nb)nb.hidden=false;}});
   sheet.querySelectorAll('#cvDir button').forEach(b=>b.onclick=()=>{const r=b.dataset.v==='rtl';if(r!==st.rtl){store.set('safahat-mathdir',r?'rtl':'ltr');
       const again=o.local&&!edited&&st.src==='local'?o.local(r?'rtl':'ltr'):null;
-      if(again){st.val.math=again.value;st.rtl=again.rtl;}else{st.val.math=convertDir(st.val.math,r);st.rtl=r;}}sync();});
+      if(again){st.val.math=again.value;st.rtl=again.rtl;st.loc=again;}else{st.val.math=convertDir(st.val.math,r);st.rtl=r;}}sync();});
   let edited=false;T.oninput=()=>{edited=true;st.val[st.type]=T.value;drawOut();};
   const aiB=$('#cvAi');if(aiB)aiB.onclick=()=>{edited=false;st.res={};run('auto');};
+  const trB=$('#cvTrain');if(trB)trB.onclick=()=>inkTrainSheet();
+  if(o.learn)st.loc=o.learn.res;
   $('#cvCopy').onclick=()=>copyText(st.val[st.type]||'');
   const cc=$('#cvCalc');if(cc)cc.onchange=()=>store.set('safahat-calc',cc.checked);
   $('#cvOk').onclick=()=>{const v=(st.val[st.type]||'').trim();if(!v){closeSheet();return;}
@@ -5007,12 +5075,48 @@ function openConvert(o){
       else if(o.items.length)p.annots=p.annots.filter(a=>!o.items.includes(a));
       else p.annots.push({type:'whiteout',pts:[[box.x,box.y],[box.x+box.w,box.y+box.h]]});
       out=fitAnnot(p,st.type,v,st.rtl,box,keep&&o.items.length?'#1d4ed8':color);p.annots.push(out);}
+    let learned=0;if(st.type==='math'&&st.loc&&(st.src==='local'||o.learn)){let cv=v;const sfx=o.learn&&o.learn.sfx&&o.learn.sfx.trim();if(sfx&&cv.endsWith(sfx))cv=cv.slice(0,cv.length-sfx.length).trim();
+      if(cv.replace(/\s/g,'')!==st.loc.value.replace(/\s/g,''))learned=INKM.learn(st.loc,cv);else if(!o.editA)INK_SRC.set(out,{res:st.loc,sfx:''});}
     let calc=null;if(st.type==='math'&&$('#cvCalc')&&$('#cvCalc').checked&&!(o.editA&&out===o.editA&&/✓|✗/.test(out.tex)))calc=applyCalc(p,out);
-    markDirty();closeSheet();selectItems(o.id,[out]);toast(st.type==='math'?(calc?'تحوّلت إلى معادلة وكُتب الناتج':'تحوّلت إلى معادلة منسّقة'):'تحوّلت إلى نص');};
+    markDirty();closeSheet();selectItems(o.id,[out]);toast((st.type==='math'?(calc?'تحوّلت إلى معادلة وكُتب الناتج':'تحوّلت إلى معادلة منسّقة'):'تحوّلت إلى نص')+(learned?' — وتعلّم التطبيق خطك من تصحيحك':''),learned?3200:2200);};
   const loc=o.shot&&!o.init&&o.local?o.local():null;
-  if(loc){st.val.math=loc.value;st.rtl=loc.rtl;st.res.math=true;st.type='math';st.src='local';const ln=$('#cvLocal');if(ln)ln.hidden=false;}
+  if(loc){st.val.math=loc.value;st.rtl=loc.rtl;st.res.math=true;st.type='math';st.src='local';st.loc=loc;const ln=$('#cvLocal');if(ln)ln.hidden=false;}
   sync();
   if(o.shot&&!o.init){if(AI&&!loc)run('auto');else if(!AI&&!loc){T.placeholder='أو اكتب النص أو المعادلة بنفسك هنا';const nb=$('#cvNoAI');if(nb)nb.hidden=false;}}
+}
+const INK_SRC=new WeakMap();
+const TRAIN_SETS={ar:[['٢','٢'],['٣','٣'],['٤','٤'],['٥','0'],['٦','٦'],['٧','٧'],['٨','٨'],['٩','9'],['س','س'],['ص','ص'],['×','x'],['+','+'],['(','('],[')',')']],
+  en:[['0','0'],['2','2'],['3','3'],['4','4'],['5','5'],['6','6'],['7','7'],['8','8'],['9','9'],['x','x'],['y','y'],['+','+'],['(','('],[')',')']]};
+function inkTrainSheet(){
+  let set=store.get('safahat-mathdir','auto')==='ltr'?'en':'ar',i=0,strokes=[],cur=null,armed=false,saved=0;
+  openSheet(`<h3>${ic('hw')} درّب التطبيق على خطك</h3>
+    <p class="hint" style="margin:0">اكتب الرمز الظاهر بخطك المعتاد كما تكتبه في الدفتر، ثم «حفظ والتالي». يتعلّم التطبيق شكل كتابتك على هذا الجهاز فقط، ويكفي عادةً مرتان أو ثلاث لكل رمز يخطئ فيه.</p>
+    <div class="pgroup"><span class="plabel">الأرقام والرموز</span><div class="seg" id="trSet"><button type="button" data-v="ar">عربية (س، ٣)</button><button type="button" data-v="en">لاتينية (x، 3)</button></div></div>
+    <div class="trwrap"><div class="trq"><b id="trSym"></b><small id="trN"></small></div><canvas id="trPad" aria-label="مساحة الكتابة"></canvas></div>
+    <div class="acts"><button class="hbtn primary" id="trNext">حفظ والتالي</button><button class="hbtn" id="trClr">${ic('eraser')}مسح</button><button class="hbtn" id="trSkip">تخطٍّ</button><button class="hbtn" data-close>تم</button></div>
+    <div class="trfoot"><small id="trCount"></small><button class="hbtn dng" id="trReset">${ic('trash')}حذف ما تعلّمه</button></div>`);
+  wireClose();
+  const pad=$('#trPad'),cx=pad.getContext('2d');
+  const size=()=>{const r=pad.getBoundingClientRect();pad.width=Math.round(r.width*DPR);pad.height=Math.round(r.height*DPR);draw();};
+  function draw(){const W=pad.width,H=pad.height;cx.setTransform(1,0,0,1,0,0);cx.fillStyle='#fff';cx.fillRect(0,0,W,H);
+    cx.strokeStyle='rgba(36,89,214,.18)';cx.lineWidth=DPR;cx.setLineDash([6*DPR,6*DPR]);cx.beginPath();cx.moveTo(0,H*.18);cx.lineTo(W,H*.18);cx.moveTo(0,H*.82);cx.lineTo(W,H*.82);cx.stroke();cx.setLineDash([]);
+    cx.strokeStyle='#111';cx.lineWidth=3.2*DPR;cx.lineCap='round';cx.lineJoin='round';
+    for(const s of strokes){cx.beginPath();s.forEach(([x,y],k)=>k?cx.lineTo(x*DPR,y*DPR):cx.moveTo(x*DPR,y*DPR));if(s.length===1)cx.lineTo(s[0][0]*DPR+.1,s[0][1]*DPR);cx.stroke();}}
+  const pos=e=>{const r=pad.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top];};
+  pad.onpointerdown=e=>{if(e.pointerType==='touch'&&pencilOnly()&&pencilSeen)return;e.preventDefault();try{pad.setPointerCapture(e.pointerId);}catch(_){}cur=[pos(e)];strokes.push(cur);draw();};
+  pad.onpointermove=e=>{if(!cur)return;const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];for(const v of evs)cur.push(pos(v));draw();};
+  pad.onpointerup=pad.onpointercancel=()=>{cur=null;};
+  const list=()=>TRAIN_SETS[set];
+  function show(){const [ch]=list()[i];$('#trSym').textContent=ch;$('#trN').textContent=ar(i+1)+' / '+ar(list().length);strokes=[];draw();
+    sheet.querySelectorAll('#trSet button').forEach(b=>b.classList.toggle('on',b.dataset.v===set));
+    const c=INKM.userCount();$('#trCount').textContent=c.total?('تعلّم التطبيق '+ar(c.total)+' عيّنة من خطك'+(saved?' (منها '+ar(saved)+' الآن)':'')):'لم يتعلّم شيئاً من خطك بعد';$('#trReset').hidden=!c.total;}
+  const step=()=>{i=(i+1)%list().length;if(i===0)toast('أكملت جولة. جولة ثانية تزيد الدقة أكثر');show();};
+  $('#trNext').onclick=()=>{if(!strokes.length){toast('اكتب الرمز أولاً');return;}INKM.addSample(list()[i][1],strokes.map(s=>s.slice()));saved++;step();};
+  $('#trSkip').onclick=step;$('#trClr').onclick=()=>{strokes=[];draw();};
+  sheet.querySelectorAll('#trSet button').forEach(b=>b.onclick=()=>{set=b.dataset.v;i=0;show();});
+  $('#trReset').onclick=()=>{const b=$('#trReset');if(!armed){armed=true;b.textContent='اضغط مرة أخرى للتأكيد';setTimeout(()=>{armed=false;if(b.isConnected)b.innerHTML=ic('trash')+'حذف ما تعلّمه';},3500);return;}
+    INKM.resetUser();armed=false;saved=0;b.innerHTML=ic('trash')+'حذف ما تعلّمه';toast('حُذف ما تعلّمه التطبيق من خطك');show();};
+  requestAnimationFrame(size);show();
 }
 function inkToText(id,items){
   if(!items.length)return;const p=byId(id);const src=renderInk(p,items);
@@ -5028,7 +5132,7 @@ async function hwFlush(){
   const mode=store.get('safahat-hwmode','auto');
   if(mode!=='text'&&(mode==='math'||!AI)){const r=localMath(p,live);
     if(r&&(r.conf>=.6||!AI)){const box=unionBox(live,pageRatio(p)),color=(live.find(a=>a.color)||{}).color||'#111111';
-      pushUndo();p.annots=p.annots.filter(a=>!live.includes(a));const out=fitAnnot(p,'math',r.value,r.rtl,box,color);p.annots.push(out);if(calcOn())applyCalc(p,out);markDirty();drawOverlay(id);
+      pushUndo();p.annots=p.annots.filter(a=>!live.includes(a));const out=fitAnnot(p,'math',r.value,r.rtl,box,color);p.annots.push(out);const base=out.tex;if(calcOn())applyCalc(p,out);INK_SRC.set(out,{res:r,sfx:out.tex.slice(base.length)});markDirty();drawOverlay(id);
       toast('تحوّلت إلى معادلة على الجهاز. للتصحيح: حدّدها واضغط «تعديل»'+(r.conf<.6?' — راجعها، فالكتابة غير واضحة تماماً':''),3800);return;}}
   if(!AI){toast(mode==='text'?'تحويل الكتابة إلى نص يحتاج المساعد الذكي. '+aiHelpText():'بقيت الكتابة كما هي. '+aiHelpText(),5500);return;}toast(mode==='math'?'جارٍ تحويل الكتابة إلى معادلة…':'جارٍ تحويل الكتابة…',9000);
   try{const r=await recognizeImg(await canvasBlob(renderInk(p,live)),mode);const still=live.filter(a=>p.annots.includes(a));if(!still.length)return;
@@ -5064,6 +5168,9 @@ function wire(){
     if(b.dataset.sbw||b.dataset.sbz||b.dataset.sbd){const m=S.msel;if(!m)return;const p=byId(m.id);const items=m.items.filter(a=>a.w&&a.type!=='image');if(!items.length)return;pushUndo('السماكة');
       for(const a of items){if(b.dataset.sbw){const v=SIZE_PRESETS.pen[+b.dataset.sbw];a.w=a.type==='marker'?v*4.2:v;}else if(b.dataset.sbz)a.w=Math.max(.0008,Math.min(.08,a.w*+b.dataset.sbz));else if(a.type!=='marker'&&a.type!=='axes'&&a.type!=='numline'){if(b.dataset.sbd==='solid')delete a.dash;else a.dash=b.dataset.sbd;}}
       markDirty();drawOverlay(m.id);m.box=unionBox(m.items,pageRatio(p));drawOverlay(m.id);positionSelbar();return;}
+    if(b.dataset.sbf!==undefined||b.dataset.sbfc!==undefined){const m=S.msel;if(!m)return;const items=m.items.filter(a=>FILLABLE.includes(a.type));if(!items.length)return;pushUndo('التعبئة');
+      for(const a of items){if(b.dataset.sbf!==undefined){if(b.dataset.sbf==='none')delete a.fill;else a.fill=b.dataset.sbf;}else{if(b.dataset.sbfc){a.fc=b.dataset.sbfc;if(!a.fill)a.fill='soft';}else delete a.fc;}}
+      markDirty();drawOverlay(m.id);renderSelbar('fill');return;}
     if(b.dataset.sbc)selAction(null,b.dataset.sbc);else selAction(b.dataset.sb);});
   $('#prX').innerHTML=ic('x');$('#prP').innerHTML=ic('prev');$('#prNx').innerHTML=ic('next');
   $('#prX').onclick=closePresent;$('#prP').onclick=()=>prGo(-1);$('#prNx').onclick=()=>prGo(1);
