@@ -695,6 +695,10 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .locnote{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:12px;background:var(--accent-soft);color:var(--accent-strong)}
 .locnote>span svg{width:18px;height:18px}.locnote small{flex:1 1 200px;font-size:12.5px;line-height:1.6;color:var(--ink)}
 .noai[hidden],.locnote[hidden]{display:none}
+
+.calcrow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 12px;border-radius:12px;background:var(--raise);border:1px solid var(--line)}
+.calcrow .cres{display:flex;align-items:center;gap:8px;font-size:13.5px}.calcrow canvas{border-radius:8px;max-width:100%}
+.calcrow[hidden]{display:none}
 </style>
 
 <div class="app" dir="rtl" id="app">
@@ -1294,10 +1298,17 @@ function drawA(c,a,W,H){
         if(a.type==='axes'){const cx=x0+w/2,cy=y0+h/2,n=10,st=Math.min(w,h)/n;c.beginPath();c.moveTo(x0,cy);c.lineTo(x1,cy);c.moveTo(cx,y1);c.lineTo(cx,y0);c.stroke();head(x1,cy,0);head(x0,cy,Math.PI);head(cx,y0,-Math.PI/2);head(cx,y1,Math.PI/2);
           c.lineWidth=Math.max(1,a.w*W*.6);const tk=Math.max(3,st*.18);c.beginPath();for(let k=1;cx+k*st<x1-st*.6;k++){c.moveTo(cx+k*st,cy-tk);c.lineTo(cx+k*st,cy+tk);c.moveTo(cx-k*st,cy-tk);c.lineTo(cx-k*st,cy+tk);}
           for(let k=1;cy+k*st<y1-st*.6;k++){c.moveTo(cx-tk,cy+k*st);c.lineTo(cx+tk,cy+k*st);c.moveTo(cx-tk,cy-k*st);c.lineTo(cx+tk,cy-k*st);}c.stroke();
-          c.textBaseline='middle';c.direction='rtl';c.textAlign='center';c.fillText('س',x1-fs*.4,cy-fs*1.2);c.fillText('ص',cx+fs*1.1,y0+fs*.5);c.fillText('و',cx-fs*.8,cy+fs*.9);}
+          const en=a.nums==='en',num=v=>en?String(v):ar(Math.abs(v)),lab=v=>(v<0?'-':'')+num(Math.abs(v));
+          const sf=Math.max(8,st*.36);c.font=`500 ${sf}px ${FONT}`;c.fillStyle=a.color;c.direction='ltr';c.textAlign='center';c.textBaseline='top';
+          const every=st<sf*1.6?2:1;
+          for(let k=1;cx+k*st<x1-st*.6;k++){if(k%every)continue;c.fillText(lab(k),cx+k*st,cy+tk+sf*.15);c.fillText(lab(-k),cx-k*st,cy+tk+sf*.15);}
+          c.textAlign=en?'right':'left';c.textBaseline='middle';
+          for(let k=1;cy+k*st<y1-st*.6;k++){if(k%every)continue;const xx=en?cx-tk-sf*.25:cx+tk+sf*.25;c.fillText(lab(k),xx,cy-k*st);c.fillText(lab(-k),xx,cy+k*st);}
+          c.font=`600 ${fs*1.1}px ${en?'"Times New Roman",serif':FONT}`;if(en)c.font=`italic 600 ${fs*1.15}px "Times New Roman",serif`;
+          c.textBaseline='middle';c.textAlign='center';c.direction=en?'ltr':'rtl';c.fillText(en?'x':'س',x1-fs*.4,cy-fs*1.2);c.fillText(en?'y':'ص',cx+(en?-1:1)*fs*1.1,y0+fs*.5);c.fillText(en?'O':'و',cx+(en?-1:1)*fs*.8,cy+fs*.9);}
         else{const cy=y0+h/2,n=10,pad=Math.max(10,w*.04),st=(w-pad*2)/n;c.font=`500 ${Math.max(9,st*.4)}px ${FONT}`;c.beginPath();c.moveTo(x0,cy);c.lineTo(x1,cy);c.stroke();head(x1,cy,0);head(x0,cy,Math.PI);
           c.lineWidth=Math.max(1,a.w*W*.6);const tk=Math.max(4,st*.18);c.textBaseline='top';c.textAlign='center';c.direction='ltr';
-          for(let k=0;k<=n;k++){const x=x0+pad+k*st,v=k-n/2;c.beginPath();c.moveTo(x,cy-tk);c.lineTo(x,cy+tk);c.stroke();c.fillText((v<0?'-':'')+ar(Math.abs(v)),x,cy+tk+Math.max(9,st*.4)*.3);}}}
+          for(let k=0;k<=n;k++){const x=x0+pad+k*st,v=k-n/2;c.beginPath();c.moveTo(x,cy-tk);c.lineTo(x,cy+tk);c.stroke();c.fillText((v<0?'-':'')+(a.nums==='en'?String(Math.abs(v)):ar(Math.abs(v))),x,cy+tk+Math.max(9,st*.4)*.3);}}}
       break;}
     case 'darrow':{c.strokeStyle=a.color;c.fillStyle=a.color;c.lineWidth=a.w*W;const x1=X(pts[0][0]),y1=Y(pts[0][1]),x2=X(pts[1][0]),y2=Y(pts[1][1]);
       c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();const L=Math.max(a.w*W*4.5,10);
@@ -1545,6 +1556,7 @@ function attachOverlay(o,id){
       const free=t==='pen'||t==='marker'||t==='hwrite';
       const pr=S.props[PROP_KEY[t]]||{color:'#000',w:.004};
       const a={type:t==='hwrite'?'pen':t,pts:free?[pt]:[pt,pt],color:pr.color,w:pr.w||.004};
+      if(t==='axes'||t==='numline')a.nums=S.props.shape.nums||'ar';
       if(t==='pen'&&e.pointerType==='pen'&&PENCIL.pressure&&!pr.straight)a.pr=[Math.max(.05,e.pressure||.5)];
       if(t==='marker')a.op=pr.op;
       drag={id,kind:'draw',a,straight:free&&!!pr.straight&&t!=='hwrite',origin:pt,hw:t==='hwrite'};drawOverlay(id);}
@@ -1686,6 +1698,10 @@ function propsTarget(){
 }
 function renderProps(){
   const box=$('#props'),t=propsTarget();
+  if(S.tool==='eraser'&&MODE[S.tab]&&MODE[S.tab].tools){box.hidden=false;
+    box.innerHTML=`<div class="pgroup"><span class="plabel">الممحاة</span><span class="hint" style="margin:0">اسحبها فوق التعليقات لمسحها، أو اضغط على عنصر</span></div>
+      <button class="toggle" id="clrPage">${ic('trash')}مسح الصفحة الحالية</button><button class="toggle" id="clrAll">${ic('trash')}مسح الملف كاملاً</button>`;
+    $('#clrPage').onclick=()=>clearAnnotsSheet('page');$('#clrAll').onclick=()=>clearAnnotsSheet('all');return;}
   if(!t){box.hidden=true;box.innerHTML='';return;}
   box.hidden=false;const k=t.key,pr=t.sel?{color:t.sel.color,w:t.sel.w,op:t.sel.op}:S.props[k];
   const pal=k==='marker'?HL_COLORS:PEN_COLORS;const inPal=pal.some(([c])=>c.toLowerCase()===String(pr.color).toLowerCase());
@@ -1701,7 +1717,10 @@ function renderProps(){
   if(!t.sel&&(k==='pen'||k==='marker')&&S.tool!=='hltext'&&S.tool!=='hwrite')
     h+=`<button class="toggle${pr.straight?' on':''}" id="pst" aria-pressed="${!!pr.straight}">${ic('line')}خط مستقيم</button>`;
   if(S.tool==='hwrite'&&!t.sel){const hm=store.get('safahat-hwmode','auto');
-    h+=`<div class="pgroup"><span class="plabel">التحويل إلى</span><div class="seg">${[['auto','تلقائي'],['text','نص'],['math','معادلة رياضية']].map(([v,l])=>`<button type="button" data-hm="${v}" class="${v===hm?'on':''}">${l}</button>`).join('')}</div></div>`;}
+    h+=`<div class="pgroup"><span class="plabel">التحويل إلى</span><div class="seg">${[['auto','تلقائي'],['text','نص'],['math','معادلة رياضية']].map(([v,l])=>`<button type="button" data-hm="${v}" class="${v===hm?'on':''}">${l}</button>`).join('')}</div></div>
+      <button class="toggle${calcOn()?' on':''}" id="pcalc" aria-pressed="${calcOn()}">${ic('check')}حساب وكتابة الناتج</button>`;}
+  if(!t.sel&&(S.tool==='axes'||S.tool==='numline')){const nm=S.props.shape.nums||'ar';
+    h+=`<div class="pgroup"><span class="plabel">الأرقام والتسميات</span><div class="seg">${[['ar','عربية (س، ص، ١٢٣)'],['en','إنكليزية (x, y, 123)']].map(([v,l])=>`<button type="button" data-nm="${v}" class="${v===nm?'on':''}">${l}</button>`).join('')}</div></div>`;}
   if(!t.sel&&(DRAW.includes(S.tool)||S.tool==='eraser')&&(pencilSeen||isTouchDevice()))
     h+=`<button class="toggle${pencilOnly()?' on':''}" id="ponly" aria-pressed="${pencilOnly()}">${ic('pen')}القلم فقط</button><button class="toggle" id="pset" title="إعدادات قلم Apple" aria-label="إعدادات قلم Apple">${ic('more')}</button>`;
   box.innerHTML=h;
@@ -1720,6 +1739,8 @@ function renderProps(){
   const po=$('#po');if(po)po.oninput=()=>{S.props[k].op=+po.value;outs();paintPreview(k,S.props[k]);saveProps();};
   const st=$('#pst');if(st)st.onclick=()=>{S.props[k].straight=!S.props[k].straight;st.classList.toggle('on',S.props[k].straight);st.setAttribute('aria-pressed',S.props[k].straight);saveProps();
     toast(S.props[k].straight?'خط مستقيم: اسحب من بداية السطر إلى نهايته':'رسم حر');};
+  const pc=$('#pcalc');if(pc)pc.onclick=()=>{const v=!calcOn();store.set('safahat-calc',v);pc.classList.toggle('on',v);pc.setAttribute('aria-pressed',v);toast(v?'سيُحسب الناتج ويُكتب بعد كل تحويل':'لن يُكتب الناتج');};
+  box.querySelectorAll('[data-nm]').forEach(b=>b.onclick=()=>{S.props.shape.nums=b.dataset.nm;saveProps();box.querySelectorAll('[data-nm]').forEach(x=>x.classList.toggle('on',x===b));});
   box.querySelectorAll('[data-hm]').forEach(b=>b.onclick=()=>{store.set('safahat-hwmode',b.dataset.hm);box.querySelectorAll('[data-hm]').forEach(x=>x.classList.toggle('on',x===b));});
   outs();paintPreview(k,pr);
 }
@@ -1783,11 +1804,11 @@ function openModeMenu(){
 function openMoreMenu(){
   openMenu($('#moreBtn'),`<div class="mhead">الملف</div>`+
     mrow('open','open','#0f8a74','فتح ملف','PDF أو صور')+mrow('scan','camera','#c0362c','مسح ضوئي','بالكاميرا أو من الصور')+mrow('idcard','idcard','#2459d6','البطاقة المدنية','الوجهان في صفحة واحدة')+
-    mrow('rename','textedit','#5b6b6e','إعادة تسمية',esc(baseName()))+mrow('history','undo','#5b6b6e','سجل التعديلات','الخطوات والنسخ السابقة')+(window.SAFAHAT_NATIVE?mrow('aikey','spark','#6a46d6','مفتاح المساعد الذكي',window.SAFAHAT_NATIVE.getKey()?'مُفعّل':'غير مُفعّل'):'')+mrow('library','home','#0f8a74','المكتبة','كل ملفاتك وتعديلاتها')+mrow('files','lock','#a95a06','المجلد الخاص','ملفات مشفّرة برمز سري')+'<div class="msep"></div><div class="mhead">الحفظ والتصدير</div>'+
+    mrow('rename','textedit','#5b6b6e','إعادة تسمية',esc(baseName()))+mrow('history','undo','#5b6b6e','سجل التعديلات','الخطوات والنسخ السابقة')+mrow('clear','trash','#c0362c','مسح التعليقات','للصفحة الحالية أو الملف كاملاً')+(window.SAFAHAT_NATIVE?mrow('aikey','spark','#6a46d6','مفتاح المساعد الذكي',window.SAFAHAT_NATIVE.getKey()?'مُفعّل':'غير مُفعّل'):'')+mrow('library','home','#0f8a74','المكتبة','كل ملفاتك وتعديلاتها')+mrow('files','lock','#a95a06','المجلد الخاص','ملفات مشفّرة برمز سري')+'<div class="msep"></div><div class="mhead">الحفظ والتصدير</div>'+
     mrow('share','share','#2459d6','مشاركة','واتساب، بريد، AirDrop…')+mrow('save','save','#0f8a74','حفظ PDF','')+mrow('protect','shield','#a95a06','حماية بكلمة مرور','')+mrow('toimg','toimg','#2459d6','تصدير كصور','PNG أو JPG')+mrow('word','word','#2459d6','تحويل إلى Word','نص الملف')+
     mrow('xlsx','excel','#15803d','تحويل إلى Excel','الجداول إلى خلايا')+mrow('pptx','ppt','#c0362c','تحويل إلى PowerPoint','شريحة لكل صفحة')+
     mrow('compress','compress','#a95a06','ضغط الحجم','')+mrow('tools','tools','#a95a06','كل الأدوات','')+'<div class="msep"></div>'+mrow('pencil','pen','#7c3aed','قلم Apple والإيباد','الكتابة بالقلم فقط، الضغط، الإيماءات')+mrow('theme',isDark()?'sun':'moon','#5b6b6e',isDark()?'المظهر الفاتح':'المظهر الداكن','لواجهة التطبيق')+mrow('shareApp','share','#2459d6','مشاركة التطبيق','أرسله لزملائك')+mrow('contact','send','#0f8a74','تواصل مع المطوّر',APP_INFO.email),
-    k=>({shareApp:shareAppSheet,contact:contactSheet,aikey:()=>{const N=window.SAFAHAT_NATIVE;if(!N)return;if(N.getKey())confirmSheet('إزالة مفتاح المساعد؟','سيتوقف المساعد الذكي في التطبيق حتى تُدخل مفتاحاً جديداً من قسم المساعد.','إزالة',()=>{N.setKey('');location.reload();});else setTab('ai');},history:historySheet,share:shareSheet,open:openFlow,scan:()=>openScanner('docs'),idcard:()=>openScanner('id'),rename:openRename,save:savePdf,
+    k=>({clear:()=>clearAnnotsSheet('page'),shareApp:shareAppSheet,contact:contactSheet,aikey:()=>{const N=window.SAFAHAT_NATIVE;if(!N)return;if(N.getKey())confirmSheet('إزالة مفتاح المساعد؟','سيتوقف المساعد الذكي في التطبيق حتى تُدخل مفتاحاً جديداً من قسم المساعد.','إزالة',()=>{N.setKey('');location.reload();});else setTab('ai');},history:historySheet,share:shareSheet,open:openFlow,scan:()=>openScanner('docs'),idcard:()=>openScanner('id'),rename:openRename,save:savePdf,
       toimg:()=>runTool('toimg'),word:()=>runTool('word'),compress:()=>runTool('compress'),tools:()=>setTab('tools'),pencil:openPencilSheet,
       files:()=>setTab('files'),library:()=>{if(DB)showLibrary();else toast('المكتبة غير متاحة في هذا المتصفح');},lib:saveToLibrary,protect:()=>runTool('protect'),xlsx:()=>runTool('xlsx'),pptx:()=>runTool('pptx'),
       theme:()=>{const t=isDark()?'light':'dark';store.set('safahat-theme',t);applyTheme(t);}})[k]());
@@ -3910,6 +3931,28 @@ function wireLib(){
 }
 
 
+
+function clearAnnotsSheet(scope){
+  if(!S.pages.length)return;const pages=scope==='page'?[S.pages[S.cur]||S.pages[0]]:S.pages;
+  const INKT=['pen','marker','rect','ellipse','line','arrow','tri','rtri','axes','numline','darrow'];
+  const count=k=>pages.reduce((n,p)=>n+p.annots.filter(a=>k==='ink'?INKT.includes(a.type):a.type!=='formval').length,0);
+  const nAll=count('all'),nInk=count('ink');
+  if(!nAll){toast(scope==='page'?'لا توجد تعليقات في هذه الصفحة':'لا توجد تعليقات في الملف');return;}
+  openSheet(`<h3>${ic('trash')} ${scope==='page'?'مسح الصفحة الحالية':'مسح الملف كاملاً'}</h3>
+    <label>النطاق${seg('clS',[['page','الصفحة الحالية'],['all','الملف كاملاً ('+cnt(S.pages.length,'page')+')']],scope)}</label>
+    <label>ماذا تمسح${seg('clK',[['ink','الكتابة والرسم فقط'],['all','كل التعليقات']],'ink')}</label>
+    <p class="hint" style="margin:0" id="clN"></p>
+    <p class="hint" style="margin:0">«كل التعليقات» يشمل أيضاً النصوص والأختام والصور والتظليل وتعديلات النص. يمكنك التراجع بعد المسح.</p>
+    <div class="acts"><button class="hbtn primary" id="clGo" style="background:var(--danger);border-color:var(--danger)">${ic('trash')} مسح</button>${cancelBtn}</div>`);
+  wireClose();wireSeg();
+  const upd=()=>{const sc=segVal('clS'),k=segVal('clK');const ps=sc==='page'?[S.pages[S.cur]||S.pages[0]]:S.pages;
+    const n=ps.reduce((m,p)=>m+p.annots.filter(a=>k==='ink'?INKT.includes(a.type):a.type!=='formval').length,0);$('#clN').textContent='سيُمسح '+cnt(n,'item')+'.';};
+  sheet.querySelectorAll('[data-seg] button').forEach(b=>b.addEventListener('click',()=>setTimeout(upd)));upd();
+  $('#clGo').onclick=()=>{const sc=segVal('clS'),k=segVal('clK');const ps=sc==='page'?[S.pages[S.cur]||S.pages[0]]:S.pages;
+    pushUndo(sc==='page'?'مسح الصفحة':'مسح الملف');let n=0;
+    for(const p of ps){const before=p.annots.length;p.annots=p.annots.filter(a=>k==='ink'?!INKT.includes(a.type):a.type==='formval');n+=before-p.annots.length;drawOverlay(p.id);}
+    if(S.msel)clearMsel();markDirty();closeSheet();toast('مُسح '+cnt(n,'item')+'. للتراجع اضغط زر التراجع',3200);};
+}
 /* ---------- share the app · contact the developer ---------- */
 const APP_INFO={name:'صفحات',version:'1.0.0',email:'aboabd366@gmail.com',
   links:{web:'https://claude.ai/artifact/2A1GenyQ6rp84rHwPUzgov',ios:'',android:''}};
@@ -4256,8 +4299,9 @@ function renderSelbar(mode){
   let h='';
   if(mode==='color')h=B('back','prev','رجوع')+PEN_COLORS.map(([c,n])=>`<button class="sbc" data-sbc="${c}" style="--c:${c}" aria-label="${n}" title="${n}"><i></i></button>`).join('');
   else if(m.items.length){const ink=m.items.some(a=>INK.includes(a.type));
-    const one=m.items.length===1&&['text','math'].includes(m.items[0].type),txt=m.items.some(a=>a.type==='text'||a.type==='edit');
-    h=(ink?B('ink','hw','تحويل','hi'):'')+(one?B('editx','textedit','تعديل','hi'):'')+(txt?B('font','text','الخط'):'')+B('color','palette','اللون')+B('copy','copy','نسخ')+B('dup','plus','تكرار')+B('big','bigger','أكبر')+B('small','smaller','أصغر')+B('front','front','للأمام')+B('del','trash','حذف','dng');}
+    const one=m.items.length===1&&['text','math'].includes(m.items[0].type),txt=m.items.some(a=>a.type==='text'||a.type==='edit'),ax=m.items.some(a=>a.type==='axes'||a.type==='numline');
+    const mth=m.items.length===1&&m.items[0].type==='math'&&MSOLVE.compute(m.items[0].tex,m.items[0].rtl);
+    h=(ink?B('ink','hw','تحويل','hi'):'')+(one?B('editx','textedit','تعديل','hi'):'')+(mth?B('calc','check','الحل','hi'):'')+(ax?B('nums','num','الأرقام'):'')+(txt?B('font','text','الخط'):'')+B('color','palette','اللون')+B('copy','copy','نسخ')+B('dup','plus','تكرار')+B('big','bigger','أكبر')+B('small','smaller','أصغر')+B('front','front','للأمام')+B('del','trash','حذف','dng');}
   else{const t=!!m.text;
     h=(t?B('copytext','copy','نسخ النص','hi')+B('hl','hltext','تظليل')+B('ul','under','تسطير')+B('st','strike','شطب'):'')+
       (AI?B('convert','hw','تحويل الكتابة',t?'':'hi')+B('read','ocr',t?'قراءة':'قراءة النص')+B('explain','bulb','شرح')+B('translate','globe','ترجمة'):'')+
@@ -4324,6 +4368,8 @@ function selAction(k,colorVal){
     case 'x':clearMsel();break;
     case 'back':renderSelbar();break;
     case 'color':renderSelbar('color');break;
+    case 'calc':{const a=m.items[0];pushUndo('كتابة الناتج');const r=applyCalc(p,a);if(!r){S.undo.pop();updUndo();toast('لم أستطع حساب هذه المعادلة');break;}markDirty();drawOverlay(m.id);selectItems(m.id,[a]);toast(r.mode==='line'?'كُتب الحل تحت المعادلة':r.mode==='check'?(r.ok?'الإجابة صحيحة ✓':'الإجابة غير صحيحة ✗'):'كُتب الناتج');break;}
+    case 'nums':{pushUndo('الأرقام');const cur=m.items.find(a=>a.type==='axes'||a.type==='numline');const nv=(cur.nums||'ar')==='ar'?'en':'ar';for(const a of m.items)if(a.type==='axes'||a.type==='numline')a.nums=nv;markDirty();drawOverlay(m.id);toast(nv==='ar'?'أرقام عربية وتسميات س وص':'أرقام إنكليزية وتسميات x وy');break;}
     case 'font':openFontSheet(m.items.filter(a=>a.type==='text'||a.type==='edit'),m.id);break;
     case 'del':{if(!m.items.length)return;pushUndo();const n=m.items.length;p.annots=p.annots.filter(a=>!m.items.includes(a));markDirty();clearMsel();toast('حُذف '+cnt(n,'item')+'. يمكنك التراجع');break;}
     case 'copy':CLIP={items:JSON.parse(JSON.stringify(m.items)),box:{...m.box}};toast('نُسخ '+cnt(m.items.length,'item')+'. ارسم تحديداً في المكان الجديد واختر «لصق»',3600);break;
@@ -4602,6 +4648,92 @@ const INKM=(()=>{
   return {recognize};
 })();
 
+/* ---------- calculate / solve recognised math (no eval; own parser) ---------- */
+const MSOLVE=(()=>{
+  const HD='٠١٢٣٤٥٦٧٨٩';
+  const VARS=/^[a-zA-Zسصعنمكلابجد]$/;
+  function lex(tex){
+    let s=String(tex).replace(/[٠-٩]/g,d=>HD.indexOf(d)).replace(/٫/g,'.').replace(/،/g,',')
+      .replace(/\\left|\\right/g,'').replace(/\\cdot|\\times/g,'*').replace(/\\div/g,'÷').replace(/\\pi|π/g,'π').replace(/−/g,'-').replace(/\\,|\\ /g,' ');
+    const T=[];let i=0;
+    while(i<s.length){const c=s[i];
+      if(/\s/.test(c)){i++;continue;}
+      if(/[0-9.]/.test(c)){let j=i;while(j<s.length&&/[0-9.]/.test(s[j]))j++;T.push({t:'num',v:parseFloat(s.slice(i,j))});i=j;continue;}
+      if(s.startsWith('\\frac',i)){T.push({t:'frac'});i+=5;continue;}
+      if(s.startsWith('\\sqrt',i)){T.push({t:'sqrt'});i+=5;continue;}
+      if(c==='\\'){let j=i+1;while(j<s.length&&/[a-zA-Z]/.test(s[j]))j++;throw new Error('cmd '+s.slice(i,j));}
+      if('+-*/÷^(){}[]=<>'.includes(c)){T.push({t:c});i++;continue;}
+      if(c==='π'){T.push({t:'num',v:Math.PI,pi:true});i++;continue;}
+      if(VARS.test(c)){T.push({t:'var',v:c});i++;continue;}
+      throw new Error('char '+c);}
+    return T;}
+  // grammar: expr := term (('+'|'-') term)* ; term := unary (('*'|'/'|'÷'| implicit) unary)* ; unary := '-' unary | power ; power := atom ('^' group)?
+  function parse(T){let p=0;const peek=()=>T[p],eat=t=>{if(!T[p]||T[p].t!==t)throw new Error('expected '+t);return T[p++];};
+    const group=()=>{if(peek()&&peek().t==='{'){eat('{');const e=expr();eat('}');return e;}return atom();};
+    function atom(){const k=peek();if(!k)throw new Error('end');
+      if(k.t==='num'){p++;return {n:'num',v:k.v};}
+      if(k.t==='var'){p++;return {n:'var',v:k.v};}
+      if(k.t==='('){p++;const e=expr();eat(')');return e;}
+      if(k.t==='{'){p++;const e=expr();eat('}');return e;}
+      if(k.t==='frac'){p++;const a=group(),b=group();return {n:'/',a,b};}
+      if(k.t==='sqrt'){p++;let idx=null;if(peek()&&peek().t==='['){eat('[');idx=expr();eat(']');}const a=group();return {n:'root',a,idx};}
+      throw new Error('atom '+k.t);}
+    function power(){let b=atom();while(peek()&&peek().t==='^'){p++;const e=group();b={n:'^',a:b,b:e};}return b;}
+    function unary(){if(peek()&&peek().t==='-'){p++;return {n:'neg',a:unary()};}if(peek()&&peek().t==='+'){p++;return unary();}return power();}
+    function term(){let a=unary();for(;;){const k=peek();if(!k)break;
+        if(k.t==='*'||k.t==='/'||k.t==='÷'){p++;const b=unary();a={n:k.t==='*'?'*':'/',a,b};continue;}
+        if(k.t==='num'||k.t==='var'||k.t==='('||k.t==='frac'||k.t==='sqrt'||k.t==='{'){const b=unary();a={n:'*',a,b};continue;}
+        break;}return a;}
+    function expr(){let a=term();while(peek()&&(peek().t==='+'||peek().t==='-')){const o=T[p++].t;const b=term();a={n:o,a,b};}return a;}
+    const sides=[expr()];const rel=[];
+    while(peek()&&'=<>'.includes(peek().t)){rel.push(T[p++].t);if(!peek()){sides.push(null);break;}sides.push(expr());}
+    if(p<T.length)throw new Error('trailing');return {sides,rel};}
+  function ev(n,env){switch(n.n){case 'num':return n.v;case 'var':if(!(n.v in env))throw new Error('var');return env[n.v];
+      case '+':return ev(n.a,env)+ev(n.b,env);case '-':return ev(n.a,env)-ev(n.b,env);case '*':return ev(n.a,env)*ev(n.b,env);
+      case '/':return ev(n.a,env)/ev(n.b,env);case 'neg':return -ev(n.a,env);case '^':return Math.pow(ev(n.a,env),ev(n.b,env));
+      case 'root':{const a=ev(n.a,env),k=n.idx?ev(n.idx,env):2;return a<0&&k%2===1?-Math.pow(-a,1/k):Math.pow(a,1/k);}}throw new Error('node');}
+  const varsOf=(n,set=new Set())=>{if(!n)return set;if(n.n==='var')set.add(n.v);for(const k of ['a','b','idx'])if(n[k])varsOf(n[k],set);return set;};
+  /* number formatting: integers, simple fractions, or short decimals */
+  function frac(x){if(!isFinite(x))return null;let best=null;for(let d=1;d<=60;d++){const nn=Math.round(x*d);if(Math.abs(nn/d-x)<1e-9){best=[nn,d];break;}}return best;}
+  function fmt(x,rtl,preferFrac){if(!isFinite(x))return null;if(Math.abs(x)<1e-12)x=0;
+    const dig=s=>rtl?s.replace(/[0-9]/g,d=>HD[d]).replace('.','٫'):s;
+    if(Math.abs(x-Math.round(x))<1e-9)return dig(String(Math.round(x)));
+    const f=frac(x);if(f&&preferFrac&&f[1]<=60){const sg=f[0]<0?'-':'';return sg+'\\frac{'+dig(String(Math.abs(f[0])))+'}{'+dig(String(f[1]))+'}';}
+    return dig(String(+x.toFixed(4)));}
+  function hasFracOrDiv(n){if(!n)return false;if(n.n==='/')return true;return ['a','b','idx'].some(k=>n[k]&&hasFracOrDiv(n[k]));}
+  /* solve f(v)=0 for one variable: exact for linear/quadratic, numeric otherwise */
+  function solve1(f){const f0=f(0),f1=f(1),fm=f(-1),f2=f(2);
+    const a=(f1+fm-2*f0)/2,b=(f1-fm)/2,c=f0;const quad=Math.abs(a*8+b*2+c-f2)<1e-7*(1+Math.abs(f2));
+    if(quad&&Math.abs(a)<1e-12){if(Math.abs(b)<1e-12)return Math.abs(c)<1e-9?'all':[];return [-c/b];}
+    if(quad){const D=b*b-4*a*c;if(D<-1e-12)return [];if(Math.abs(D)<1e-12)return [-b/(2*a)];const r=Math.sqrt(D);return [(-b-r)/(2*a),(-b+r)/(2*a)].sort((x,y)=>x-y);}
+    const roots=[];let px=-200,pv=f(px);for(let x=-200+.25;x<=200;x+=.25){const v=f(x);if(isFinite(v)&&isFinite(pv)&&(v===0||pv*v<0)){let lo=px,hi=x;for(let k=0;k<60;k++){const m=(lo+hi)/2,fm2=f(m);if(f(lo)*fm2<=0)hi=m;else lo=m;}const r=(lo+hi)/2;if(!roots.some(q=>Math.abs(q-r)<1e-6))roots.push(r);}px=x;pv=v;}
+    return roots;}
+  /* main: returns {mode:'append'|'line'|'check', tex} or null */
+  function compute(tex,rtl){
+    let P;try{P=parse(lex(tex));}catch(e){return null;}
+    const {sides,rel}=P;const vars=new Set();sides.forEach(s=>varsOf(s,vars));
+    const pf=sides.some(s=>hasFracOrDiv(s));
+    try{
+      if(!rel.length){if(vars.size)return null;const v=ev(sides[0],{});const r=fmt(v,rtl,pf);return r==null?null:{mode:'append',tex:' = '+r,value:v};}
+      if(rel.length===1&&sides[1]===null&&rel[0]==='='){if(vars.size)return null;const v=ev(sides[0],{});const r=fmt(v,rtl,pf);return r==null?null:{mode:'append',tex:' '+r,value:v};}
+      if(rel.length===1&&rel[0]==='='&&!vars.size){const L=ev(sides[0],{}),R=ev(sides[1],{});const ok=Math.abs(L-R)<1e-9*(1+Math.abs(L));
+        return {mode:'check',ok,tex:ok?' \\text{✓}':' \\text{✗} ('+fmt(L,rtl,pf)+')',correct:fmt(L,rtl,pf)};}
+      if(rel.length===1&&rel[0]==='='&&vars.size===1){const [v]=[...vars];const f=x=>ev(sides[0],{[v]:x})-ev(sides[1],{[v]:x});
+        const rs=solve1(f);if(rs==='all')return {mode:'line',tex:'\\text{'+(rtl?'كل الأعداد':'all numbers')+'}'};
+        if(!rs.length)return {mode:'line',tex:'\\text{'+(rtl?'لا يوجد حل':'no solution')+'}'};
+        const parts=rs.map(r=>fmt(r,rtl,pf||true));return {mode:'line',tex:v+' = '+parts.join(rtl?' ، ':' , ')};}
+    }catch(e){return null;}
+    return null;}
+  return {compute,parse,lex};
+})();
+
+const calcOn=()=>store.get('safahat-calc',false)===true;
+// write the result next to a math annotation: same line for calculations, a new line for solved equations
+function applyCalc(p,out){if(!out||out.type!=='math')return null;const r=MSOLVE.compute(out.tex,out.rtl);if(!r)return null;
+  if(r.mode!=='line'){out.tex=out.tex+r.tex;return r;}
+  const b=bbox(out,pageRatio(p)),R=pageRatio(p);const box={x:b.x,y:Math.min(.96,b.y+b.h+.01*R),w:b.w,h:b.h};
+  const line=mathFit(p,box,r.tex,out.rtl,out.color||'#111111');line.size=out.size;p.annots.push(line);return r;}
+function calcPreview(tex,rtl){const r=MSOLVE.compute(tex,rtl);if(!r)return '';return r.mode==='line'?r.tex:r.mode==='check'?(r.ok?'✓ صحيح':'✗ غير صحيح، الناتج '+r.correct):'='+r.tex.replace(/^\s*=?\s*/,' ');}
 function inkStrokes(p,items){const r=pageRatio(p);return items.filter(a=>a.type==='pen'&&a.pts&&a.pts.length).map(a=>a.pts.map(([x,y])=>[x,y/r]));}
 function localMath(p,items,pref){try{const st=inkStrokes(p,items);if(!st.length)return null;const r=INKM.recognize(st,pref||store.get('safahat-mathdir','auto'));return r&&r.value?r:null;}catch(e){console.warn('ink',e);return null;}}
 function renderInk(p,items){
@@ -4658,6 +4790,7 @@ function openConvert(o){
     <div class="erow"><div class="pgroup"><span class="plabel">التحويل إلى</span><div class="seg" id="cvType"><button type="button" data-v="text">نص</button><button type="button" data-v="math">معادلة رياضية</button></div></div>
       <div class="pgroup" id="cvDirG"><span class="plabel">كتابة المعادلة</span><div class="seg" id="cvDir"><button type="button" data-v="rtl">عربية (س، ٣)</button><button type="button" data-v="ltr">لاتينية (x، 3)</button></div></div></div>
     <div class="eprev mprev"><canvas id="cvOut"></canvas><span>الناتج</span></div>
+    <div class="calcrow" id="cvCalcRow" hidden><span class="cres"><b>الحل:</b> <canvas id="cvRes"></canvas></span><label class="cbx"><input type="checkbox" id="cvCalc" ${calcOn()?'checked':''}>كتابة الناتج على الصفحة</label></div>
     <label><span id="cvLab">النص</span><textarea id="cvT" dir="auto" rows="3" placeholder="${o.shot?'جارٍ التعرّف على الكتابة…':''}"></textarea></label>
     <p class="hint" id="cvHelp" style="margin:0" hidden>الكسر: \\frac{١}{٢} · الأس: س^{٢} · الجذر: \\sqrt{س} · الجذر النوني: \\sqrt[٣]{س} · الضرب \\times والقسمة \\div وπ: \\pi</p>
     <div class="locnote" id="cvLocal" hidden><span>${ic('check')}</span><small>تعرّف فوري على الجهاز دون إنترنت. راجع الصيغة وصحّحها إن لزم${AI?'، أو اضغط «بالمساعد» لتعرّف أدق':''}.</small>${AI?`<button class="hbtn" id="cvAi">${ic('spark')} بالمساعد</button>`:''}</div>
@@ -4668,7 +4801,9 @@ function openConvert(o){
   const T=$('#cvT');let srcDone=false;const aiOn=$('#cvAiOn');if(aiOn)aiOn.onclick=()=>{closeSheet();setTab('ai');};
   const showSrc=async c=>{const cv=$('#cvSrc');if(!cv||!c)return;const k=Math.min(1,130/c.height,460/c.width);cv.width=c.width;cv.height=c.height;cv.style.width=Math.round(c.width*k)+'px';cv.style.height=Math.round(c.height*k)+'px';cv.getContext('2d').drawImage(c,0,0);srcDone=true;};
   if(o.src)showSrc(o.src);
-  const drawOut=()=>{const cv=$('#cvOut');if(cv)drawResult(cv,st.type,st.val[st.type],st.rtl);};
+  const drawOut=()=>{const cv=$('#cvOut');if(cv)drawResult(cv,st.type,st.val[st.type],st.rtl);
+    const row=$('#cvCalcRow');if(!row)return;const r=st.type==='math'?MSOLVE.compute(st.val.math||'',st.rtl):null;row.hidden=!r;
+    if(r){const tex=r.mode==='line'?r.tex:r.mode==='check'?(r.ok?'\\text{✓}':'\\text{✗} ('+r.correct+')'):r.tex.replace(/^\s*=\s*/,'');drawResult($('#cvRes'),'math',tex,st.rtl);}};
   const sync=()=>{if(!$('#cvT'))return;
     sheet.querySelectorAll('#cvType button').forEach(b=>b.classList.toggle('on',b.dataset.v===st.type));
     sheet.querySelectorAll('#cvDir button').forEach(b=>b.classList.toggle('on',b.dataset.v===(st.rtl?'rtl':'ltr')));
@@ -4689,6 +4824,7 @@ function openConvert(o){
   let edited=false;T.oninput=()=>{edited=true;st.val[st.type]=T.value;drawOut();};
   const aiB=$('#cvAi');if(aiB)aiB.onclick=()=>{edited=false;st.res={};run('auto');};
   $('#cvCopy').onclick=()=>copyText(st.val[st.type]||'');
+  const cc=$('#cvCalc');if(cc)cc.onchange=()=>store.set('safahat-calc',cc.checked);
   $('#cvOk').onclick=()=>{const v=(st.val[st.type]||'').trim();if(!v){closeSheet();return;}
     const keep=!o.editA&&segVal('cvM')==='keep',r=pageRatio(p);pushUndo();let out;
     if(o.editA){const a=o.editA;
@@ -4700,7 +4836,8 @@ function openConvert(o){
       else if(o.items.length)p.annots=p.annots.filter(a=>!o.items.includes(a));
       else p.annots.push({type:'whiteout',pts:[[box.x,box.y],[box.x+box.w,box.y+box.h]]});
       out=fitAnnot(p,st.type,v,st.rtl,box,keep&&o.items.length?'#1d4ed8':color);p.annots.push(out);}
-    markDirty();closeSheet();selectItems(o.id,[out]);toast(st.type==='math'?'تحوّلت إلى معادلة منسّقة':'تحوّلت إلى نص');};
+    let calc=null;if(st.type==='math'&&$('#cvCalc')&&$('#cvCalc').checked&&!(o.editA&&out===o.editA&&/✓|✗/.test(out.tex)))calc=applyCalc(p,out);
+    markDirty();closeSheet();selectItems(o.id,[out]);toast(st.type==='math'?(calc?'تحوّلت إلى معادلة وكُتب الناتج':'تحوّلت إلى معادلة منسّقة'):'تحوّلت إلى نص');};
   const loc=o.shot&&!o.init&&o.local?o.local():null;
   if(loc){st.val.math=loc.value;st.rtl=loc.rtl;st.res.math=true;st.type='math';st.src='local';const ln=$('#cvLocal');if(ln)ln.hidden=false;}
   sync();
@@ -4720,12 +4857,12 @@ async function hwFlush(){
   const mode=store.get('safahat-hwmode','auto');
   if(mode!=='text'&&(mode==='math'||!AI)){const r=localMath(p,live);
     if(r&&(r.conf>=.6||!AI)){const box=unionBox(live,pageRatio(p)),color=(live.find(a=>a.color)||{}).color||'#111111';
-      pushUndo();p.annots=p.annots.filter(a=>!live.includes(a));const out=fitAnnot(p,'math',r.value,r.rtl,box,color);p.annots.push(out);markDirty();drawOverlay(id);
+      pushUndo();p.annots=p.annots.filter(a=>!live.includes(a));const out=fitAnnot(p,'math',r.value,r.rtl,box,color);p.annots.push(out);if(calcOn())applyCalc(p,out);markDirty();drawOverlay(id);
       toast('تحوّلت إلى معادلة على الجهاز. للتصحيح: حدّدها واضغط «تعديل»'+(r.conf<.6?' — راجعها، فالكتابة غير واضحة تماماً':''),3800);return;}}
   if(!AI){toast(mode==='text'?'تحويل الكتابة إلى نص يحتاج المساعد الذكي. '+aiHelpText():'بقيت الكتابة كما هي. '+aiHelpText(),5500);return;}toast(mode==='math'?'جارٍ تحويل الكتابة إلى معادلة…':'جارٍ تحويل الكتابة…',9000);
   try{const r=await recognizeImg(await canvasBlob(renderInk(p,live)),mode);const still=live.filter(a=>p.annots.includes(a));if(!still.length)return;
     const box=unionBox(still,pageRatio(p)),color=(still.find(a=>a.color)||{}).color||'#111111';
-    pushUndo();p.annots=p.annots.filter(a=>!still.includes(a));p.annots.push(fitAnnot(p,r.type,r.value,r.rtl,box,color));markDirty();drawOverlay(id);
+    pushUndo();p.annots=p.annots.filter(a=>!still.includes(a));const out2=fitAnnot(p,r.type,r.value,r.rtl,box,color);p.annots.push(out2);if(calcOn())applyCalc(p,out2);markDirty();drawOverlay(id);
     toast((r.type==='math'?'تحوّلت إلى معادلة':'تحوّلت إلى نص')+'. للتعديل: حدّدها واضغط «تعديل»، وللتراجع زر التراجع',3600);}
   catch(e){toast(e&&e.code==='unreadable'?'لم تُقرأ الكتابة بوضوح، فبقيت كما هي':aiErr(e),3800);}
 }
