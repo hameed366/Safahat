@@ -1,0 +1,33 @@
+{
+  "name": "safahat-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "صفحات — قارئ ومحرر PDF عربي",
+  "scripts": {
+    "build": "node scripts/build-www.mjs",
+    "patch:android": "node scripts/patch-native.mjs android",
+    "patch:ios": "node scripts/patch-native.mjs ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/ios": "^7.0.0",
+    "@capacitor/share": "^7.0.0",
+    "@fontsource/amiri": "^5.0.0",
+    "@fontsource/ibm-plex-sans-arabic": "^5.0.0",
+    "@fontsource/readex-pro": "^5.0.0",
+    "@fontsource/reem-kufi": "^5.0.0",
+    "jszip": "3.10.1",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "3.11.174",
+    "pptxgenjs": "3.12.0",
+    "xlsx": "0.18.5"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0",
+    "esbuild": "^0.24.0"
+  }
+}
