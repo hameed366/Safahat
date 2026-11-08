@@ -688,6 +688,9 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .lfoot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0 90px}
 .lfoot button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
 .lfoot button svg{width:16px;height:16px}.lfoot span{margin-inline-start:auto;color:var(--muted);font-size:12px}
+
+.noai{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--violet-soft);border:1px solid color-mix(in srgb,var(--violet) 30%,transparent)}
+.noai>span svg{width:20px;height:20px;color:var(--violet)}.noai>div{flex:1 1 200px;display:grid;gap:2px;min-width:0}.noai b{font-size:13.5px}.noai small{font-size:12.5px;color:var(--muted);line-height:1.6}
 </style>
 
 <div class="app" dir="rtl" id="app">
@@ -2998,6 +3001,7 @@ function drawEditPreview(id,a,ex){
 function clearCaches(){for(const k in textCache)delete textCache[k];for(const k in runCache)delete runCache[k];}
 const hasAr=s=>/[؀-ۿ]/.test(s||'');
 const toLatin=s=>String(s).replace(/[٠-٩]/g,d=>AR.indexOf(d));
+function aiHelpText(){return window.SAFAHAT_NATIVE?'هذه الميزة تحتاج تفعيل المساعد الذكي في التطبيق: افتح قسم «المساعد الذكي» وأدخل مفتاح Claude API.':'المساعد الذكي غير متاح الآن. افتح التطبيق داخل Claude وأنت مسجّل الدخول، واسمح له باستخدام Claude إن ظهر طلب الإذن.';}
 function cleanAI(t){return String(t||'').replace(/\*\*/g,'').replace(/^#+\s*/gm,'').trim();}
 function parseJSON(t){const s=String(t||'');const i=s.search(/[\[{]/);if(i<0)return null;const j=s.lastIndexOf(s[i]==='['?']':'}');if(j<=i)return null;try{return JSON.parse(s.slice(i,j+1));}catch(e){return null;}}
 function aiErr(e){const c=e&&e.code;return c==='not_granted'?'لم يُسمح للتطبيق باستخدام المساعد. يمكنك السماح من قائمة الأذونات في أعلى الصفحة.':c==='rate_limited'?'طلبات كثيرة في وقت قصير، انتظر دقيقة ثم أعد المحاولة.':c==='images_unavailable'?'إرسال الصور إلى المساعد غير متاح في هذا العرض.':'تعذّر الحصول على إجابة الآن.';}
@@ -3195,7 +3199,7 @@ async function openForms(){
 /* ---------- OCR with the AI assistant ---------- */
 async function openOcr(){
   if(!S.pages.length){toast('افتح ملفاً أولاً');return;}
-  if(!AI){toast('التعرّف الضوئي يعمل عبر المساعد الذكي. افتح التطبيق داخل Claude لاستخدامه',4200);return;}
+  if(!AI){toast(aiHelpText(),5000);return;}
   let lim=null;try{lim=await AI.limits();}catch(e){}
   if(!lim||!lim.images){toast('إرسال الصور إلى المساعد غير متاح في هذا العرض',4000);return;}
   showBusy('جارٍ فحص الصفحات…');const need=[];
@@ -4289,7 +4293,7 @@ function addTextNear(m,text){
   pushUndo();p.annots.push(a);markDirty();selectItems(m.id,[a]);
 }
 async function regionAI(m,kind){
-  if(!AI){toast('هذه الميزة تعمل عبر المساعد الذكي. افتح التطبيق داخل Claude',3800);return;}
+  if(!AI){toast(aiHelpText(),5000);return;}
   const p=byId(m.id),text=m.text,lang=store.get('safahat-lang','الإنجليزية');
   const title={read:'قراءة النص المحدد',explain:'شرح المحدد',translate:'ترجمة المحدد إلى '+lang}[kind];
   openSheet(`<h3>${ic(kind==='read'?'ocr':kind==='explain'?'bulb':'globe')} ${title}</h3><div class="out" id="raOut">جارٍ القراءة…</div>
@@ -4468,10 +4472,11 @@ function openConvert(o){
     <div class="eprev mprev"><canvas id="cvOut"></canvas><span>الناتج</span></div>
     <label><span id="cvLab">النص</span><textarea id="cvT" dir="auto" rows="3" placeholder="${o.shot?'جارٍ التعرّف على الكتابة…':''}"></textarea></label>
     <p class="hint" id="cvHelp" style="margin:0" hidden>الكسر: \\frac{١}{٢} · الأس: س^{٢} · الجذر: \\sqrt{س} · الجذر النوني: \\sqrt[٣]{س} · الضرب \\times والقسمة \\div وπ: \\pi</p>
+    <div class="noai" id="cvNoAI" hidden><span>${ic('spark')}</span><div><b>لم يُحوَّل تلقائياً</b><small>${aiHelpText()}</small></div>${window.SAFAHAT_NATIVE?`<button class="hbtn primary" id="cvAiOn">تفعيل المساعد</button>`:''}</div>
     ${o.editA?'':`<label>بعد التحويل${seg('cvM',[['replace','استبدال الأصل'],['keep','إبقاء الأصل وإضافة الناتج تحته']],'replace')}</label>`}
     <div class="acts"><button class="hbtn primary" id="cvOk">${o.editA?'حفظ':'تحويل'}</button><button class="hbtn" id="cvCopy">${ic('copy')}نسخ</button>${cancelBtn}</div>`);
   wireClose();wireSeg();
-  const T=$('#cvT');let srcDone=false;
+  const T=$('#cvT');let srcDone=false;const aiOn=$('#cvAiOn');if(aiOn)aiOn.onclick=()=>{closeSheet();setTab('ai');};
   const showSrc=async c=>{const cv=$('#cvSrc');if(!cv||!c)return;const k=Math.min(1,130/c.height,460/c.width);cv.width=c.width;cv.height=c.height;cv.style.width=Math.round(c.width*k)+'px';cv.style.height=Math.round(c.height*k)+'px';cv.getContext('2d').drawImage(c,0,0);srcDone=true;};
   if(o.src)showSrc(o.src);
   const drawOut=()=>{const cv=$('#cvOut');if(cv)drawResult(cv,st.type,st.val[st.type],st.rtl);};
@@ -4485,7 +4490,7 @@ function openConvert(o){
     try{const blob=await getBlob();
       if(!srcDone&&blob){try{const im=await loadImg(URL.createObjectURL(blob));const c=mkCanvas(im.naturalWidth,im.naturalHeight);c.getContext('2d').drawImage(im,0,0);showSrc(c);}catch(e){}}
       const r=await recognizeImg(blob,mode);st.res[r.type]=true;st.val[r.type]=r.value;if(r.type==='math')st.rtl=r.rtl;if(mode==='auto'||mode===r.type)st.type=r.type;}
-    catch(e){if(!$('#cvT'))return;T.placeholder=e&&e.code==='unreadable'?'لم تُقرأ الكتابة بوضوح، اكتب بنفسك':e&&e.code==='no_ai'?'التعرّف يعمل عبر المساعد الذكي داخل Claude. اكتب بنفسك':aiErr(e);}
+    catch(e){if(!$('#cvT'))return;T.placeholder=e&&e.code==='unreadable'?'لم تُقرأ الكتابة بوضوح، اكتب بنفسك':e&&e.code==='no_ai'?aiHelpText()+' أو اكتب بنفسك':aiErr(e);}
     sync();};
   sheet.querySelectorAll('#cvType button').forEach(b=>b.onclick=()=>{st.type=b.dataset.v;sync();if(!st.res[st.type]&&o.shot&&AI){st.res[st.type]=true;run(st.type);}});
   sheet.querySelectorAll('#cvDir button').forEach(b=>b.onclick=()=>{const r=b.dataset.v==='rtl';if(r!==st.rtl){st.val.math=convertDir(st.val.math,r);st.rtl=r;}sync();});
@@ -4503,7 +4508,7 @@ function openConvert(o){
       else p.annots.push({type:'whiteout',pts:[[box.x,box.y],[box.x+box.w,box.y+box.h]]});
       out=fitAnnot(p,st.type,v,st.rtl,box,keep&&o.items.length?'#1d4ed8':color);p.annots.push(out);}
     markDirty();closeSheet();selectItems(o.id,[out]);toast(st.type==='math'?'تحوّلت إلى معادلة منسّقة':'تحوّلت إلى نص');};
-  sync();if(o.shot&&!o.init){if(AI)run('auto');else T.placeholder='التعرّف يعمل عبر المساعد الذكي داخل Claude. اكتب النص أو المعادلة بنفسك';}
+  sync();if(o.shot&&!o.init){if(AI)run('auto');else{T.placeholder='أو اكتب النص أو المعادلة بنفسك هنا';const nb=$('#cvNoAI');if(nb)nb.hidden=false;}}
 }
 function inkToText(id,items){
   if(!items.length)return;const p=byId(id);const src=renderInk(p,items);
@@ -4515,7 +4520,7 @@ function hwQueue(id,a){if(HW.id&&HW.id!==id)hwFlush();HW.id=id;HW.items.push(a);
 async function hwFlush(){
   clearTimeout(HW.timer);const id=HW.id,items=HW.items.slice();HW.items=[];HW.id=null;if(!id||!items.length)return;
   const p=byId(id);if(!p)return;const live=items.filter(a=>p.annots.includes(a));if(!live.length)return;
-  if(!AI){toast('التحويل يعمل عبر المساعد الذكي داخل Claude، فبقيت الكتابة كما هي',4200);return;}
+  if(!AI){toast('بقيت الكتابة كما هي. '+aiHelpText(),5500);return;}
   const mode=store.get('safahat-hwmode','auto');toast(mode==='math'?'جارٍ تحويل الكتابة إلى معادلة…':'جارٍ تحويل الكتابة…',9000);
   try{const r=await recognizeImg(await canvasBlob(renderInk(p,live)),mode);const still=live.filter(a=>p.annots.includes(a));if(!still.length)return;
     const box=unionBox(still,pageRatio(p)),color=(still.find(a=>a.color)||{}).color||'#111111';
