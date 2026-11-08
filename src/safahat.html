@@ -699,6 +699,15 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .calcrow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 12px;border-radius:12px;background:var(--raise);border:1px solid var(--line)}
 .calcrow .cres{display:flex;align-items:center;gap:8px;font-size:13.5px}.calcrow canvas{border-radius:8px;max-width:100%}
 .calcrow[hidden]{display:none}
+
+.sizes{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.sizes button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink);padding:0}
+.sizes button i{display:block;background:currentColor;border-radius:50%}
+.sizes button.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.seg.dashes button{padding:6px 10px;display:grid;place-items:center}
+.selbar .sbw{min-width:34px;justify-content:center}.selbar .sbw i{display:block;border-radius:50%;background:currentColor}
+.selbar .sbd{min-width:44px;justify-content:center}
+#erSz[hidden]{display:none}
 </style>
 
 <div class="app" dir="rtl" id="app">
@@ -901,7 +910,7 @@ const ic=(n,cls='i')=>`<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true
 const PEN_COLORS=[['#111111','أسود'],['#4b5563','رمادي'],['#d92d20','أحمر'],['#ea580c','برتقالي'],['#ca8a04','ذهبي'],['#15803d','أخضر'],['#0d9488','فيروزي'],['#1d4ed8','أزرق'],['#1e3a8a','كحلي'],['#7c3aed','بنفسجي'],['#db2777','وردي'],['#92400e','بني']];
 const HL_COLORS=[['#ffe14d','أصفر'],['#a3f06b','أخضر فاتح'],['#5ee0c8','فيروزي'],['#7cc8ff','أزرق فاتح'],['#c3a6ff','بنفسجي فاتح'],['#ff8fc7','وردي'],['#ffb35c','برتقالي'],['#ff7a7a','أحمر فاتح']];
 const PROP_KEY={pen:'pen',marker:'marker',rect:'shape',ellipse:'shape',line:'shape',arrow:'shape',tri:'shape',rtri:'shape',axes:'shape',numline:'shape',darrow:'shape',text:'text',hwrite:'pen',hltext:'marker',under:'tmark',strike:'tmark'};
-const DEF_PROPS={pen:{color:'#1d4ed8',w:.004,straight:false},marker:{color:'#ffe14d',w:.022,op:.4,straight:true},shape:{color:'#d92d20',w:.004},text:{color:'#d92d20'},tmark:{color:'#d92d20'}};
+const DEF_PROPS={pen:{color:'#1d4ed8',w:.004,straight:false},marker:{color:'#ffe14d',w:.022,op:.4,straight:true},shape:{color:'#d92d20',w:.004},eraser:{mode:'obj',r:.02},text:{color:'#d92d20'},tmark:{color:'#d92d20'}};
 let chatHist=[],pendingBms=[];
 const S={sources:[],pages:[],imgs:{},name:'',tab:'view',tool:'browse',zoom:1,mode:'day',layout:'single',libId:null,libLocked:false,props:JSON.parse(JSON.stringify(DEF_PROPS)),
   get color(){return (this.props[PROP_KEY[this.tool]]||this.props.pen).color;},
@@ -1266,10 +1275,11 @@ function openFontSheet(items,id){
 }
 function drawA(c,a,W,H){
   c.save();c.lineCap='round';c.lineJoin='round';
+  if(a.dash&&a.w&&!['marker','axes','numline'].includes(a.type)){const lw=Math.max(1,a.w*W);c.setLineDash(a.dash==='dot'?[.01,lw*2.3]:[lw*3.4,lw*2.4]);}
   const X=v=>v*W,Y=v=>v*H;const pts=a.pts;
   switch(a.type){
     case 'pen':case 'marker':{
-      if(a.pr&&a.pr.length===pts.length&&a.type==='pen'){c.strokeStyle=a.color;c.fillStyle=a.color;const wv=i=>a.w*W*(.3+1.25*Math.min(1,a.pr[i]));
+      if(a.pr&&a.pr.length===pts.length&&a.type==='pen'&&!a.dash){c.strokeStyle=a.color;c.fillStyle=a.color;const wv=i=>a.w*W*(.3+1.25*Math.min(1,a.pr[i]));
         if(pts.length===1){c.beginPath();c.arc(X(pts[0][0]),Y(pts[0][1]),wv(0)/2,0,Math.PI*2);c.fill();break;}
         let px=X(pts[0][0]),py=Y(pts[0][1]);
         for(let i=1;i<pts.length;i++){const last=i===pts.length-1,mx=last?pts[i][0]:(pts[i][0]+pts[i+1][0])/2,my=last?pts[i][1]:(pts[i][1]+pts[i+1][1])/2;
@@ -1468,10 +1478,32 @@ function showPenCursor(e,o){if(!PENCIL.hover)return;const t=S.tool;const k=t==='
   if(!['pen','marker','eraser'].includes(k)&&t!=='hwrite'&&t!=='pen'){hidePenCursor();return;}
   if(!pcEl){pcEl=document.createElement('div');pcEl.className='pcur';document.body.appendChild(pcEl);}
   const r=o.getBoundingClientRect();let d,c;
-  if(t==='eraser'){d=18;c='var(--ink)';pcEl.classList.add('er');}else{const pr=S.props[PROP_KEY[t]]||S.props.pen;d=Math.max(3,(pr.w||.004)*r.width);c=pr.color;pcEl.classList.remove('er');}
+  if(t==='eraser'){d=S.props.eraser&&S.props.eraser.mode==='part'?Math.max(8,(S.props.eraser.r||.02)*2*r.width):18;c='var(--ink)';pcEl.classList.add('er');}else{const pr=S.props[PROP_KEY[t]]||S.props.pen;d=Math.max(3,(pr.w||.004)*r.width);c=pr.color;pcEl.classList.remove('er');}
   pcEl.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-d/2}px;top:${e.clientY-d/2}px;--c:${c}`;pcEl.hidden=false;}
 function hidePenCursor(){if(pcEl)pcEl.hidden=true;}
-function eraseAt(d,p,pt){const l=d.last||pt;d.last=pt;const n=Math.max(1,Math.ceil(Math.hypot(pt[0]-l[0],pt[1]-l[1])/.005));let ch=false;
+function erasePartial(d,p,q){const r=pageRatio(p),R=(S.props.eraser&&S.props.eraser.r)||.02;let ch=false;const out=[];
+  const near=(x,y,rr)=>Math.hypot(x-q[0],(y-q[1])/r)<rr;
+  for(const a of p.annots){
+    if((a.type==='pen'||a.type==='marker')&&a.pts&&a.pts.length){const rr=R+(a.w||0)/2;
+      let b=null;for(const [x,y] of a.pts){if(!b)b={x0:x,x1:x,y0:y,y1:y};else{b.x0=Math.min(b.x0,x);b.x1=Math.max(b.x1,x);b.y0=Math.min(b.y0,y);b.y1=Math.max(b.y1,y);}}
+      if(q[0]<b.x0-rr||q[0]>b.x1+rr||q[1]<b.y0-rr*r||q[1]>b.y1+rr*r){out.push(a);continue;}
+      // densify long segments so the eraser can cut through them
+      const P=[],PR=[];const hasPr=a.pr&&a.pr.length===a.pts.length;
+      for(let i=0;i<a.pts.length;i++){if(i){const [x0,y0]=a.pts[i-1],[x1,y1]=a.pts[i];const L=Math.hypot(x1-x0,(y1-y0)/r),n=Math.ceil(L/(R*.4));for(let k=1;k<n;k++){P.push([x0+(x1-x0)*k/n,y0+(y1-y0)*k/n]);if(hasPr)PR.push(a.pr[i-1]+(a.pr[i]-a.pr[i-1])*k/n);}}P.push(a.pts[i]);if(hasPr)PR.push(a.pr[i]);}
+      const ins=P.map(([x,y])=>near(x,y,rr));if(!ins.some(Boolean)){out.push(a);continue;}
+      ch=true;let cur=null;const pieces=[];
+      P.forEach((pt,i)=>{if(ins[i]){if(cur){pieces.push(cur);cur=null;}return;}if(!cur)cur={pts:[],pr:[]};cur.pts.push(pt);if(hasPr)cur.pr.push(PR[i]);});if(cur)pieces.push(cur);
+      for(const pc of pieces){if(pc.pts.length<2)continue;const na={...a,pts:pc.pts};if(hasPr)na.pr=pc.pr;else delete na.pr;out.push(na);}
+      continue;}
+    out.push(a);}
+  if(ch){if(!d.pushed){pushUndo('ممحاة');d.pushed=true;}p.annots=out;d.n++;}
+  // anything else touched by the eraser is removed whole
+  let a;while((a=hit(p,q))&&a.type!=='pen'&&a.type!=='marker'){if(!d.pushed){pushUndo('ممحاة');d.pushed=true;}p.annots.splice(p.annots.indexOf(a),1);d.n++;ch=true;}
+  return ch;}
+function eraseAt(d,p,pt){const l=d.last||pt;d.last=pt;
+  if(S.props.eraser&&S.props.eraser.mode==='part'){const R=S.props.eraser.r||.02,n=Math.max(1,Math.ceil(Math.hypot(pt[0]-l[0],pt[1]-l[1])/(R*.5)));let ch=false;
+    for(let i=1;i<=n;i++)ch=erasePartial(d,p,[l[0]+(pt[0]-l[0])*i/n,l[1]+(pt[1]-l[1])*i/n])||ch;if(ch)drawOverlay(d.id);return;}
+  const n=Math.max(1,Math.ceil(Math.hypot(pt[0]-l[0],pt[1]-l[1])/.005));let ch=false;
   for(let i=1;i<=n;i++){const q=[l[0]+(pt[0]-l[0])*i/n,l[1]+(pt[1]-l[1])*i/n];let a;while((a=hit(p,q))){if(!d.pushed){pushUndo();d.pushed=true;}p.annots.splice(p.annots.indexOf(a),1);d.n++;ch=true;}}
   if(ch)drawOverlay(d.id);}
 function openPencilSheet(){
@@ -1557,6 +1589,7 @@ function attachOverlay(o,id){
       const pr=S.props[PROP_KEY[t]]||{color:'#000',w:.004};
       const a={type:t==='hwrite'?'pen':t,pts:free?[pt]:[pt,pt],color:pr.color,w:pr.w||.004};
       if(t==='axes'||t==='numline')a.nums=S.props.shape.nums||'ar';
+      if(pr.dash&&pr.dash!=='solid'&&t!=='marker'&&t!=='hwrite'&&t!=='axes'&&t!=='numline')a.dash=pr.dash;
       if(t==='pen'&&e.pointerType==='pen'&&PENCIL.pressure&&!pr.straight)a.pr=[Math.max(.05,e.pressure||.5)];
       if(t==='marker')a.op=pr.op;
       drag={id,kind:'draw',a,straight:free&&!!pr.straight&&t!=='hwrite',origin:pt,hw:t==='hwrite'};drawOverlay(id);}
@@ -1590,7 +1623,7 @@ function attachOverlay(o,id){
     if(FG.pts.has(e.pointerId)){fingerUp(e);return;}
     if(e.pointerType==='pen')lastPenT=performance.now();
     if(!drag||drag.id!==id)return;const d=drag;drag=null;const p=byId(id);
-    if(d.kind==='erase'){if(d.n){markDirty();toast(d.n===1?'حُذف عنصر':'حُذف '+cnt(d.n,'item'),1400);}return;}
+    if(d.kind==='erase'){if(d.n){markDirty();if(!(S.props.eraser&&S.props.eraser.mode==='part'))toast(d.n===1?'حُذف عنصر':'حُذف '+cnt(d.n,'item'),1400);}return;}
     if(d.kind==='draw'){const a=d.a;let ok;
       if(a.type==='pen'||a.type==='marker')ok=a.pts.length>1||e.type==='pointerup';
       else ok=Math.hypot(a.pts[1][0]-a.pts[0][0],a.pts[1][1]-a.pts[0][1])>.006;
@@ -1686,6 +1719,10 @@ function syncToolbar(){
   viewer.classList.toggle('sepia',S.mode==='sepia');viewer.classList.toggle('night',S.mode==='night');
 }
 /* ---------- properties panel (colour, thickness, opacity, straight line) ---------- */
+const SIZE_PRESETS={pen:[.0018,.0028,.004,.006,.009,.013],marker:[.012,.018,.025,.034,.046],shape:[.0018,.0028,.004,.006,.009]};
+const DASHES=[['solid','متصل','<svg viewBox="0 0 34 10" width="34" height="10"><path d="M2 5h30" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'],
+  ['dash','متقطع','<svg viewBox="0 0 34 10" width="34" height="10"><path d="M2 5h30" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="7 5"/></svg>'],
+  ['dot','منقّط','<svg viewBox="0 0 34 10" width="34" height="10"><path d="M3 5h29" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray=".1 5.5"/></svg>']];
 const PROP_TITLE={pen:'القلم',marker:'قلم التظليل',shape:'الأشكال',text:'النص',tmark:'التسطير والشطب'};
 const RANGES={pen:[.0015,.014],marker:[.01,.05],shape:[.0015,.012]};
 function propsTarget(){
@@ -1699,8 +1736,12 @@ function propsTarget(){
 function renderProps(){
   const box=$('#props'),t=propsTarget();
   if(S.tool==='eraser'&&MODE[S.tab]&&MODE[S.tab].tools){box.hidden=false;
-    box.innerHTML=`<div class="pgroup"><span class="plabel">الممحاة</span><span class="hint" style="margin:0">اسحبها فوق التعليقات لمسحها، أو اضغط على عنصر</span></div>
+    const E=S.props.eraser||{mode:'obj',r:.02};
+    box.innerHTML=`<div class="pgroup"><span class="plabel">نوع المسح</span><div class="seg" id="erM"><button type="button" data-v="part" class="${E.mode==='part'?'on':''}">جزئي (مثل الممحاة)</button><button type="button" data-v="obj" class="${E.mode!=='part'?'on':''}">عنصر كامل</button></div></div>
+      <div class="pgroup" id="erSz" ${E.mode==='part'?'':'hidden'}><span class="plabel">حجم الممحاة</span><div class="sizes">${[[.008,'صغيرة جداً'],[.014,'صغيرة'],[.022,'متوسطة'],[.035,'كبيرة'],[.055,'كبيرة جداً']].map(([v,l])=>`<button type="button" data-er="${v}" class="${Math.abs((E.r||.02)-v)<1e-6?'on':''}" title="${l}" aria-label="${l}"><i style="width:${Math.round(6+v*420)}px;height:${Math.round(6+v*420)}px;border-radius:50%"></i></button>`).join('')}</div></div>
       <button class="toggle" id="clrPage">${ic('trash')}مسح الصفحة الحالية</button><button class="toggle" id="clrAll">${ic('trash')}مسح الملف كاملاً</button>`;
+    box.querySelectorAll('#erM [data-v]').forEach(b=>b.onclick=()=>{S.props.eraser={...E,mode:b.dataset.v};saveProps();renderProps();toast(b.dataset.v==='part'?'ممحاة جزئية: تمسح الجزء الذي تمرّ عليه فقط':'تمسح العنصر كاملاً عند لمسه',2400);});
+    box.querySelectorAll('[data-er]').forEach(b=>b.onclick=()=>{S.props.eraser={...E,mode:'part',r:+b.dataset.er};saveProps();box.querySelectorAll('[data-er]').forEach(x=>x.classList.toggle('on',x===b));});
     $('#clrPage').onclick=()=>clearAnnotsSheet('page');$('#clrAll').onclick=()=>clearAnnotsSheet('all');return;}
   if(!t){box.hidden=true;box.innerHTML='';return;}
   box.hidden=false;const k=t.key,pr=t.sel?{color:t.sel.color,w:t.sel.w,op:t.sel.op}:S.props[k];
@@ -1710,8 +1751,9 @@ function renderProps(){
       ${pal.map(([c,n])=>`<button class="sw${k==='marker'?' hl':''}${c.toLowerCase()===String(pr.color).toLowerCase()?' on':''}" data-pc="${c}" style="background:${c}" title="${n}" aria-label="${n}"></button>`).join('')}
       <label class="custom${inPal?'':' on'}" title="لون مخصص"><input type="color" id="pcCustom" value="${/^#[0-9a-f]{6}$/i.test(pr.color)?pr.color:'#000000'}" aria-label="لون مخصص"></label>
     </div></div>`;
-  if(!t.sel&&RANGES[k]&&S.tool!=='hltext'){const [mn,mx]=RANGES[k];
-    h+=`<div class="pgroup"><span class="plabel">السماكة</span><div class="slider"><input type="range" id="pw" min="${mn}" max="${mx}" step="0.0005" value="${pr.w}"><output id="pwo"></output></div></div>`;}
+  if(!t.sel&&RANGES[k]&&S.tool!=='hltext'){const [mn,mx]=RANGES[k];const PS=SIZE_PRESETS[k]||SIZE_PRESETS.pen;
+    h+=`<div class="pgroup"><span class="plabel">السماكة</span><div class="sizes" id="psz">${PS.map((v,i)=>`<button type="button" data-ps="${v}" class="${Math.abs(pr.w-v)<1e-6?'on':''}" aria-label="حجم ${ar(i+1)}" title="حجم ${ar(i+1)}"><i style="width:${Math.round(4+i*4.2)}px;height:${Math.round(4+i*4.2)}px;background:${k==='marker'?pr.color:'currentColor'};border-radius:50%"></i></button>`).join('')}</div><div class="slider"><input type="range" id="pw" min="${mn}" max="${mx}" step="0.0005" value="${pr.w}"><output id="pwo"></output></div></div>`;
+    if(k!=='marker'&&S.tool!=='hwrite'&&S.tool!=='axes'&&S.tool!=='numline')h+=`<div class="pgroup"><span class="plabel">نمط الخط</span><div class="seg dashes" id="pdash">${DASHES.map(([v,l,svg])=>`<button type="button" data-pd="${v}" class="${(pr.dash||'solid')===v?'on':''}" title="${l}" aria-label="${l}">${svg}</button>`).join('')}</div></div>`;}
   if(!t.sel&&k==='marker')
     h+=`<div class="pgroup"><span class="plabel">الشفافية</span><div class="slider"><input type="range" id="po" min="0.15" max="0.75" step="0.05" value="${pr.op}"><output id="poo"></output></div></div>`;
   if(!t.sel&&(k==='pen'||k==='marker')&&S.tool!=='hltext'&&S.tool!=='hwrite')
@@ -1735,7 +1777,9 @@ function renderProps(){
     paintPreview(k,t.sel?{...pr,color:c}:S.props[k]);syncDots();};
   box.querySelectorAll('[data-pc]').forEach(b=>b.onclick=()=>setColor(b.dataset.pc));
   const cc=$('#pcCustom');cc.oninput=()=>{if(!t.sel){S.props[k].color=cc.value;paintPreview(k,S.props[k]);syncDots();}};cc.onchange=()=>setColor(cc.value);
-  const pw=$('#pw');if(pw)pw.oninput=()=>{S.props[k].w=+pw.value;outs();paintPreview(k,S.props[k]);saveProps();};
+  const pw=$('#pw');if(pw)pw.oninput=()=>{S.props[k].w=+pw.value;outs();paintPreview(k,S.props[k]);saveProps();box.querySelectorAll('[data-ps]').forEach(x=>x.classList.toggle('on',Math.abs(+x.dataset.ps-S.props[k].w)<1e-6));};
+  box.querySelectorAll('[data-ps]').forEach(b=>b.onclick=()=>{S.props[k].w=+b.dataset.ps;if(pw)pw.value=b.dataset.ps;outs();paintPreview(k,S.props[k]);saveProps();box.querySelectorAll('[data-ps]').forEach(x=>x.classList.toggle('on',x===b));});
+  box.querySelectorAll('[data-pd]').forEach(b=>b.onclick=()=>{S.props[k].dash=b.dataset.pd;saveProps();box.querySelectorAll('[data-pd]').forEach(x=>x.classList.toggle('on',x===b));paintPreview(k,S.props[k]);});
   const po=$('#po');if(po)po.oninput=()=>{S.props[k].op=+po.value;outs();paintPreview(k,S.props[k]);saveProps();};
   const st=$('#pst');if(st)st.onclick=()=>{S.props[k].straight=!S.props[k].straight;st.classList.toggle('on',S.props[k].straight);st.setAttribute('aria-pressed',S.props[k].straight);saveProps();
     toast(S.props[k].straight?'خط مستقيم: اسحب من بداية السطر إلى نهايته':'رسم حر');};
@@ -1753,8 +1797,8 @@ function paintPreview(k,pr){
   else if(k==='text'){x.fillStyle=pr.color;x.font=`700 ${H*.42}px ${FONT}`;x.direction='rtl';x.textAlign='center';x.textBaseline='middle';x.fillText('نص',W/2,H/2);}
   else if(k==='tmark'){x.fillStyle='#222';x.font=`500 ${H*.34}px ${FONT}`;x.direction='rtl';x.textAlign='center';x.textBaseline='middle';x.fillText('نص مسطّر',W/2,H/2);
     x.strokeStyle=pr.color;x.lineWidth=Math.max(1.5,H*.05);x.beginPath();x.moveTo(W*.14,H*.74);x.lineTo(W*.86,H*.74);x.stroke();}
-  else if(k==='shape'){x.strokeStyle=pr.color;x.lineWidth=Math.max(1,pr.w*scale);x.strokeRect(W*.2,H*.22,W*.6,H*.56);}
-  else{drawA(x,{type:'pen',pts:[[.1,.62],[.3,.3],[.5,.6],[.7,.32],[.9,.55]],color:pr.color,w:Math.max(1/W,pr.w*scale/W)},W,H);}
+  else if(k==='shape'){drawA(x,{type:'rect',pts:[[.2,.22],[.8,.78]],color:pr.color,w:Math.max(1/W,pr.w*scale/W),dash:pr.dash&&pr.dash!=='solid'?pr.dash:undefined},W,H);}
+  else{drawA(x,{type:'pen',pts:[[.1,.62],[.3,.3],[.5,.6],[.7,.32],[.9,.55]],color:pr.color,w:Math.max(1/W,pr.w*scale/W),dash:pr.dash&&pr.dash!=='solid'&&S.tool!=='hwrite'?pr.dash:undefined},W,H);}
 }
 function syncDots(){document.querySelectorAll('[data-cd]').forEach(d=>d.style.setProperty('--c',S.props[d.dataset.cd].color));}
 function saveProps(){store.set('safahat-props',S.props);}
@@ -4297,11 +4341,16 @@ function renderSelbar(mode){
   const m=S.msel,sb=$('#selbar');if(!m){sb.hidden=true;return;}
   const B=(k,i,l,cls='')=>`<button data-sb="${k}" class="${cls}">${ic(i)}<span>${l}</span></button>`;
   let h='';
-  if(mode==='color')h=B('back','prev','رجوع')+PEN_COLORS.map(([c,n])=>`<button class="sbc" data-sbc="${c}" style="--c:${c}" aria-label="${n}" title="${n}"><i></i></button>`).join('');
+  if(mode==='thick'){const strokes=m.items.filter(a=>a.w&&a.type!=='image');const mk=strokes.length&&strokes.every(a=>a.type==='marker');
+    h=B('back','prev','رجوع')+SIZE_PRESETS.pen.map((v,i)=>`<button class="sbw" data-sbw="${i}" aria-label="سماكة ${ar(i+1)}" title="سماكة ${ar(i+1)}"><i style="width:${Math.round(4+i*3.6)}px;height:${Math.round(4+i*3.6)}px"></i></button>`).join('')+
+      `<button data-sbz="0.8" title="أرفع">${ic('smaller')}<span>أرفع</span></button><button data-sbz="1.25" title="أعرض">${ic('bigger')}<span>أعرض</span></button>`+
+      (mk?'':DASHES.map(([v,l,svg])=>`<button class="sbd" data-sbd="${v}" title="${l}" aria-label="${l}">${svg}</button>`).join(''));}
+  else if(mode==='color')h=B('back','prev','رجوع')+PEN_COLORS.map(([c,n])=>`<button class="sbc" data-sbc="${c}" style="--c:${c}" aria-label="${n}" title="${n}"><i></i></button>`).join('');
   else if(m.items.length){const ink=m.items.some(a=>INK.includes(a.type));
     const one=m.items.length===1&&['text','math'].includes(m.items[0].type),txt=m.items.some(a=>a.type==='text'||a.type==='edit'),ax=m.items.some(a=>a.type==='axes'||a.type==='numline');
     const mth=m.items.length===1&&m.items[0].type==='math'&&MSOLVE.compute(m.items[0].tex,m.items[0].rtl);
-    h=(ink?B('ink','hw','تحويل','hi'):'')+(one?B('editx','textedit','تعديل','hi'):'')+(mth?B('calc','check','الحل','hi'):'')+(ax?B('nums','num','الأرقام'):'')+(txt?B('font','text','الخط'):'')+B('color','palette','اللون')+B('copy','copy','نسخ')+B('dup','plus','تكرار')+B('big','bigger','أكبر')+B('small','smaller','أصغر')+B('front','front','للأمام')+B('del','trash','حذف','dng');}
+    const hasW=m.items.some(a=>a.w&&a.type!=='image');
+    h=(ink?B('ink','hw','تحويل','hi'):'')+(one?B('editx','textedit','تعديل','hi'):'')+(hasW?B('thick','line','السماكة'):'')+(mth?B('calc','check','الحل','hi'):'')+(ax?B('nums','num','الأرقام'):'')+(txt?B('font','text','الخط'):'')+B('color','palette','اللون')+B('copy','copy','نسخ')+B('dup','plus','تكرار')+B('big','bigger','أكبر')+B('small','smaller','أصغر')+B('front','front','للأمام')+B('del','trash','حذف','dng');}
   else{const t=!!m.text;
     h=(t?B('copytext','copy','نسخ النص','hi')+B('hl','hltext','تظليل')+B('ul','under','تسطير')+B('st','strike','شطب'):'')+
       (AI?B('convert','hw','تحويل الكتابة',t?'':'hi')+B('read','ocr',t?'قراءة':'قراءة النص')+B('explain','bulb','شرح')+B('translate','globe','ترجمة'):'')+
@@ -4368,6 +4417,7 @@ function selAction(k,colorVal){
     case 'x':clearMsel();break;
     case 'back':renderSelbar();break;
     case 'color':renderSelbar('color');break;
+    case 'thick':renderSelbar('thick');break;
     case 'calc':{const a=m.items[0];pushUndo('كتابة الناتج');const r=applyCalc(p,a);if(!r){S.undo.pop();updUndo();toast('لم أستطع حساب هذه المعادلة');break;}markDirty();drawOverlay(m.id);selectItems(m.id,[a]);toast(r.mode==='line'?'كُتب الحل تحت المعادلة':r.mode==='check'?(r.ok?'الإجابة صحيحة ✓':'الإجابة غير صحيحة ✗'):'كُتب الناتج');break;}
     case 'nums':{pushUndo('الأرقام');const cur=m.items.find(a=>a.type==='axes'||a.type==='numline');const nv=(cur.nums||'ar')==='ar'?'en':'ar';for(const a of m.items)if(a.type==='axes'||a.type==='numline')a.nums=nv;markDirty();drawOverlay(m.id);toast(nv==='ar'?'أرقام عربية وتسميات س وص':'أرقام إنكليزية وتسميات x وy');break;}
     case 'font':openFontSheet(m.items.filter(a=>a.type==='text'||a.type==='edit'),m.id);break;
@@ -4889,7 +4939,11 @@ function wire(){
     try{const u=await readFile(f,'url');let url=u;if(k==='image'){const el=await loadImg(u);const m=1600/Math.max(el.naturalWidth,el.naturalHeight);if(m<1){const c=mkCanvas(el.naturalWidth*m,el.naturalHeight*m);c.getContext('2d').drawImage(el,0,0,c.width,c.height);url=c.toDataURL(/png/.test(f.type)?'image/png':'image/jpeg',.9);}}
       usePendingImage(await addImg(url),k);}catch(err){toast('تعذّر قراءة الصورة');}};
   wireScanner();
-  $('#selbar').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.sbc)selAction(null,b.dataset.sbc);else selAction(b.dataset.sb);});
+  $('#selbar').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.sbw||b.dataset.sbz||b.dataset.sbd){const m=S.msel;if(!m)return;const p=byId(m.id);const items=m.items.filter(a=>a.w&&a.type!=='image');if(!items.length)return;pushUndo('السماكة');
+      for(const a of items){if(b.dataset.sbw){const v=SIZE_PRESETS.pen[+b.dataset.sbw];a.w=a.type==='marker'?v*4.2:v;}else if(b.dataset.sbz)a.w=Math.max(.0008,Math.min(.08,a.w*+b.dataset.sbz));else if(a.type!=='marker'&&a.type!=='axes'&&a.type!=='numline'){if(b.dataset.sbd==='solid')delete a.dash;else a.dash=b.dataset.sbd;}}
+      markDirty();drawOverlay(m.id);m.box=unionBox(m.items,pageRatio(p));drawOverlay(m.id);positionSelbar();return;}
+    if(b.dataset.sbc)selAction(null,b.dataset.sbc);else selAction(b.dataset.sb);});
   $('#prX').innerHTML=ic('x');$('#prP').innerHTML=ic('prev');$('#prNx').innerHTML=ic('next');
   $('#prX').onclick=closePresent;$('#prP').onclick=()=>prGo(-1);$('#prNx').onclick=()=>prGo(1);
   $('#prC').onclick=e=>{const r=e.currentTarget.getBoundingClientRect();prGo(e.clientX<r.left+r.width/2?1:-1);};
