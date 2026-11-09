@@ -132,6 +132,8 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.65;str
 .ldghost b{font-size:11.5px;max-width:84px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}.ldghost.ok{box-shadow:0 0 0 3px var(--accent),0 18px 40px rgba(0,0,0,.35)}
 .lddrag{opacity:.35}
 .lib-in.ldzone{outline:2px dashed var(--accent);outline-offset:8px;border-radius:18px}
+.ldtgt.fcard,.ldtgt.lback,#tabbar .ldtgt{animation:ldspring .7s ease-in-out}
+@keyframes ldspring{0%{transform:scale(1)}60%{transform:scale(1.05)}80%{transform:scale(.98)}100%{transform:scale(1.03)}}
 .ldtgt{outline:3px solid var(--accent);outline-offset:3px;border-radius:16px;background:var(--accent-soft)!important;transform:scale(1.03);transition:transform .12s}
 .fsheet2{display:flex;flex-direction:column;align-items:center;gap:12px}.fsheet2 .fprev{display:grid;place-items:center}.fsheet2 .fart.big{width:132px;height:auto}
 .fdname{width:min(100%,360px);text-align:center;font:600 18px var(--f-body,inherit);padding:10px 14px;border-radius:99px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
@@ -4301,7 +4303,7 @@ async function shareDocs(docs,label){if(!docs.length){toast('لا توجد مل�
   if(files.length===1){await saveFile(files[0].name,files[0]);return;}
   const zip=new JSZip();files.forEach(f=>zip.file(f.name,f));await saveFile(label+'.zip',await zip.generateAsync({type:'blob'}));}
 // merge several library files into one new file, in the order the teacher picks
-function mergeSheet(docs){let order=sortDocs(docs).slice();
+function mergeSheet(docs,opts={}){let order=opts.keep?docs.slice():sortDocs(docs).slice();
   const draw=()=>{const L=$('#mgList');if(!L)return;L.innerHTML=order.map((d,i)=>`<div class="mgrow"><span class="sn">${ar(i+1)}</span><span class="lrthumb">${d.thumb?`<img src="${d.thumb}" alt="">`:''}</span><span class="lrtxt"><b>${esc(d.name)}</b><small>${cnt(d.pages||0,'page')}</small></span>
     <button class="mini" data-mu="${i}" ${i?'':'disabled'} aria-label="للأعلى">${ic('chev')}</button><button class="mini" data-md="${i}" ${i<order.length-1?'':'disabled'} aria-label="للأسفل">${ic('chev')}</button></div>`).join('');
     L.querySelectorAll('[data-mu]').forEach(b=>b.onclick=()=>{const i=+b.dataset.mu;[order[i-1],order[i]]=[order[i],order[i-1]];draw();});
@@ -4310,7 +4312,7 @@ function mergeSheet(docs){let order=sortDocs(docs).slice();
     <label>اسم الملف الجديد<input type="text" id="mgName" value="${esc(order[0].name)} - مدموج"></label>
     <div class="acts"><button class="hbtn primary" id="mgGo">${ic('merge')}دمج</button>${cancelBtn}</div>`);
   wireClose();draw();
-  $('#mgGo').onclick=async()=>{const name=$('#mgName').value.trim()||'ملف مدموج',fid=LB.folder&&!['all','fav','trash'].includes(LB.folder)?LB.folder:null;closeSheet();
+  $('#mgGo').onclick=async()=>{const name=$('#mgName').value.trim()||'ملف مدموج',fid=opts.folder!==undefined?opts.folder:LB.folder&&!['all','fav','trash'].includes(LB.folder)?LB.folder:null;closeSheet();
     const before=new Set(LB.docs.map(d=>d.id));let files;try{files=await docsAsFiles(order);}catch(e){toast('تعذّر تجهيز الملفات');return;}
     showBusy('جارٍ الدمج…');try{await openFiles(files,{quiet:true});S.name=name;if(typeof setName==='function')setName();S.dirty=true;await saveProject();
       const fresh=LB.docs.filter(d=>!before.has(d.id));for(const d of fresh){d.name=name;if(fid)d.folder=fid;await dbPut('docs',d);}}catch(e){console.error(e);hideBusy();toast('تعذّر الدمج');return;}
@@ -4662,7 +4664,7 @@ function ldSpring(t){clearTimeout(LD.spring);if(!t||!['folder','up','tab'].inclu
   LD.spring=setTimeout(()=>{if(!LD.on||LD.tgt!==t)return;t.el.classList.remove('ldtgt');LD.tgt=null;
     if(t.kind==='folder'){LB.tab='files';LB.folder=t.id;}else if(t.kind==='up'){const cur=LB.folders.find(x=>x.id===LB.folder);LB.folder=cur&&cur.parent&&LB.folders.some(x=>x.id===cur.parent)?cur.parent:null;}
     else{LB.tab=t.lt;if(t.lt==='files')LB.folder=null;}
-    renderLib();$('#libMain').scrollTop=0;try{navigator.vibrate&&navigator.vibrate(8);}catch(_){}ldMove(LD.lx,LD.ly);},850);}
+    renderLib();$('#libMain').scrollTop=0;try{navigator.vibrate&&navigator.vibrate(8);}catch(_){}ldMove(LD.lx,LD.ly);if(t.kind==='folder')toast('فُتح «'+((LB.folders.find(x=>x.id===t.id)||{}).name||'')+'». أفلت هنا أو فوق مجلد داخله',1400);},700);}
 function ldStart(x,y){const s=LD.src;if(!s||LD.on)return;LD.on=true;if(LD.node){LD.tm=e=>{if(LD.on)e.preventDefault();};LD.node.addEventListener('touchmove',LD.tm,{passive:false});}try{navigator.vibrate&&navigator.vibrate(12);}catch(_){}
   const g=document.createElement('div');g.className='ldghost';
   if(s.kind==='doc'){const d=LB.docs.find(z=>z.id===s.id);g.innerHTML=`${d&&d.thumb?`<img src="${d.thumb}" alt="">`:'<span class="ph"></span>'}<b>${esc(d?d.name:'')}</b>`;}
@@ -4673,13 +4675,21 @@ function ldMove(x,y){const g=LD.ghost;if(!g)return;LD.lx=x;LD.ly=y;g.style.trans
   if(!same){LD.tgt=t;ldSpring(t);}const zone=!t&&ldHere()!==undefined;$('#libIn').classList.toggle('ldzone',zone);
   g.classList.toggle('ok',!!t||zone);const mn=$('#libMain'),r=mn.getBoundingClientRect();if(y<r.top+70)mn.scrollBy(0,-12);else if(y>r.bottom-150)mn.scrollBy(0,12);}
 function ldClear(){clearTimeout(LD.spring);if(LD.node&&LD.tm)LD.node.removeEventListener('touchmove',LD.tm);LD.tm=null;$('#libIn').classList.remove('ldzone');if(LD.ghost)LD.ghost.remove();LD.ghost=null;if(LD.src&&LD.src.el)LD.src.el.classList.remove('lddrag');if(LD.tgt)LD.tgt.el.classList.remove('ldtgt');LD.on=false;LD.tgt=null;LD.end=performance.now();}
-async function ldDrop(){const s=LD.src,t0=LD.tgt,where=t0?undefined:ldHere();ldClear();if(!s)return;
+async function ldDrop(){const s=LD.src,t0=LD.tgt,where=t0?undefined:ldHere();ldClear();return ldDrop2(s,t0,where);}
+async function ldDrop2(s,t0,where){if(!s)return;
   if(!t0&&where!==undefined){const fol=s.kind==='folder'?LB.folders.find(x=>x.id===s.id):null,doc=s.kind==='doc'?LB.docs.find(x=>x.id===s.id):null;
     if(doc){doc.folder=where;await dbPut('docs',doc);}else if(fol){if(where)fol.parent=where;else delete fol.parent;await dbPut('folders',fol);}
     renderLib();toast('نُقل '+(doc?'الملف':'المجلد')+' إلى «'+(where?LB.folders.find(x=>x.id===where).name:'ملفاتي')+'»',2200);return;}
   const t=t0;if(!t||t.kind==='tab')return;
   const doc=s.kind==='doc'?LB.docs.find(x=>x.id===s.id):null,fol=s.kind==='folder'?LB.folders.find(x=>x.id===s.id):null;
   const here=LB.tab==='files'&&LB.folder&&LB.folders.some(x=>x.id===LB.folder)?LB.folder:null;
+  if(t.kind==='doc'&&doc&&!t.go){const other=LB.docs.find(x=>x.id===t.id);if(!other)return;
+    openSheet(`<h3>${ic('layers')} «${esc(doc.name)}» و«${esc(other.name)}»</h3><div class="plist share-l">
+      <button data-dd="folder">${ic('folderplus','i big')}<span><b>مجلد جديد يضمهما</b><small>يبقى الملفان كما هما داخل مجلد واحد</small></span></button>
+      <button data-dd="merge">${ic('merge','i big')}<span><b>دمج الملفين في ملف واحد</b><small>صفحات «${esc(other.name)}» ثم صفحات «${esc(doc.name)}»، وتبقى الملفات الأصلية</small></span></button></div><div class="acts">${cancelBtn}</div>`);
+    wireClose();sheet.querySelectorAll('[data-dd]').forEach(b=>b.onclick=()=>{closeSheet();
+      if(b.dataset.dd==='merge')mergeSheet([other,doc],{keep:true,folder:other.folder&&LB.folders.some(x=>x.id===other.folder)?other.folder:null});
+      else ldDrop2(s,{...t,go:true});});return;}
   if(t.kind==='doc'&&doc){const other=LB.docs.find(x=>x.id===t.id);if(!other)return;
     // a new folder, in the place where the two files were, holding both
     const base='مجلد جديد',names=new Set(LB.folders.map(f=>f.name));let name=base,k=2;while(names.has(name))name=base+' '+ar(k++);
