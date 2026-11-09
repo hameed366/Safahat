@@ -513,7 +513,7 @@ h2.sec{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0 0 6p
 body.inlib::before{background:var(--bg)}
 .lib{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column}
 .lib[hidden]{display:none!important}
-.lib-main{flex:1;min-height:0;overflow:auto;padding-block:calc(12px + env(safe-area-inset-top,0px)) calc(120px + env(safe-area-inset-bottom,0px))}
+.lib-main{flex:1;min-height:0;overflow:auto;padding-block:calc(12px + env(safe-area-inset-top,0px)) calc(190px + env(safe-area-inset-bottom,0px))}
 .lib-in{max-width:1100px;margin:0 auto}
 .ltop{display:flex;align-items:center;gap:10px;min-height:52px}
 .lbrand{display:flex;align-items:center;gap:9px;font-family:var(--f-display);font-weight:700;font-size:21px}
@@ -777,7 +777,7 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .fart{width:58px;height:70px}.fart.big{width:110px;height:132px}.fart.sm{width:30px;height:36px;flex:none}
 .fctxt{display:grid;gap:4px;min-width:0;padding-inline-end:40px}.fctxt b{font-size:15.5px;font-weight:700;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35;overflow-wrap:anywhere}.fctxt small{font-size:12.5px;color:var(--muted)}
 .fcstar,.fcmore{position:absolute;inset-inline-end:8px;width:32px;height:32px;border:0;border-radius:10px;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer}
-.fcstar{top:8px}.fcmore{bottom:8px}.fcstar svg,.fcmore svg{width:18px;height:18px}.fcstar.on{color:#e0a100}.fcstar.on svg{fill:#e0a100}
+.fcstar{top:8px}.fcmore{top:8px;inset-inline-end:42px}.fcstar svg,.fcmore svg{width:18px;height:18px}.fcstar.on{color:#e0a100}.fcstar.on svg{fill:#e0a100}
 .fcstar:hover,.fcmore:hover{background:var(--raise)}
 .lsec button{display:inline-flex;align-items:center;gap:4px}
 .ltart{display:inline-block;vertical-align:middle;margin-inline-end:10px}.ltart .fart{width:40px;height:48px}
@@ -4270,7 +4270,7 @@ function folderStats(fid){const docs=liveDocs().filter(d=>d.folder===fid),subs=L
 function folderCard(f){const st=folderStats(f.id);
   return `<div class="fcard"><button class="fcmain" data-folder="${f.id}"><span class="fcart">${folderArt(f)}</span><span class="fctxt"><b>${esc(f.name)}</b><small>${st.subs?cnt(st.subs,'folder')+' · ':''}${cnt(st.n,'file')}${st.last?' · '+fmtWhen(st.last):''}</small></span></button>
     <button class="fcstar${f.fav?' on':''}" data-ffav="${f.id}" aria-label="${f.fav?'إزالة من المفضلة':'تثبيت في المفضلة'}">${ic('star')}</button>
-    <button class="fcmore" data-fmenu="${f.id}" aria-label="خيارات المجلد ${esc(f.name)}">${ic('chev')}</button></div>`;}
+    <button class="fcmore" data-fmenu="${f.id}" aria-label="خيارات المجلد ${esc(f.name)}">${ic('more')}</button></div>`;}
 async function pickCover(){return new Promise(res=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
   inp.onchange=async()=>{const file=inp.files[0];if(!file){res(null);return;}try{const url=URL.createObjectURL(file);const im=await loadImg(url);
       const W=360,H=420,c=mkCanvas(W,H),x=c.getContext('2d');const k=Math.max(W/im.naturalWidth,H/im.naturalHeight);const w=im.naturalWidth*k,h=im.naturalHeight*k;
