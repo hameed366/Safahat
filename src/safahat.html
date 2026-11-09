@@ -350,8 +350,9 @@ h2.sec{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0 0 6p
 .crop-h small{display:block;color:#8ea3a2;font-family:var(--f-body);font-weight:400;font-size:12px}
 .crop-stage{flex:1;min-height:0;position:relative;touch-action:none;cursor:crosshair}
 .crop-stage .cv{position:absolute;inset:0;width:100%;height:100%}
-.crpv{position:absolute;left:12px;top:12px;z-index:3;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border-radius:12px;background:rgba(8,16,18,.82);box-shadow:0 8px 24px rgba(0,0,0,.5)}
-.crpv[hidden]{display:none}.crpv canvas{max-width:min(150px,26vw);max-height:min(200px,30vh);border-radius:6px;background:#fff;display:block}.crpv span{font-size:11.5px;color:#cfe3de}
+.crpv{position:absolute;left:12px;top:12px;z-index:3;pointer-events:auto;cursor:pointer;transition:opacity .15s;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border-radius:12px;background:rgba(8,16,18,.82);box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.crpv[hidden]{display:none}.crpv.min canvas{display:none}.crpv.min{padding:6px 10px}.crpv.fade{opacity:.18;pointer-events:none}.crpv canvas{max-width:min(150px,26vw);max-height:min(200px,30vh);border-radius:6px;background:#fff;display:block}.crpv span{font-size:11.5px;color:#cfe3de}
+@media (max-width:640px){.crpv{top:auto;bottom:8px;left:8px;padding:4px}.crpv canvas{max-width:60px;max-height:84px}.crpv span{font-size:10px}}
 .loupe{position:absolute;width:116px;height:116px;border-radius:50%;border:3px solid #fff;box-shadow:0 8px 24px rgba(0,0,0,.6);pointer-events:none}
 .crop-f{padding-block:10px calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;border-top:1px solid #1d2b2f}
 .tchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
@@ -412,6 +413,8 @@ h2.sec{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0 0 6p
 @media (max-width:640px){
   .props{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:14px;padding-block:8px;align-items:flex-end}
   .props::-webkit-scrollbar{display:none}
+  .props>.hint{display:none}
+  .props .mscale{flex-wrap:nowrap}
   .props .pv{display:none}
   .props .swatches{flex-wrap:nowrap}
   .props .pgroup{flex:none}
@@ -2083,6 +2086,7 @@ function setTool(t){
   if(t==='edittext')loadRunsAll();else if(S.pages.length)redrawAll();
   const tips={lasso:'ارسم دائرة حول العناصر أو النص لتحديدها، ثم اختر من الخيارات. اضغط على عنصر لتحديده وحده',hwrite:'اكتب بخط يدك نصاً أو معادلة، وبعد توقف قصير تتحول إلى نص مطبوع أو معادلة منسّقة. اختر نوع التحويل من الشريط',hltext:'اسحب فوق السطور لتظليل النص بدقة',under:'اسحب فوق السطور لوضع خط تحتها',strike:'اسحب فوق السطور لشطبها',
     link:'اسحب مستطيلاً فوق المنطقة التي تريدها رابطاً',note:'اضغط في أي مكان لإضافة ملاحظة لاصقة',edittext:'اضغط على أي سطر في الملف لتعديله. في الصفحات المصوّرة اسحب مستطيلاً فوق النص لاستبداله',text:'اضغط على الصفحة في المكان الذي تريد الكتابة فيه',whiteout:'اسحب فوق النص لتغطيته باللون الأبيض',redact:'اسحب فوق المعلومات الحساسة. عند الحفظ تتحول الصفحة إلى صورة فيُحذف النص المخفي فعلياً',eraser:'اسحب الممحاة فوق الخطوط لمسحها، أو اضغط على عنصر لحذفه',move:'اضغط على تعليق لتحديده ثم اسحبه'};
+  Object.assign(tips,{mdist:'اسحب من نقطة إلى أخرى لقياس الطول',mperim:'اضغط على رؤوس الشكل، ثم على الرأس الأول لإغلاقه',marea:'اضغط على رؤوس الشكل، ثم على الرأس الأول لإغلاقه وحساب المساحة',mangle:'اضغط على نقطة من الضلع الأول، ثم على رأس الزاوية، ثم على نقطة من الضلع الثاني'});
   if(tips[t])toast(tips[t],3200);
 }
 function setTab(t){
@@ -3183,7 +3187,7 @@ async function openCrop(it){
   CR.it=it;CR.q=it.quad.map(p=>p.slice());CR.rot=it.rot;CR.filter=it.filter;
   try{CR.img=await loadImg(it.url);}catch(e){toast('تعذّر فتح الصورة');return;}
   const k=Math.min(1,2000/Math.max(it.nw,it.nh));CR.big=mkCanvas(it.nw*k,it.nh*k);CR.big.getContext('2d').drawImage(CR.img,0,0,CR.big.width,CR.big.height);
-  $('#crop').hidden=false;
+  $('#crop').hidden=false;try{$('#crPv').classList.toggle('min',localStorage.getItem('safahat-crpv')==='min');}catch(_){}
   $('#crFilters').innerHTML=FILTERS.map(([k,n])=>`<button class="tchip${k===CR.filter?' on':''}" data-cf="${k}">${n}</button>`).join('');
   $('#crFilters').querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{CR.filter=b.dataset.cf;$('#crFilters').querySelectorAll('[data-cf]').forEach(x=>x.classList.toggle('on',x===b));crPreview();});
   crRotLabel();requestAnimationFrame(()=>{layoutCrop();crPreview();});
@@ -3195,10 +3199,10 @@ function crPreview(){const it=CR.it,c=$('#crPrev');if(!it||!c||!CR.big)return;
   if(!CR.pv||CR.pv.width!==sw){CR.pv=mkCanvas(sw,sh);CR.pv.getContext('2d').drawImage(src,0,0,sw,sh);CR.pvd=CR.pv.getContext('2d').getImageData(0,0,sw,sh);}
   const q=CR.q.map(([x,y])=>[x*sw,y*sh]);let [W,H]=outSize(q,it.card);const m=Math.min(1,340/Math.max(W,H));W=Math.max(8,Math.round(W*m));H=Math.max(8,Math.round(H*m));
   let o=mkCanvas(W,H);o.getContext('2d').putImageData(warpData(CR.pvd,q,W,H),0,0);filterCanvas(o,CR.filter);if(CR.rot)o=rotCanvas(o,CR.rot);
-  c.width=o.width;c.height=o.height;c.getContext('2d').drawImage(o,0,0);const box=$('#crPv');if(box){box.hidden=false;box.querySelector('span').textContent='الناتج · '+(FNAME[CR.filter]||'');}}
+  c.width=o.width;c.height=o.height;c.getContext('2d').drawImage(o,0,0);const box=$('#crPv');if(box){box.hidden=false;box.querySelector('span').textContent=(box.classList.contains('min')?'إظهار الناتج · ':'الناتج · ')+(FNAME[CR.filter]||'');}}
 function closeCrop(){CR.pv=null;CR.pvd=null;$('#crop').hidden=true;$('#crLoupe').hidden=true;if(CR.big)CR.big.width=CR.big.height=0;CR.img=CR.big=null;CR.it=null;}
 function layoutCrop(){if(!CR.img)return;const st=$('#crStage'),r=st.getBoundingClientRect(),W=r.width,H=r.height,nw=CR.it.nw,nh=CR.it.nh;
-  const pad=Math.max(22,Math.min(36,W*.06)),s=Math.min((W-pad*2)/nw,(H-pad*2)/nh);CR.fit={s,ox:(W-nw*s)/2,oy:(H-nh*s)/2,W,H,nw,nh};
+  const pad=Math.max(22,Math.min(36,W*.06)),rb=W<=640&&!$('#crPv').classList.contains('min')?104:0,s=Math.min((W-pad*2)/nw,(H-pad*2-rb)/nh);CR.fit={s,ox:(W-nw*s)/2,oy:(H-rb-nh*s)/2,W,H,nw,nh};
   for(const id of ['crImg','crOv']){const c=$('#'+id);c.width=Math.round(W*DPR);c.height=Math.round(H*DPR);}
   const x=$('#crImg').getContext('2d');x.setTransform(DPR,0,0,DPR,0,0);x.clearRect(0,0,W,H);x.drawImage(CR.big,CR.fit.ox,CR.fit.oy,nw*s,nh*s);drawCropOv();}
 const crP=i=>{const f=CR.fit,q=CR.q[i];return [f.ox+q[0]*f.nw*f.s,f.oy+q[1]*f.nh*f.s];};
@@ -3220,14 +3224,14 @@ function crDown(e){if(!CR.fit)return;const p=crPos(e),P=[0,1,2,3].map(crP);let b
   else{let be=-1,bde=26;for(let i=0;i<4;i++){const m=lerp2(P[i],P[(i+1)%4],.5),d=Math.hypot(m[0]-p[0],m[1]-p[1]);if(d<bde){bde=d;be=i;}}
     if(be>=0)CR.drag={t:'e',i:be};else if(inQuad(p,P))CR.drag={t:'a'};else return;}
   CR.drag.start=p;CR.drag.q0=CR.q.map(a=>a.slice());$('#crStage').setPointerCapture(e.pointerId);e.preventDefault();crMove(p);}
-function crMove(p){const f=CR.fit,d=CR.drag;if(!d)return;const cl=v=>Math.max(0,Math.min(1,v));
+function crMove(p){const f=CR.fit,d=CR.drag;if(!d)return;{const pv=$('#crPv'),st=$('#crStage').getBoundingClientRect(),r=pv.getBoundingClientRect();pv.classList.toggle('fade',p[0]>r.left-st.left-40&&p[0]<r.right-st.left+40&&p[1]>r.top-st.top-40&&p[1]<r.bottom-st.top+40);}const cl=v=>Math.max(0,Math.min(1,v));
   if(d.t==='c'){CR.q[d.i]=[cl((p[0]-f.ox)/(f.nw*f.s)),cl((p[1]-f.oy)/(f.nh*f.s))];crLoupe(CR.q[d.i]);}
   else{let dx=(p[0]-d.start[0])/(f.nw*f.s),dy=(p[1]-d.start[1])/(f.nh*f.s);const idx=d.t==='e'?[d.i,(d.i+1)%4]:[0,1,2,3];
     for(const i of idx){const q=d.q0[i];dx=Math.max(-q[0],Math.min(1-q[0],dx));dy=Math.max(-q[1],Math.min(1-q[1],dy));}
     for(const i of idx)CR.q[i]=[d.q0[i][0]+dx,d.q0[i][1]+dy];
     if(d.t==='e')crLoupe(lerp2(CR.q[idx[0]],CR.q[idx[1]],.5));else $('#crLoupe').hidden=true;}
   drawCropOv();}
-function crUp(){const was=!!CR.drag;CR.drag=null;$('#crLoupe').hidden=true;drawCropOv();if(was)crPreview();}
+function crUp(){const was=!!CR.drag;$('#crPv').classList.remove('fade');CR.drag=null;$('#crLoupe').hidden=true;drawCropOv();if(was)crPreview();}
 function crLoupe(n){const L=$('#crLoupe'),f=CR.fit,size=116,sx=f.ox+n[0]*f.nw*f.s,sy=f.oy+n[1]*f.nh*f.s;
   L.hidden=false;L.width=L.height=Math.round(size*DPR);let ly=sy-size-48;if(ly<8)ly=sy+48;const lx=Math.max(8,Math.min(f.W-size-8,sx-size/2));L.style.left=lx+'px';L.style.top=ly+'px';
   const x=L.getContext('2d'),B=CR.big,bs=B.width/f.nw,zoom=3,k=f.s*zoom*DPR/ 1; // screen px per image px in loupe
@@ -3271,6 +3275,8 @@ function wireScanner(){
   $('#crFull').onclick=()=>{CR.q=[[0,0],[1,0],[1,1],[0,1]];drawCropOv();crPreview();};
   $('#crRot').onclick=()=>{CR.rot=(CR.rot+90)%360;crRotLabel();crPreview();};
   $('#crCancel').onclick=closeCrop;$('#crOk').onclick=cropDone;
+  $('#crPv').addEventListener('pointerdown',e=>e.stopPropagation());
+  $('#crPv').onclick=e=>{e.stopPropagation();const b=$('#crPv');b.classList.toggle('min');try{localStorage.setItem('safahat-crpv',b.classList.contains('min')?'min':'');}catch(_){}layoutCrop();crPreview();};
   window.addEventListener('resize',()=>{if(!$('#crop').hidden)layoutCrop();});
 }
 
