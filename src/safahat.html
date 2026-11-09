@@ -126,6 +126,12 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.65;str
 .lrtxt{display:flex;flex-direction:column;min-width:0}.lrtxt b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lrtxt small{color:var(--muted);font-size:12px}
 .lrow .selck{position:static;flex:none;border-color:var(--line-strong);background:transparent;color:#fff}
 .fcards.subf{margin-bottom:16px}
+.lib .lthumb,.lib .fcmain,.lib .lrmain,.lib .cont{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.lib img,.lib svg{-webkit-user-drag:none}
+.ldghost{position:fixed;left:0;top:0;z-index:90;pointer-events:none;width:92px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:14px;background:color-mix(in srgb,var(--surface) 92%,transparent);box-shadow:0 18px 40px rgba(0,0,0,.35);transform-origin:center;opacity:.95;transition:box-shadow .12s}
+.ldghost img,.ldghost .ph{width:62px;height:80px;object-fit:cover;border-radius:6px;background:#fff;box-shadow:0 0 0 1px var(--line)}.ldghost .fart{width:62px;height:auto}
+.ldghost b{font-size:11.5px;max-width:84px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}.ldghost.ok{box-shadow:0 0 0 3px var(--accent),0 18px 40px rgba(0,0,0,.35)}
+.lddrag{opacity:.35}
+.ldtgt{outline:3px solid var(--accent);outline-offset:3px;border-radius:16px;background:var(--accent-soft)!important;transform:scale(1.03);transition:transform .12s}
 .fsheet2{display:flex;flex-direction:column;align-items:center;gap:12px}.fsheet2 .fprev{display:grid;place-items:center}.fsheet2 .fart.big{width:132px;height:auto}
 .fdname{width:min(100%,360px);text-align:center;font:600 18px var(--f-body,inherit);padding:10px 14px;border-radius:99px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
 .fdtabs{width:min(100%,360px);display:grid!important;grid-template-columns:repeat(3,1fr)}#fdPane{width:100%}
@@ -4631,7 +4637,59 @@ function docMenu(id,btn){
 function openFabMenu(){
   openMenu($('#fab'),mrow('open','open','#0f8a74','فتح ملف','PDF أو صور من جهازك')+mrow('scan','camera','#c0362c','مسح ضوئي','')+mrow('idcard','idcard','#2459d6','البطاقة المدنية','')+mrow('blank','blank','#ea580c','ملف فارغ','')+'<div class="msep"></div>'+mrow('newFolder','folderplus','#2459d6','مجلد جديد',''),k=>libAction(k));
 }
-function wireLib(){
+/* ---------- drag and drop in the library ----------
+   press and hold a file or folder (or drag it with the mouse), then drop it:
+   on another file -> a new folder holding both; on a folder -> into that folder; on «المفضلة» / «المحذوفة» / the back button */
+const LD={t:0,src:null,on:false,ghost:null,tgt:null,end:0,pid:null};
+function ldSrcOf(el){if(!el||!el.closest||el.closest('.lmore,.fcstar,.fcmore'))return null;
+  const d=el.closest('[data-open]');if(d){const doc=LB.docs.find(x=>x.id===d.dataset.open);if(doc&&!doc.deleted)return {kind:'doc',id:doc.id,el:d.closest('.lcard,.lrow,.cont')||d};return null;}
+  const f=el.closest('.fcmain[data-folder]');if(f&&LB.folders.some(x=>x.id===f.dataset.folder))return {kind:'folder',id:f.dataset.folder,el:f.closest('.fcard')||f};return null;}
+function ldTargetOf(el){const s=LD.src;if(!el||!el.closest||!s)return null;
+  const d=el.closest('[data-open]');if(d&&s.kind==='doc'&&d.dataset.open!==s.id){const doc=LB.docs.find(x=>x.id===d.dataset.open);if(doc&&!doc.deleted)return {kind:'doc',id:doc.id,el:d.closest('.lcard,.lrow,.cont')||d};}
+  const f=el.closest('[data-folder]');if(f){const k=f.dataset.folder;
+    if(LB.folders.some(x=>x.id===k)){if(s.kind==='folder'&&(k===s.id||isInside(k,s.id)))return null;if(s.kind==='doc'&&(LB.docs.find(x=>x.id===s.id)||{}).folder===k)return null;return {kind:'folder',id:k,el:f.closest('.fcard')||f};}
+    if(s.kind==='doc'&&(k==='fav'||k==='trash'))return {kind:k,el:f};}
+  const up=el.closest('.lback');if(up&&LB.folder&&LB.folders.some(x=>x.id===LB.folder))return {kind:'up',el:up};
+  return null;}
+function ldStart(x,y){const s=LD.src;if(!s||LD.on)return;LD.on=true;try{navigator.vibrate&&navigator.vibrate(12);}catch(_){}
+  const g=document.createElement('div');g.className='ldghost';
+  if(s.kind==='doc'){const d=LB.docs.find(z=>z.id===s.id);g.innerHTML=`${d&&d.thumb?`<img src="${d.thumb}" alt="">`:'<span class="ph"></span>'}<b>${esc(d?d.name:'')}</b>`;}
+  else{const f=LB.folders.find(z=>z.id===s.id);g.innerHTML=`${folderArt(f,'fart')}<b>${esc(f?f.name:'')}</b>`;}
+  document.body.appendChild(g);LD.ghost=g;s.el.classList.add('lddrag');ldMove(x,y);}
+function ldMove(x,y){const g=LD.ghost;if(!g)return;g.style.transform=`translate(${x-46}px,${y-60}px)`;
+  const el=document.elementFromPoint(x,y),t=ldTargetOf(el);if(LD.tgt&&(!t||t.el!==LD.tgt.el))LD.tgt.el.classList.remove('ldtgt');if(t)t.el.classList.add('ldtgt');LD.tgt=t;
+  g.classList.toggle('ok',!!t);const mn=$('#libMain'),r=mn.getBoundingClientRect();if(y<r.top+70)mn.scrollBy(0,-12);else if(y>r.bottom-150)mn.scrollBy(0,12);}
+function ldClear(){if(LD.ghost)LD.ghost.remove();LD.ghost=null;if(LD.src&&LD.src.el)LD.src.el.classList.remove('lddrag');if(LD.tgt)LD.tgt.el.classList.remove('ldtgt');LD.on=false;LD.tgt=null;LD.end=performance.now();}
+async function ldDrop(){const s=LD.src,t=LD.tgt;ldClear();if(!s||!t)return;
+  const doc=s.kind==='doc'?LB.docs.find(x=>x.id===s.id):null,fol=s.kind==='folder'?LB.folders.find(x=>x.id===s.id):null;
+  const here=LB.tab==='files'&&LB.folder&&LB.folders.some(x=>x.id===LB.folder)?LB.folder:null;
+  if(t.kind==='doc'&&doc){const other=LB.docs.find(x=>x.id===t.id);if(!other)return;
+    // a new folder, in the place where the two files were, holding both
+    const base='مجلد جديد',names=new Set(LB.folders.map(f=>f.name));let name=base,k=2;while(names.has(name))name=base+' '+ar(k++);
+    const fo={id:nidL('f'),name,created:Date.now(),color:FOLDER_COLORS[LB.folders.length%FOLDER_COLORS.length]};const par=other.folder&&LB.folders.some(x=>x.id===other.folder)?other.folder:here;if(par)fo.parent=par;
+    await dbPut('folders',fo);LB.folders.push(fo);for(const d of [doc,other]){d.folder=fo.id;await dbPut('docs',d);}
+    LB.tab='files';renderLib();toast('أُنشئ مجلد يضم الملفين. اكتب اسمه',2600);folderSheet(fo);setTimeout(()=>{const i=$('#fdName');if(i)i.select();},120);return;}
+  if(t.kind==='folder'){const dest=LB.folders.find(x=>x.id===t.id);if(!dest)return;
+    if(doc){doc.folder=dest.id;await dbPut('docs',doc);}else if(fol){fol.parent=dest.id;await dbPut('folders',fol);}
+    renderLib();toast('نُقل '+(doc?'الملف':'المجلد')+' إلى «'+dest.name+'»',2200);return;}
+  if(t.kind==='up'){const cur=LB.folders.find(x=>x.id===LB.folder),up=cur&&cur.parent&&LB.folders.some(x=>x.id===cur.parent)?cur.parent:null;
+    if(doc){doc.folder=up;await dbPut('docs',doc);}else if(fol){if(up)fol.parent=up;else delete fol.parent;await dbPut('folders',fol);}
+    renderLib();toast('نُقل إلى «'+(up?LB.folders.find(x=>x.id===up).name:'ملفاتي')+'»',2200);return;}
+  if(t.kind==='fav'&&doc){doc.fav=true;await dbPut('docs',doc);renderLib();toast('أُضيف إلى المفضلة');return;}
+  if(t.kind==='trash'&&doc){doc.deleted=Date.now();await dbPut('docs',doc);if(S.docId===doc.id)S.docId=null;renderLib();toast('نُقل إلى المحذوفة مؤخراً. يمكنك استعادته منها',2600);}}
+function libDragWire(){const root=$('#libMain');
+  root.addEventListener('pointerdown',e=>{if(LB.selecting||e.button>0||LD.on)return;const s=ldSrcOf(e.target);if(!s)return;LD.src=s;LD.x=e.clientX;LD.y=e.clientY;LD.pid=e.pointerId;LD.type=e.pointerType;
+    clearTimeout(LD.t);if(e.pointerType!=='mouse')LD.t=setTimeout(()=>ldStart(LD.x,LD.y),400);},true);
+  window.addEventListener('pointermove',e=>{if(!LD.src||e.pointerId!==LD.pid)return;
+    if(!LD.on){const d=Math.hypot(e.clientX-LD.x,e.clientY-LD.y);if(LD.type==='mouse'){if(d>8)ldStart(e.clientX,e.clientY);}else if(d>10){clearTimeout(LD.t);LD.src=null;}else{LD.x=e.clientX;LD.y=e.clientY;}return;}
+    e.preventDefault();ldMove(e.clientX,e.clientY);},{passive:false});
+  window.addEventListener('pointerup',e=>{if(!LD.src||e.pointerId!==LD.pid)return;clearTimeout(LD.t);if(LD.on)ldDrop();LD.src=null;});
+  window.addEventListener('pointercancel',e=>{if(e.pointerId!==LD.pid)return;clearTimeout(LD.t);if(LD.on)ldClear();LD.src=null;});
+  root.addEventListener('touchmove',e=>{if(LD.on)e.preventDefault();},{passive:false});
+  root.addEventListener('click',e=>{if(performance.now()-LD.end<450){e.stopPropagation();e.preventDefault();}},true);
+  root.addEventListener('contextmenu',e=>{if(LD.src||LD.on)e.preventDefault();});
+  root.addEventListener('dragstart',e=>e.preventDefault());}
+function wireLib(){libDragWire();
   const tb={home:['home','الرئيسية'],files:['folder','ملفاتي'],recent:['clock','الأخيرة'],tools:['all','الأدوات'],search:['search','بحث']};
   $('#tabbar').innerHTML=Object.entries(tb).map(([k,[i,l]])=>`<button data-lt="${k}">${ic(i)}<span>${l}</span></button>`).join('');
   $('#tabbar').querySelectorAll('[data-lt]').forEach(b=>b.onclick=()=>{const t=b.dataset.lt;if(t==='files'&&LB.tab==='files')LB.folder=null;LB.tab=t;renderLib();$('#libMain').scrollTop=0;});
