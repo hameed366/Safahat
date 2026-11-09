@@ -112,6 +112,13 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.65;str
 .fvd{display:block;width:var(--d);height:var(--d);border-radius:50%;background:var(--c)}.fvd.mk{border-radius:3px;width:calc(var(--d) + 6px);opacity:var(--o)}
 .fvs svg{width:18px;height:18px}
 .rd-fav{width:30px;height:30px}
+.bgpv{display:grid;place-items:center;padding:10px;border-radius:14px;border:1px solid var(--line);background-color:#fff;background-image:linear-gradient(45deg,#e5e7eb 25%,transparent 25%,transparent 75%,#e5e7eb 75%),linear-gradient(45deg,#e5e7eb 25%,transparent 25%,transparent 75%,#e5e7eb 75%);background-size:18px 18px;background-position:0 0,9px 9px}
+.bgpv canvas{max-width:100%;max-height:42vh;display:block}
+.stl{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto;padding:2px}
+.st{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.st .sn{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent-strong);display:grid;place-items:center;font-weight:700;font-size:12px}
+.st .sb{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px;align-items:flex-start}.st small{color:var(--muted);font-size:12.5px}.st canvas{max-width:100%;height:auto;border-radius:6px}.st p{margin:0;line-height:1.8}
+.stwait{padding:24px;text-align:center;color:var(--muted)}
 .mscale{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.mscale input{width:84px;padding:7px 8px;border-radius:9px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;text-align:center}
 .tb.favtb .fvd,.tb.favtb .fvs{margin:2px auto}
 .sw.same{background:var(--bg);color:var(--ink);font:700 15px/1 system-ui;display:grid;place-items:center}
@@ -1914,7 +1921,7 @@ function tapAction(id,pt){
   if(t==='stamp'&&S.pending&&S.pending.label){pushUndo();p.annots.push({type:'stamp',pts:[pt],label:S.pending.label,color:S.pending.color,size:.045});markDirty();drawOverlay(id);return;}
   if((t==='sign'||t==='image')&&S.pending&&S.pending.key){const im=S.imgs[S.pending.key].el;const w=t==='sign'?.3:.45;const h=w*r*im.naturalHeight/im.naturalWidth;
     pushUndo();p.annots.push({type:'image',key:S.pending.key,pts:[[Math.max(0,pt[0]-w/2),Math.max(0,pt[1]-h/2)]],w,h});markDirty();drawOverlay(id);
-    const na=p.annots[p.annots.length-1];setTool('lasso');selectItems(id,[na]);toast('اسحبها لتحريكها، واسحب المربعات الصغيرة لتغيير حجمها، أو اختر «قص» أو «قلب»',3600);return;}
+    const na=p.annots[p.annots.length-1];setTool('lasso');selectItems(id,[na]);toast('اسحبها لتحريكها، واسحب المربعات الصغيرة لتغيير حجمها، أو اختر «قص» أو «مسح الخلفية» أو «قلب»',3800);return;}
   if(t==='sign')openSignSheet();else if(t==='stamp')openStampSheet();else if(t==='image')$('#fileImg').click();
 }
 function scaleSel(f){if(!S.sel||!S.sel.a)return;const a=S.sel.a,p=byId(S.sel.id);pushUndo();
@@ -2061,7 +2068,7 @@ function renderProps(){
     h+=`<button class="toggle${pr.straight?' on':''}" id="pst" aria-pressed="${!!pr.straight}">${ic('line')}خط مستقيم</button>`;
   if(S.tool==='hwrite'&&!t.sel){const hm=store.get('safahat-hwmode','auto');
     h+=`<div class="pgroup"><span class="plabel">التحويل إلى</span><div class="seg">${[['auto','تلقائي'],['text','نص'],['math','معادلة رياضية']].map(([v,l])=>`<button type="button" data-hm="${v}" class="${v===hm?'on':''}">${l}</button>`).join('')}</div></div>
-      <button class="toggle${calcOn()?' on':''}" id="pcalc" aria-pressed="${calcOn()}">${ic('check')}حساب وكتابة الناتج</button><button class="toggle" id="ptrain">${ic('hw')}درّب على خطك</button>`;}
+      <button class="toggle${calcOn()?' on':''}" id="pcalc" aria-pressed="${calcOn()}">${ic('check')}حساب وكتابة الناتج</button><button class="toggle${store.get('safahat-autosteps',false)?' on':''}" id="psteps">${ic('list')}كتابة الخطوات</button><button class="toggle" id="ptrain">${ic('hw')}درّب على خطك</button>`;}
   if(!t.sel&&k==='measure'){const M=S.props.measure,mp=S.mpoly;
     h+=`<div class="pgroup"><span class="plabel">مقياس الرسم: ١ سم على الصفحة يساوي</span><div class="mscale"><input type="number" id="msK" min="0.001" step="any" value="${M.k||1}" dir="ltr"><div class="seg" id="msU">${Object.entries(MUNITS).map(([v,l])=>`<button type="button" data-mu="${v}" class="${(M.unit||'cm')===v?'on':''}">${l}</button>`).join('')}</div></div></div>`;
     h+=`<p class="hint" style="margin:0;max-width:330px">${S.tool==='mdist'?'اسحب من نقطة إلى أخرى. يُقاس الطول الحقيقي على الورقة ثم يُضرب في مقياس الرسم.':S.tool==='mangle'?'اضغط على نقطة من الضلع الأول، ثم على رأس الزاوية، ثم على نقطة من الضلع الثاني.':'اضغط على رؤوس الشكل واحداً بعد الآخر، ثم اضغط على الرأس الأول لإغلاقه'+(S.tool==='mperim'?'، أو اضغط مرتين على آخر نقطة لقياس خط مفتوح.':'.')}</p>`;
@@ -2090,6 +2097,7 @@ function renderProps(){
   box.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>{S.props[k].op=+b.dataset.op;if(po)po.value=b.dataset.op;outs();paintPreview(k,S.props[k]);saveProps();box.querySelectorAll('[data-op]').forEach(x=>x.classList.toggle('on',x===b));});
   const st=$('#pst');if(st)st.onclick=()=>{S.props[k].straight=!S.props[k].straight;st.classList.toggle('on',S.props[k].straight);st.setAttribute('aria-pressed',S.props[k].straight);saveProps();
     toast(S.props[k].straight?'خط مستقيم: اسحب من بداية السطر إلى نهايته':'رسم حر');};
+  const pst=$('#psteps');if(pst)pst.onclick=()=>{const v=!store.get('safahat-autosteps',false);store.set('safahat-autosteps',v);pst.classList.toggle('on',v);toast(v?'ستُكتب خطوات الحل تحت كل معادلة تُحوَّل (الحسابات والمعادلات من الدرجة الأولى والثانية)':'لن تُكتب الخطوات تلقائياً. حدّد المعادلة واضغط «الخطوات» متى شئت',3600);};
   const ptr=$('#ptrain');if(ptr)ptr.onclick=()=>inkTrainSheet();
   const pc=$('#pcalc');if(pc)pc.onclick=()=>{const v=!calcOn();store.set('safahat-calc',v);pc.classList.toggle('on',v);pc.setAttribute('aria-pressed',v);toast(v?'سيُحسب الناتج ويُكتب بعد كل تحويل':'لن يُكتب الناتج');};
   const setFill=(f,fc)=>{if(t.sel){pushUndo('التعبئة');const a=t.sel;if(f!==undefined){if(f==='none')delete a.fill;else a.fill=f;}if(fc!==undefined){if(fc)a.fc=fc;else delete a.fc;}markDirty();drawOverlay(S.sel.id);}
@@ -4051,7 +4059,7 @@ function setSaveState(st){const el=$('#dirty');if(!el)return;el.hidden=false;el.
 function scheduleSave(){if(!DB||!S.docId)return;setSaveState('pending');clearTimeout(saveTimer);saveTimer=setTimeout(saveProject,1100);}
 async function saveProject(){
   if(!DB||!S.docId)return;if(saving){scheduleSave();return;}saving=true;clearTimeout(saveTimer);
-  try{const used=new Set();for(const p of S.pages){if(p.src.kind==='img')used.add(p.src.key);for(const a of p.annots)if(a.key)used.add(a.key);}
+  try{const used=new Set();for(const p of S.pages){if(p.src.kind==='img')used.add(p.src.key);for(const a of p.annots){if(a.key)used.add(a.key);if(a.origKey)used.add(a.origKey);}}
     const plain=v=>JSON.parse(JSON.stringify(v,(k,x)=>(typeof HTMLElement!=='undefined'&&x instanceof HTMLElement)||(typeof ImageBitmap!=='undefined'&&x instanceof ImageBitmap)||typeof x==='function'?undefined:x));
     S.versions=S.versions||[];const lv=S.versions[S.versions.length-1];
     if(S.pages.length&&(!lv||Date.now()-lv.t>15*60*1000)){S.versions.push({t:Date.now(),s:snap(),n:S.pages.length,a:S.pages.reduce((x,p)=>x+p.annots.length,0)});
@@ -4889,11 +4897,11 @@ function renderSelbar(mode){
     const one=m.items.length===1&&['text','math'].includes(m.items[0].type),txt=m.items.some(a=>a.type==='text'||a.type==='edit'),ax=m.items.some(a=>a.type==='axes'||a.type==='numline');
     const mth=m.items.length===1&&m.items[0].type==='math'&&MSOLVE.compute(m.items[0].tex,m.items[0].rtl);
     const hasW=m.items.some(a=>a.w&&a.type!=='image');const pic=m.items.length===1&&m.items[0].type==='image';
-    if(m.rect){h=B('copyimg','copy','نسخ','hi')+B('erase','eraser','مسح','dng')+B('copy','layers','نسخ العناصر')+(CLIP?B('paste','paste','لصق'):'')+B('img','image','حفظ صورة')+B('cover','whiteout','تغطية');sb.innerHTML=h+B('x','x','إغلاق');sb.hidden=false;sb.scrollLeft=0;positionSelbar();return;}
-    h=(pic?B('cropi','crop','قص','hi')+B('flipH','flipH','قلب')+B('flipV','flipV','قلب رأسي'):'')+(ink?B('ink','hw','تحويل','hi'):'')+(one?B('editx','textedit','تعديل','hi'):'')+(hasW?B('thick','line','السماكة'):'')+(mth?B('calc','check','الحل','hi'):'')+(ax?B('nums','num','الأرقام'):'')+(m.items.some(canFill)?B('fillm','fill','التعبئة'):'')+(m.items.some(canRot)?B('rotm','rotR','تدوير'):'')+(txt?B('font','text','الخط'):'')+B('color','palette','اللون')+B('copy','copy','نسخ')+B('dup','plus','تكرار')+B('big','bigger','أكبر')+B('small','smaller','أصغر')+B('front','front','للأمام')+B('del','trash','حذف','dng');}
+    if(m.rect){h=B('copyimg','copy','نسخ','hi')+B('erase','eraser','مسح','dng')+(AI?B('steps','list','حل بالخطوات'):'')+B('copy','layers','نسخ العناصر')+(CLIP?B('paste','paste','لصق'):'')+B('img','image','حفظ صورة')+B('cover','whiteout','تغطية');sb.innerHTML=h+B('x','x','إغلاق');sb.hidden=false;sb.scrollLeft=0;positionSelbar();return;}
+    h=(pic?B('cropi','crop','قص','hi')+B('rmbg','wand','مسح الخلفية')+B('flipH','flipH','قلب')+B('flipV','flipV','قلب رأسي'):'')+(ink?B('ink','hw','تحويل','hi'):'')+(one?B('editx','textedit','تعديل','hi'):'')+(hasW?B('thick','line','السماكة'):'')+(mth?B('calc','check','الحل','hi'):'')+(m.items.length===1&&(m.items[0].type==='math'||m.items[0].type==='text')||ink&&AI?B('steps','list','الخطوات'):'')+(ax?B('nums','num','الأرقام'):'')+(m.items.some(canFill)?B('fillm','fill','التعبئة'):'')+(m.items.some(canRot)?B('rotm','rotR','تدوير'):'')+(txt?B('font','text','الخط'):'')+B('color','palette','اللون')+B('copy','copy','نسخ')+B('dup','plus','تكرار')+B('big','bigger','أكبر')+B('small','smaller','أصغر')+B('front','front','للأمام')+B('del','trash','حذف','dng');}
   else{const t=!!m.text;
     h=(t?B('copytext','copy','نسخ النص','hi')+B('hl','hltext','تظليل')+B('ul','under','تسطير')+B('st','strike','شطب'):'')+
-      (AI?B('convert','hw','تحويل الكتابة',t?'':'hi')+B('read','ocr',t?'قراءة':'قراءة النص')+B('explain','bulb','شرح')+B('translate','globe','ترجمة'):'')+
+      (AI?B('convert','hw','تحويل الكتابة',t?'':'hi')+B('steps','list','حل بالخطوات')+B('read','ocr',t?'قراءة':'قراءة النص')+B('explain','bulb','شرح')+B('translate','globe','ترجمة'):'')+
       B('copyimg','copy','نسخ كصورة')+B('img','image','حفظ صورة')+B('cover','whiteout','تغطية')+(CLIP?B('paste','paste','لصق'):'');}
   sb.innerHTML=h+B('x','x','إغلاق');sb.hidden=false;sb.scrollLeft=0;positionSelbar();
 }
@@ -4963,6 +4971,8 @@ function selAction(k,colorVal){
     case 'fillm':renderSelbar('fill');break;
     case 'rotm':renderSelbar('rot');break;
     case 'cropi':startCrop(m);break;
+    case 'steps':stepsFor(m);break;
+    case 'rmbg':{const a=m.items[0];if(a&&a.type==='image')bgSheet(m.id,a);break;}
     case 'cropok':cropEnd(true);break;
     case 'cropx':cropEnd(false);break;
     case 'cropfull':if(S.icrop){S.icrop.dc=[0,0,1,1];cropApply();drawOverlay(S.icrop.id);}break;
@@ -5368,7 +5378,74 @@ const MSOLVE=(()=>{
         const parts=rs.map(r=>fmt(r,rtl,pf||true));return {mode:'line',tex:v+' = '+parts.join(rtl?' ، ':' , ')};}
     }catch(e){return null;}
     return null;}
-  return {compute,parse,lex};
+  /* ---------- solution steps (offline): arithmetic by order of operations, linear and quadratic equations ---------- */
+  function ratOf(x){if(!isFinite(x))return null;for(let d=1;d<=1000;d++){const n=Math.round(x*d);if(Math.abs(n/d-x)<1e-9*Math.max(1,Math.abs(x)))return [n,d];}return null;}
+  function num(x,rtl){if(Math.abs(x)<1e-12)x=0;const dig=s=>rtl?s.replace(/[0-9]/g,d=>HD[d]).replace('.','٫'):s;
+    if(Math.abs(x-Math.round(x))<1e-9)return dig(String(Math.round(x)));const f=ratOf(x);
+    if(f&&f[1]<=1000)return (f[0]<0?'-':'')+'\\frac{'+dig(String(Math.abs(f[0])))+'}{'+dig(String(f[1]))+'}';return dig(String(+x.toFixed(4)));}
+  const PREC={'+':1,'-':1,'*':2,'/':3,neg:4,'^':5,root:6,num:7,var:7};
+  function T(n,rtl){const w=(c,p)=>{const s=T(c,rtl);return (PREC[c.n]<p||c.n==='num'&&c.v<0&&p>1)?'('+s+')':s;};
+    switch(n.n){case 'num':return num(n.v,rtl);case 'var':return n.v;
+      case '+':return w(n.a,1)+' + '+w(n.b,1.5);case '-':return w(n.a,1)+' - '+w(n.b,1.5);
+      case '*':{const a=w(n.a,2),b=w(n.b,2.5);return n.a.n==='num'&&n.a.v>=0&&(n.b.n==='var'||n.b.n==='^'&&n.b.a.n==='var'||n.b.n==='+'||n.b.n==='-'||n.b.n==='root')?a+b:a+' \\times '+b;}
+      case '/':return '\\frac{'+T(n.a,rtl)+'}{'+T(n.b,rtl)+'}';case 'neg':return '-'+w(n.a,4);
+      case '^':return w(n.a,5.5)+'^{'+T(n.b,rtl)+'}';case 'root':return n.idx?'\\sqrt['+T(n.idx,rtl)+']{'+T(n.a,rtl)+'}':'\\sqrt{'+T(n.a,rtl)+'}';}return '?';}
+  // one operation at a time: the leftmost operation whose operands are both plain numbers
+  const isI=x=>x&&x.n==='num'&&Math.abs(x.v-Math.round(x.v))<1e-9,fr=x=>x&&x.n==='/'&&isI(x.a)&&isI(x.b)&&x.b.v;
+  const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a||1;};
+  function reduce1(n){if(n.n==='num'||n.n==='var')return null;
+    // fractions the way the textbook does them: same denominator first, then numerators; product of numerators over product of denominators
+    if((n.n==='+'||n.n==='-')&&fr(n.a)&&fr(n.b)){const d1=n.a.b.v,d2=n.b.b.v;
+      if(d1!==d2){const l=Math.abs(d1*d2)/gcd(d1,d2);return {n:n.n,a:{n:'/',a:{n:'num',v:n.a.a.v*l/d1},b:{n:'num',v:l}},b:{n:'/',a:{n:'num',v:n.b.a.v*l/d2},b:{n:'num',v:l}}};}
+      return {n:'/',a:{n:n.n,a:n.a.a,b:n.b.a},b:n.a.b,keep:1};}
+    if(n.n==='*'&&fr(n.a)&&fr(n.b))return {n:'/',a:{n:'*',a:n.a.a,b:n.b.a},b:{n:'*',a:n.a.b,b:n.b.b},keep:1};
+    if(n.n==='/'&&n.keep&&isI(n.a)&&isI(n.b)){const g=gcd(n.a.v,n.b.v);if(g>1)return {n:'/',a:{n:'num',v:n.a.v/g},b:{n:'num',v:n.b.v/g}};}
+    const allNum=['a','b','idx'].every(k=>!n[k]||n[k].n==='num');
+    if(allNum){try{return {n:'num',v:ev(n,{})};}catch(e){return null;}}
+    for(const k of ['a','b','idx']){if(!n[k])continue;const r=reduce1(n[k]);if(r){return {...n,[k]:r};}}return null;}
+  const term=(a,v,rtl,first)=>{if(Math.abs(a)<1e-12)return '';const s=Math.abs(Math.abs(a)-1)<1e-12?v:num(Math.abs(a),rtl)+v;return first?(a<0?'-':'')+s:(a<0?' - ':' + ')+s;};
+  const lin=(a,b,v,rtl)=>{let s=term(a,v,rtl,true);if(Math.abs(b)>1e-12||!s)s+=s?(b<0?' - ':' + ')+num(Math.abs(b),rtl):num(b,rtl);return s;};
+  const L=(rtl,ar,en)=>rtl?ar:en;
+  function steps(tex,rtl){let P;try{P=parse(lex(tex));}catch(e){return null;}
+    const {sides,rel}=P;const vars=new Set();sides.forEach(s=>varsOf(s,vars));const out=[];const add=(t,say)=>{if(!out.length||out[out.length-1].tex!==t)out.push({tex:t,say:say||''});};
+    try{
+      if(!vars.size&&(!rel.length||rel.length===1&&(sides[1]===null))){let n=sides[0];add(T(n,rtl),L(rtl,'المسألة','Problem'));
+        for(let k=0;k<40;k++){const r=reduce1(n);if(!r)break;n=r;add(T(n,rtl),'');}
+        if(n.n!=='num')return null;out.forEach((s,i)=>{if(i)s.tex='= '+s.tex;});return {kind:'calc',steps:out,answer:num(n.v,rtl)};}
+      if(rel.length===1&&rel[0]==='='&&vars.size===1&&sides[1]){const [v]=[...vars];const fL=x=>ev(sides[0],{[v]:x}),fR=x=>ev(sides[1],{[v]:x});
+        const aL=fL(1)-fL(0),bL=fL(0),aR=fR(1)-fR(0),bR=fR(0);const linear=Math.abs(fL(2)-(2*aL+bL))<1e-9&&Math.abs(fR(2)-(2*aR+bR))<1e-9;
+        add(T(sides[0],rtl)+' = '+T(sides[1],rtl),L(rtl,'المعادلة','Equation'));
+        if(linear){add(lin(aL,bL,v,rtl)+' = '+lin(aR,bR,v,rtl),L(rtl,'تبسيط الطرفين','Simplify both sides'));
+          let a=aL,b=bL,c=bR;
+          if(Math.abs(aR)>1e-12){a=aL-aR;add(lin(aL,bL,v,rtl)+(aR>0?' - ':' + ')+term(Math.abs(aR),v,rtl,true)+' = '+lin(aR,bR,v,rtl)+(aR>0?' - ':' + ')+term(Math.abs(aR),v,rtl,true),L(rtl,(aR>0?'طرح ':'إضافة ')+term(Math.abs(aR),v,rtl,true)+(aR>0?' من':' إلى')+' الطرفين',(aR>0?'Subtract ':'Add ')+term(Math.abs(aR),v,rtl,true)+' on both sides'));
+            add(lin(a,b,v,rtl)+' = '+num(c,rtl),'');}
+          if(Math.abs(a)<1e-12){add(Math.abs(b-c)<1e-9?L(rtl,'\\text{كل الأعداد حلول}','\\text{all numbers}'):L(rtl,'\\text{لا يوجد حل}','\\text{no solution}'),'');return {kind:'linear',steps:out,answer:''};}
+          if(Math.abs(b)>1e-12){add(lin(a,b,v,rtl)+(b>0?' - ':' + ')+num(Math.abs(b),rtl)+' = '+num(c,rtl)+(b>0?' - ':' + ')+num(Math.abs(b),rtl),L(rtl,(b>0?'طرح ':'إضافة ')+num(Math.abs(b),rtl)+(b>0?' من':' إلى')+' الطرفين',(b>0?'Subtract ':'Add ')+num(Math.abs(b),rtl)+' on both sides'));
+            c=c-b;b=0;add(term(a,v,rtl,true)+' = '+num(c,rtl),'');}
+          if(Math.abs(a-1)>1e-12){add('\\frac{'+term(a,v,rtl,true)+'}{'+num(a,rtl)+'} = \\frac{'+num(c,rtl)+'}{'+num(a,rtl)+'}',L(rtl,'قسمة الطرفين على '+num(a,rtl),'Divide both sides by '+num(a,rtl)));}
+          const x=c/a;add(v+' = '+num(x,rtl),L(rtl,'الحل','Solution'));
+          const sub=n=>n.n==='var'?{n:'num',v:x}:{...n,...Object.fromEntries(['a','b','idx'].filter(k=>n[k]).map(k=>[k,sub(n[k])]))};const chk=T(sub(sides[0]),rtl)+' = '+num(fL(x),rtl);add(chk,L(rtl,'التحقق: الطرف الأيمن = '+num(fR(x),rtl)+' ✓','Check: right side = '+num(fR(x),rtl)+' ✓'));
+          return {kind:'linear',steps:out,answer:v+' = '+num(x,rtl)};}
+        // quadratic  a v^2 + b v + c = 0
+        const f=x=>fL(x)-fR(x),c0=f(0),b0=(f(1)-f(-1))/2,a0=(f(1)+f(-1)-2*c0)/2;if(Math.abs(a0*4+b0*2+c0-f(2))>1e-7*(1+Math.abs(f(2)))||Math.abs(a0)<1e-12)return null;
+        const sq=v+'^{'+num(2,rtl)+'}',quad=(Math.abs(a0-1)<1e-12?sq:Math.abs(a0+1)<1e-12?'-'+sq:num(a0,rtl)+sq)+term(b0,v,rtl,false)+(Math.abs(c0)>1e-12?(c0<0?' - ':' + ')+num(Math.abs(c0),rtl):'');
+        add(quad+' = '+num(0,rtl),L(rtl,'الصورة العامة','Standard form'));
+        const D=b0*b0-4*a0*c0;const r1=(-b0-Math.sqrt(Math.max(0,D)))/(2*a0),r2=(-b0+Math.sqrt(Math.max(0,D)))/(2*a0);
+        const isInt=x=>Math.abs(x-Math.round(x))<1e-9;
+        if(D>=0&&isInt(r1)&&isInt(r2)&&isInt(a0)){const fac=r=>Math.abs(r)<1e-12?v:'('+v+(r>0?' - ':' + ')+num(Math.abs(r),rtl)+')';
+          add((Math.abs(a0-1)<1e-12?'':num(a0,rtl))+fac(r1)+fac(r2)+' = '+num(0,rtl),L(rtl,'التحليل','Factor'));
+          if(Math.abs(r1-r2)<1e-12)add(v+' = '+num(r1,rtl),L(rtl,'الحل','Solution'));
+          else{add(fac(r1).replace(/^\(|\)$/g,'')+' = '+num(0,rtl)+L(rtl,' \\text{ أو } ',' \\text{ or } ')+fac(r2).replace(/^\(|\)$/g,'')+' = '+num(0,rtl),L(rtl,'خاصية الضرب الصفري','Zero product property'));
+            add(v+' = '+num(r1,rtl)+L(rtl,' \\text{ أو } ',' \\text{ or } ')+v+' = '+num(r2,rtl),L(rtl,'الحل','Solution'));}
+          return {kind:'quad',steps:out,answer:''};}
+        add(L(rtl,'\\text{المميز} = ','\\Delta = ')+'b^{2} - 4ac = ('+num(b0,rtl)+')^{2} - '+num(4,rtl)+' \\times '+(a0<0?'('+num(a0,rtl)+')':num(a0,rtl))+' \\times '+(c0<0?'('+num(c0,rtl)+')':num(c0,rtl))+' = '+num(D,rtl),L(rtl,'حساب المميز','Discriminant'));
+        if(D<0){add(L(rtl,'\\text{لا توجد حلول حقيقية}','\\text{no real solutions}'),L(rtl,'المميز سالب','Negative discriminant'));return {kind:'quad',steps:out,answer:''};}
+        add(v+' = \\frac{-b \\pm \\sqrt{'+num(D,rtl)+'}}{'+num(2*a0,rtl)+'}',L(rtl,'القانون العام','Quadratic formula'));
+        add(v+' = '+num(r1,rtl)+(Math.abs(r1-r2)>1e-12?L(rtl,' \\text{ أو } ',' \\text{ or } ')+v+' = '+num(r2,rtl):''),L(rtl,'الحل','Solution'));
+        return {kind:'quad',steps:out,answer:''};}
+    }catch(e){return null;}
+    return null;}
+  return {compute,parse,lex,steps};
 })();
 
 const calcOn=()=>store.get('safahat-calc',false)===true;
@@ -5435,6 +5512,7 @@ function openConvert(o){
       <div class="pgroup" id="cvDirG"><span class="plabel">كتابة المعادلة</span><div class="seg" id="cvDir"><button type="button" data-v="rtl">عربية (س، ٣)</button><button type="button" data-v="ltr">لاتينية (x، 3)</button></div></div></div>
     <div class="eprev mprev"><canvas id="cvOut"></canvas><span>الناتج</span></div>
     <div class="calcrow" id="cvCalcRow" hidden><span class="cres"><b>الحل:</b> <canvas id="cvRes"></canvas></span><label class="cbx"><input type="checkbox" id="cvCalc" ${calcOn()?'checked':''}>كتابة الناتج على الصفحة</label></div>
+    <label class="cbx" id="cvStepsL"><input type="checkbox" id="cvSteps" ${store.get('safahat-steps',false)?'checked':''}>عرض الحل بالخطوات بعد التحويل (رياضيات، فيزياء، كيمياء)</label>
     <label><span id="cvLab">النص</span><textarea id="cvT" dir="auto" rows="3" placeholder="${o.shot?'جارٍ التعرّف على الكتابة…':''}"></textarea></label>
     <p class="hint" id="cvHelp" style="margin:0" hidden>الكسر: \\frac{١}{٢} · الأس: س^{٢} · الجذر: \\sqrt{س} · الجذر النوني: \\sqrt[٣]{س} · الضرب \\times والقسمة \\div وπ: \\pi</p>
     <div class="locnote" id="cvLocal" hidden><span>${ic('check')}</span><small>تعرّف فوري على الجهاز دون إنترنت. راجع الصيغة وصحّحها إن لزم${AI?'، أو اضغط «بالمساعد» لتعرّف أدق':''}. كل تصحيح تكتبه يتعلّم منه التطبيق خطك.</small><button class="hbtn" id="cvTrain">${ic('hw')} درّبه على خطك</button>${AI?`<button class="hbtn" id="cvAi">${ic('spark')} بالمساعد</button>`:''}</div>
@@ -5471,6 +5549,7 @@ function openConvert(o){
   if(o.learn)st.loc=o.learn.res;
   $('#cvCopy').onclick=()=>copyText(st.val[st.type]||'');
   const cc=$('#cvCalc');if(cc)cc.onchange=()=>store.set('safahat-calc',cc.checked);
+  const cs=$('#cvSteps');if(cs)cs.onchange=()=>store.set('safahat-steps',cs.checked);
   $('#cvOk').onclick=()=>{const v=(st.val[st.type]||'').trim();if(!v){closeSheet();return;}
     const keep=!o.editA&&segVal('cvM')==='keep',r=pageRatio(p);pushUndo();let out;
     if(o.editA){const a=o.editA;
@@ -5485,7 +5564,10 @@ function openConvert(o){
     let learned=0;if(st.type==='math'&&st.loc&&(st.src==='local'||o.learn)){let cv=v;const sfx=o.learn&&o.learn.sfx&&o.learn.sfx.trim();if(sfx&&cv.endsWith(sfx))cv=cv.slice(0,cv.length-sfx.length).trim();
       if(cv.replace(/\s/g,'')!==st.loc.value.replace(/\s/g,''))learned=INKM.learn(st.loc,cv);else if(!o.editA)INK_SRC.set(out,{res:st.loc,sfx:''});}
     let calc=null;if(st.type==='math'&&$('#cvCalc')&&$('#cvCalc').checked&&!(o.editA&&out===o.editA&&/✓|✗/.test(out.tex)))calc=applyCalc(p,out);
-    markDirty();closeSheet();selectItems(o.id,[out]);toast((st.type==='math'?(calc?'تحوّلت إلى معادلة وكُتب الناتج':'تحوّلت إلى معادلة منسّقة'):'تحوّلت إلى نص')+(learned?' — وتعلّم التطبيق خطك من تصحيحك':''),learned?3200:2200);};
+    const wantSteps=$('#cvSteps')&&$('#cvSteps').checked&&!(o.editA&&out===o.editA);
+    markDirty();closeSheet();selectItems(o.id,[out]);
+    if(wantSteps)setTimeout(()=>{const bx=bbox(out,r);if(st.type==='math')stepsSheet({id:o.id,tex:v,rtl:st.rtl,box:bx,size:out.size,color:'#1d4ed8'});else stepsSheet({id:o.id,text:v,rtl:true,box:bx,size:.02});},80);
+    toast((st.type==='math'?(calc?'تحوّلت إلى معادلة وكُتب الناتج':'تحوّلت إلى معادلة منسّقة'):'تحوّلت إلى نص')+(learned?' — وتعلّم التطبيق خطك من تصحيحك':''),learned?3200:2200);};
   const loc=o.shot&&!o.init&&o.local?o.local():null;
   if(loc){st.val.math=loc.value;st.rtl=loc.rtl;st.res.math=true;st.type='math';st.src='local';st.loc=loc;const ln=$('#cvLocal');if(ln)ln.hidden=false;}
   sync();
@@ -5525,6 +5607,81 @@ function inkTrainSheet(){
     INKM.resetUser();armed=false;saved=0;b.innerHTML=ic('trash')+'حذف ما تعلّمه';toast('حُذف ما تعلّمه التطبيق من خطك');show();};
   requestAnimationFrame(size);show();
 }
+/* ---------- solution with steps: offline for arithmetic / linear / quadratic, the assistant for anything else (science too) ---------- */
+function writeSteps(p,box,steps,o={}){const r=pageRatio(p),rtl=o.rtl!==false,size=Math.max(.014,Math.min(.03,o.size||.02)),color=o.color||'#1d4ed8',gap=.008*r;
+  let y=box.y+box.h+gap*1.6;const xR=box.x+box.w,xL=box.x,added=[];let cut=false;
+  for(const st of steps){if(y>.96){cut=true;break;}
+    if(o.say&&st.say){const t={type:'text',pts:[[rtl?xR:xL+.3,y]],text:st.say,color:'#64748b',size:size*.62,bold:false};p.annots.push(t);added.push(t);y+=bbox(t,r).h+gap*.4;}
+    let a=null;if(st.tex)a={type:'math',tex:st.tex,rtl,size,color,pts:[[rtl?xR:xL,y]]};else if(st.text)a={type:'text',pts:[[rtl?xR:xL+.3,y]],text:st.text,color,size:size*.8,bold:false};
+    if(!a)continue;p.annots.push(a);added.push(a);y+=bbox(a,r).h+gap;}
+  return {added,cut};}
+function stepsLocal(tex,rtl){try{const r=MSOLVE.steps(tex,rtl);return r&&r.steps&&r.steps.length>1?r.steps:null;}catch(e){return null;}}
+async function stepsAI(o){if(!AI)throw {code:'no_ai'};
+  const rules='أنت معلم في دولة الكويت. حل المسألة حلاً كاملاً خطوة بخطوة بأسلوب كتب وزارة التربية الكويتية. قد تكون رياضيات أو فيزياء أو كيمياء.\nالقواعد: العربية الفصحى، والأرقام الهندية (٠١٢٣٤٥٦٧٨٩) والفاصلة العشرية «٫»، والرمزان س و ص للمتغيرات في المسائل العربية، وπ للنسبة التقريبية. في الفيزياء: اكتب القانون، ثم التعويض، ثم الناتج مع الوحدة. في الكيمياء: اكتب المعادلات موزونة نصاً عادياً بالأرقام السفلية مثل H₂O والسهم →، مع ذكر نوع التفاعل عند الحاجة.\nأعد JSON فقط دون أي نص قبله أو بعده، بهذا الشكل:\n{"subject":"رياضيات أو فيزياء أو كيمياء","steps":[{"say":"شرح قصير للخطوة","tex":"الخطوة بصيغة LaTeX إن كانت معادلة أو حساباً"},{"say":"شرح","text":"خطوة نصية إن لم تكن معادلة"}],"answer":"الناتج النهائي باختصار"}\nفي LaTeX استخدم فقط: \\frac{}{} و ^{} و _{} و \\sqrt{} و \\times و \\div و \\pm و \\pi و \\text{}، ولا تستخدم علامات $. اجعل كل خطوة سطراً واحداً قصيراً، ولا تتجاوز ١٢ خطوة.';
+  let prompt=rules,images;
+  if(o.tex)prompt+='\n\nالمسألة (LaTeX):\n'+o.tex;else if(o.text)prompt+='\n\nالمسألة:\n«'+o.text+'»';
+  if(o.img){const caps=await AI.limits().catch(()=>null);if(caps&&caps.images){images=[await o.img()];prompt+=o.tex||o.text?'\n\nوالصورة المرفقة تبيّن المسألة كما كُتبت.':'\n\nالمسألة في الصورة المرفقة (مطبوعة أو بخط اليد).';}else if(!o.tex&&!o.text)throw {code:'images_unavailable'};}
+  const r=await AI(prompt,{...(images?{images}:{}),modelTier:'complex',cache:false});
+  const t=String(r.text||''),i=t.indexOf('{'),j=t.lastIndexOf('}');if(i<0||j<i)throw {code:'unreadable'};
+  let J;try{J=JSON.parse(t.slice(i,j+1));}catch(e){throw {code:'unreadable'};}
+  const steps=(J.steps||[]).map(s=>({say:String(s.say||'').trim(),tex:s.tex?String(s.tex).replace(/^\$+|\$+$/g,'').trim():'',text:s.text?String(s.text).trim():''})).filter(s=>s.tex||s.text);
+  if(!steps.length)throw {code:'unreadable'};return {steps,subject:J.subject||'',answer:J.answer||''};}
+function stepsSheet(o){const p=byId(o.id);if(!p)return;let steps=null,src='',rtl=o.rtl!==false;
+  openSheet(`<h3>${ic('list')} الحل بالخطوات</h3><p class="hint" id="stSrc" style="margin:0"></p><div class="stl" id="stList"><div class="stwait">جارٍ الحل…</div></div>
+    <label class="cbx"><input type="checkbox" id="stSay" ${store.get('safahat-steps-say',false)?'checked':''}>كتابة شرح كل خطوة أيضاً</label>
+    <div class="acts"><button class="hbtn primary" id="stWrite" disabled>${ic('text')}كتابة على الصفحة</button>${AI?`<button class="hbtn" id="stAI">${ic('spark')}حل بالمساعد</button>`:''}<button class="hbtn" id="stCopy" disabled>${ic('copy')}نسخ</button>${cancelBtn.replace('إلغاء','إغلاق')}</div>`);
+  wireClose();
+  const show=()=>{const L=$('#stList');if(!L)return;L.innerHTML=steps.map((s,i)=>`<div class="st"><span class="sn">${ar(i+1)}</span><div class="sb">${s.say?`<small>${esc(s.say)}</small>`:''}${s.tex?`<canvas data-st="${i}"></canvas>`:`<p>${esc(s.text)}</p>`}</div></div>`).join('');
+    L.querySelectorAll('[data-st]').forEach(cv=>{const s=steps[+cv.dataset.st];try{drawResult(cv,'math',s.tex,rtl||/[؀-ۿ]/.test(s.tex));}catch(e){cv.replaceWith(Object.assign(document.createElement('p'),{textContent:s.tex}));}});
+    $('#stSrc').textContent=src;$('#stWrite').disabled=false;$('#stCopy').disabled=false;};
+  const fail=e=>{const L=$('#stList');if(!L)return;L.innerHTML=`<div class="stwait">${e&&e.code==='no_ai'?'لم أجد حلاً فورياً لهذه المسألة. '+aiHelpText():e&&e.code==='unreadable'?'لم يُفهم الحل، حاول مرة أخرى':aiErr(e)}</div>`;};
+  const runAI=async()=>{const L=$('#stList');if(L)L.innerHTML='<div class="stwait">جارٍ الحل بالمساعد…</div>';$('#stWrite').disabled=true;
+    try{const r=await stepsAI(o);if(!$('#stList'))return;steps=r.steps;rtl=rtl||steps.some(s=>/[؀-ۿ]/.test(s.tex||s.text));src='حل المساعد الذكي'+(r.subject?' · '+r.subject:'')+'. راجعه قبل اعتماده.';show();}catch(e){fail(e);}};
+  const loc=o.tex?stepsLocal(o.tex,rtl):null;
+  if(loc){steps=loc;src='حل فوري على الجهاز'+(AI?'. للمسائل الأصعب أو العلمية اضغط «حل بالمساعد».':'.');show();}else if(AI)runAI();else fail({code:'no_ai'});
+  const ab=$('#stAI');if(ab)ab.onclick=runAI;
+  $('#stSay').onchange=e=>store.set('safahat-steps-say',e.target.checked);
+  $('#stCopy').onclick=()=>copyText(steps.map((s,i)=>ar(i+1)+') '+(s.say?s.say+': ':'')+(s.tex||s.text)).join('\n'));
+  $('#stWrite').onclick=()=>{if(!steps)return;pushUndo('الحل بالخطوات');const norm=t=>String(t||'').replace(/\s+/g,'');const ws=o.tex&&steps[0]&&norm(steps[0].tex)===norm(o.tex)?steps.slice(1):steps;const res=writeSteps(p,o.box,ws,{rtl,size:o.size,color:o.color,say:$('#stSay').checked});
+    markDirty();closeSheet();drawOverlay(o.id);if(res.added.length)selectItems(o.id,res.added);toast(res.cut?'كُتب ما اتسعت له الصفحة من الخطوات':'كُتب الحل بالخطوات تحت المسألة',2600);};
+}
+function stepsFor(m){const p=byId(m.id),r=pageRatio(p);
+  if(m.items.length===1&&m.items[0].type==='math'){const a=m.items[0];stepsSheet({id:m.id,tex:a.tex.replace(/\s*\\text\{[✓✗]\}.*$/,''),rtl:a.rtl,box:bbox(a,r),size:a.size,color:'#1d4ed8'});return;}
+  if(m.items.length===1&&m.items[0].type==='text'){const a=m.items[0];stepsSheet({id:m.id,text:a.text,rtl:true,box:bbox(a,r),size:.02});return;}
+  const box=m.box;stepsSheet({id:m.id,text:m.text||'',rtl:true,box,size:.02,img:()=>regionShot(p,box,true)});}
+/* ---------- remove a picture's background on the device ----------
+   the background is what touches the picture's edges and looks like the edge colours; optionally the same colours inside too */
+function bgPalette(d,W,H){const B=new Map(),add=i=>{const k=(d[i]>>4)<<8|(d[i+1]>>4)<<4|(d[i+2]>>4);const e=B.get(k);if(e){e.n++;e.r+=d[i];e.g+=d[i+1];e.b+=d[i+2];}else B.set(k,{n:1,r:d[i],g:d[i+1],b:d[i+2]});};
+  let n=0;for(let x=0;x<W;x+=2){add(x*4);add(((H-1)*W+x)*4);n+=2;}for(let y=0;y<H;y+=2){add(y*W*4);add((y*W+W-1)*4);n+=2;}
+  return [...B.values()].sort((a,b)=>b.n-a.n).filter((e,i)=>i===0||e.n>n*.06).slice(0,5).map(e=>[e.r/e.n,e.g/e.n,e.b/e.n]);}
+function bgAlpha(d,W,H,tol,inside){const pal=bgPalette(d,W,H),N=W*H,t2=tol*tol*3;
+  const near=i=>{const r=d[i*4],g=d[i*4+1],b=d[i*4+2];for(const c of pal){const dr=r-c[0],dg=g-c[1],db=b-c[2];if(dr*dr*1.2+dg*dg*1.5+db*db*.8<t2)return true;}return false;};
+  const bg=new Uint8Array(N);
+  if(inside){for(let i=0;i<N;i++)if(d[i*4+3]>0&&near(i))bg[i]=1;}
+  else{const q=new Int32Array(N);let h=0,t=0;const push=i=>{if(!bg[i]&&near(i)){bg[i]=1;q[t++]=i;}};
+    for(let x=0;x<W;x++){push(x);push((H-1)*W+x);}for(let y=0;y<H;y++){push(y*W);push(y*W+W-1);}
+    while(h<t){const i=q[h++],x=i%W;if(x>0)push(i-1);if(x<W-1)push(i+1);if(i>=W)push(i-W);if(i<N-W)push(i+W);}}
+  // soft edge: blur the mask a little so the cut-out does not look jagged
+  const m=new Uint8Array(N);for(let i=0;i<N;i++)m[i]=bg[i]?0:255;const sm=boxBlurU8(m,W,H,1);
+  const A=new Uint8ClampedArray(N);for(let i=0;i<N;i++)A[i]=bg[i]?Math.max(0,sm[i]*2-255):Math.min(255,sm[i]+40);return A;}
+function cutOut(el,maxSide,tol,inside){const iw=el.naturalWidth||el.width,ih=el.naturalHeight||el.height,k=Math.min(1,maxSide/Math.max(iw,ih));
+  const c=mkCanvas(iw*k,ih*k),x=c.getContext('2d');x.drawImage(el,0,0,c.width,c.height);const im=x.getImageData(0,0,c.width,c.height),A=bgAlpha(im.data,c.width,c.height,tol,inside);
+  for(let i=0;i<A.length;i++)im.data[i*4+3]=Math.min(im.data[i*4+3],A[i]);x.putImageData(im,0,0);return c;}
+function bgSheet(id,a){const src=S.imgs[a.origKey||a.key];if(!src)return;let tol=store.get('safahat-bgtol',30),inside=false,timer=0;
+  openSheet(`<h3>${ic('wand')} مسح خلفية الصورة</h3>
+    <div class="bgpv"><canvas id="bgPv"></canvas></div>
+    <div class="pgroup"><span class="plabel">درجة المسح</span><div class="slider"><input type="range" id="bgTol" min="6" max="90" step="1" value="${tol}"><output id="bgTolO"></output></div></div>
+    <label class="cbx"><input type="checkbox" id="bgIn">مسح اللون نفسه من داخل الصورة أيضاً (مثل الفراغ داخل الحروف)</label>
+    <p class="hint" style="margin:0">يعمل على الجهاز دون إنترنت، وأفضل نتيجة مع الخلفية ذات اللون الواحد: ورقة بيضاء، جدار، طاولة، توقيع أو ختم مصوّر. ارفع الدرجة إن بقي جزء من الخلفية، واخفضها إن مُسح جزء من الصورة.</p>
+    <div class="acts"><button class="hbtn primary" id="bgOk">${ic('check')}تطبيق</button>${a.origKey?`<button class="hbtn" id="bgRestore">${ic('undo')}استعادة الخلفية</button>`:''}${cancelBtn}</div>`);
+  wireClose();
+  const draw=()=>{const cv=$('#bgPv');if(!cv)return;const c=cutOut(src.el,520,tol,inside);cv.width=c.width;cv.height=c.height;cv.getContext('2d').drawImage(c,0,0);$('#bgTolO').textContent=ar(tol);};
+  const later=()=>{clearTimeout(timer);timer=setTimeout(draw,60);};
+  $('#bgTol').oninput=e=>{tol=+e.target.value;$('#bgTolO').textContent=ar(tol);later();};$('#bgIn').onchange=e=>{inside=e.target.checked;draw();};
+  $('#bgOk').onclick=async()=>{store.set('safahat-bgtol',tol);const c=cutOut(src.el,1800,tol,inside);const key=await addImg(c.toDataURL('image/png'));
+    pushUndo('مسح الخلفية');if(!a.origKey)a.origKey=a.key;a.key=key;markDirty();closeSheet();drawOverlay(id);toast('مُسحت الخلفية. للتراجع اضغط تراجع أو «استعادة الخلفية»',3000);};
+  const rs=$('#bgRestore');if(rs)rs.onclick=()=>{pushUndo('استعادة الخلفية');a.key=a.origKey;delete a.origKey;markDirty();closeSheet();drawOverlay(id);toast('أُعيدت الخلفية');};
+  requestAnimationFrame(draw);}
 function inkToText(id,items){
   if(!items.length)return;const p=byId(id);const src=renderInk(p,items);
   const hasPen=items.some(a=>a.type==='pen');
@@ -5539,7 +5696,8 @@ async function hwFlush(){
   const mode=store.get('safahat-hwmode','auto');
   if(mode!=='text'&&(mode==='math'||!AI)){const r=localMath(p,live);
     if(r&&(r.conf>=.6||!AI)){const box=unionBox(live,pageRatio(p)),color=(live.find(a=>a.color)||{}).color||'#111111';
-      pushUndo();p.annots=p.annots.filter(a=>!live.includes(a));const out=fitAnnot(p,'math',r.value,r.rtl,box,color);p.annots.push(out);const base=out.tex;if(calcOn())applyCalc(p,out);INK_SRC.set(out,{res:r,sfx:out.tex.slice(base.length)});markDirty();drawOverlay(id);
+      pushUndo();p.annots=p.annots.filter(a=>!live.includes(a));const out=fitAnnot(p,'math',r.value,r.rtl,box,color);p.annots.push(out);const base=out.tex;
+      const autoSt=store.get('safahat-autosteps',false)?stepsLocal(r.value,r.rtl):null;if(autoSt)writeSteps(p,bbox(out,pageRatio(p)),autoSt.slice(1),{rtl:r.rtl,size:out.size,color:'#1d4ed8'});else if(calcOn())applyCalc(p,out);INK_SRC.set(out,{res:r,sfx:out.tex.slice(base.length)});markDirty();drawOverlay(id);
       toast('تحوّلت إلى معادلة على الجهاز. للتصحيح: حدّدها واضغط «تعديل»'+(r.conf<.6?' — راجعها، فالكتابة غير واضحة تماماً':''),3800);return;}}
   if(!AI){toast(mode==='text'?'تحويل الكتابة إلى نص يحتاج المساعد الذكي. '+aiHelpText():'بقيت الكتابة كما هي. '+aiHelpText(),5500);return;}toast(mode==='math'?'جارٍ تحويل الكتابة إلى معادلة…':'جارٍ تحويل الكتابة…',9000);
   try{const r=await recognizeImg(await canvasBlob(renderInk(p,live)),mode);const still=live.filter(a=>p.annots.includes(a));if(!still.length)return;
