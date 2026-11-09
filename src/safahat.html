@@ -342,6 +342,8 @@ h2.sec{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0 0 6p
 .crop-h small{display:block;color:#8ea3a2;font-family:var(--f-body);font-weight:400;font-size:12px}
 .crop-stage{flex:1;min-height:0;position:relative;touch-action:none;cursor:crosshair}
 .crop-stage .cv{position:absolute;inset:0;width:100%;height:100%}
+.crpv{position:absolute;left:12px;top:12px;z-index:3;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border-radius:12px;background:rgba(8,16,18,.82);box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.crpv[hidden]{display:none}.crpv canvas{max-width:min(150px,26vw);max-height:min(200px,30vh);border-radius:6px;background:#fff;display:block}.crpv span{font-size:11.5px;color:#cfe3de}
 .loupe{position:absolute;width:116px;height:116px;border-radius:50%;border:3px solid #fff;box-shadow:0 8px 24px rgba(0,0,0,.6);pointer-events:none}
 .crop-f{padding-block:10px calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;border-top:1px solid #1d2b2f}
 .tchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
@@ -811,7 +813,7 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 </div>
 <div class="crop" id="crop" hidden dir="rtl">
   <div class="crop-h gut"><b>تعديل الحواف<small>اسحب الزوايا أو منتصف الأضلاع لتطابق حدود الورقة</small></b><button class="cbtn" id="crAuto"></button><button class="cbtn" id="crFull"></button></div>
-  <div class="crop-stage" id="crStage"><canvas class="cv" id="crImg"></canvas><canvas class="cv" id="crOv"></canvas><canvas class="loupe" id="crLoupe" hidden></canvas></div>
+  <div class="crop-stage" id="crStage"><canvas class="cv" id="crImg"></canvas><canvas class="cv" id="crOv"></canvas><canvas class="loupe" id="crLoupe" hidden></canvas><div class="crpv" id="crPv" hidden><canvas id="crPrev"></canvas><span>الناتج</span></div></div>
   <div class="crop-f gut"><div class="tchips" id="crFilters" aria-label="فلتر هذه الصورة"></div><div class="row"><button class="cbtn" id="crCancel">إلغاء</button><span class="sp"></span><button class="cbtn" id="crRot"></button><button class="cbtn primary" id="crOk">تم</button></div></div>
 </div>
 <div class="present" id="present" hidden dir="rtl"><canvas id="prC"></canvas>
@@ -2804,6 +2806,74 @@ function detectQuad(cv){
   return {quad:best.quad.map(([x,y])=>[Math.max(0,Math.min(1,x/w)),Math.max(0,Math.min(1,y/h))]),auto:true};
 }
 
+/* edge + line based page finder: strongest four straight edges that close a large convex quad */
+function detectQuadLines(cv,extra){
+  const w=cv.width,h=cv.height,N=w*h,d=cv.getContext('2d').getImageData(0,0,w,h).data;
+  const L0=new Uint8Array(N);for(let i=0,j=0;j<N;i+=4,j++)L0[j]=(d[i]*77+d[i+1]*150+d[i+2]*29)>>8;
+  const L=boxBlurU8(boxBlurU8(L0,w,h,1),w,h,1);
+  const gx=new Float32Array(N),gy=new Float32Array(N),mg=new Float32Array(N);
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;
+    const a=L[i-w-1],b=L[i-w],c=L[i-w+1],e=L[i-1],f=L[i+1],g=L[i+w-1],k=L[i+w],l=L[i+w+1];
+    const X=(c+2*f+l)-(a+2*e+g),Y=(g+2*k+l)-(a+2*b+c);gx[i]=X;gy[i]=Y;mg[i]=Math.hypot(X,Y);}
+  // threshold: strong edges only (paper borders are among the strongest in the photo)
+  const hist=new Uint32Array(1024);for(let i=0;i<N;i++)hist[Math.min(1023,mg[i]|0)]++;
+  const pct=q=>{let s=0,t=N*q;for(let v=0;v<1024;v++){s+=hist[v];if(s>=t)return v;}return 1023;};
+  const thr=Math.max(40,pct(.9));
+  // Hough, each edge pixel votes only near its own gradient direction
+  const nT=180,R=Math.ceil(Math.hypot(w,h)),nR=2*R+1,acc=new Float32Array(nT*nR),cs=new Float32Array(nT),sn=new Float32Array(nT);
+  for(let t=0;t<nT;t++){cs[t]=Math.cos(t*Math.PI/nT);sn[t]=Math.sin(t*Math.PI/nT);}
+  for(let y=2;y<h-2;y++)for(let x=2;x<w-2;x++){const i=y*w+x;const m=mg[i];if(m<thr)continue;
+    let a=Math.atan2(gy[i],gx[i]);if(a<0)a+=Math.PI;const t0=Math.round(a*nT/Math.PI);
+    for(let dt=-6;dt<=6;dt++){const t=(t0+dt+nT)%nT;const r=Math.round(x*cs[t]+y*sn[t])+R;acc[t*nR+r]+=Math.min(m,4*thr);}}
+  let amax=0;for(let i=0;i<acc.length;i++)if(acc[i]>amax)amax=acc[i];
+  const lines=[];
+  for(let t=0;t<nT;t++)for(let r=1;r<nR-1;r++){const v=acc[t*nR+r];if(v<amax*.12)continue;let ok=true;
+    for(let dt=-5;dt<=5&&ok;dt++){const tt=(t+dt+nT)%nT;for(let dr=-8;dr<=8;dr++){if(!dt&&!dr)continue;const rr=(t+dt<0||t+dt>=nT)?(2*R-(r))+dr:r+dr;if(rr<0||rr>=nR)continue;if(acc[tt*nR+rr]>v){ok=false;break;}}}
+    if(ok)lines.push({t:t*Math.PI/nT,r:r-R,v});}
+  lines.sort((a,b)=>b.v-a.v);
+  const Hs=lines.filter(l=>Math.abs(Math.sin(l.t))>Math.SQRT1_2).slice(0,22),Vs=lines.filter(l=>Math.abs(Math.sin(l.t))<=Math.SQRT1_2).slice(0,16);
+  const X=(a,b)=>{const c1=Math.cos(a.t),s1=Math.sin(a.t),c2=Math.cos(b.t),s2=Math.sin(b.t),D=c1*s2-s1*c2;if(Math.abs(D)<1e-6)return null;return [(a.r*s2-b.r*s1)/D,(c1*b.r-c2*a.r)/D];};
+  // how much of a side is backed by a real edge running along it, and whether it is a step (paper meets desk) rather than a printed line
+  const Lat=(x,y)=>{const xi=Math.max(0,Math.min(w-1,Math.round(x))),yi=Math.max(0,Math.min(h-1,Math.round(y)));return L[yi*w+xi];};
+  function side(p,q){const dx=q[0]-p[0],dy=q[1]-p[1],len=Math.hypot(dx,dy);if(len<8)return {c:0,st:0};const nx=-dy/len,ny=dx/len;const n=Math.max(8,Math.round(len/2));let hit=0,cnt=0,st=0;
+    for(let k=1;k<n;k++){const u=k/n,x=p[0]+dx*u,y=p[1]+dy*u;if(x<1||y<1||x>w-2||y>h-2)continue;cnt++;let best=0;
+      for(let o=-2;o<=2;o++){const xi=Math.round(x+nx*o),yi=Math.round(y+ny*o);if(xi<1||yi<1||xi>w-2||yi>h-2)continue;const i=yi*w+xi;const pr=Math.abs(gx[i]*nx+gy[i]*ny);if(pr>best)best=pr;}
+      if(best>thr*.55)hit++;st+=Math.abs(Lat(x+nx*4,y+ny*4)-Lat(x-nx*4,y-ny*4));}
+    const inside=cnt/(n-1);return cnt?{c:hit/cnt*Math.min(1,inside+.25),st:st/cnt}:{c:0,st:0};}
+  function score(q){const S4=[0,1,2,3].map(i=>side(q[i],q[(i+1)%4])),cv=S4.map(o=>o.c);const mean=(cv[0]+cv[1]+cv[2]+cv[3])/4,mn=Math.min(...cv);
+    const step=S4.reduce((a,o)=>a*Math.min(1,Math.max(.25,o.st/45)),1);
+    const area=polyArea(q)/N;return {s:mean*Math.sqrt(Math.max(0,mn))*Math.pow(area,.35)*step,mean,mn,area,step};}
+  const convex=q=>{let sg=0;for(let i=0;i<4;i++){const a=q[i],b=q[(i+1)%4],c=q[(i+2)%4];const cr=(b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-b[0]);if(!cr)return false;const s=Math.sign(cr);if(sg&&s!==sg)return false;sg=s;}return true;};
+  let best=null;
+  const consider=q=>{if(!q)return;const o=orderQuad(q);if(!convex(o))return;if(o.some(([x,y])=>x<-w*.06||y<-h*.06||x>w*1.06||y>h*1.06))return;
+    const ar=polyArea(o)/N;if(ar<.12)return;
+    // opposite sides should be roughly the same length (a sheet, not a sliver)
+    const ln=i=>Math.hypot(o[(i+1)%4][0]-o[i][0],o[(i+1)%4][1]-o[i][1]);if(Math.min(ln(0),ln(2))/Math.max(ln(0),ln(2))<.45||Math.min(ln(1),ln(3))/Math.max(ln(1),ln(3))<.45)return;
+    const sc=score(o);if(!best||sc.s>best.s)best={...sc,quad:o};};
+  for(let i=0;i<Hs.length;i++)for(let j=i+1;j<Hs.length;j++)for(let k=0;k<Vs.length;k++)for(let l=k+1;l<Vs.length;l++){
+    const a=Hs[i],b=Hs[j],c=Vs[k],e=Vs[l];consider([X(a,c),X(a,e),X(b,e),X(b,c)].every(Boolean)?[X(a,c),X(a,e),X(b,e),X(b,c)]:null);}
+  if(extra)for(const q of extra)consider(q.map(([x,y])=>[x*w,y*h]));
+  // a printed frame inside the sheet also makes four clean lines: push each weak, flat side out to a real paper edge just beyond it
+  if(best){let q=best.quad.map(p=>p.slice());const cen=[q.reduce((s,p)=>s+p[0],0)/4,q.reduce((s,p)=>s+p[1],0)/4];
+    const lineOf=(p,r)=>{const t=Math.atan2(r[0]-p[0],-(r[1]-p[1]));return {t,r:p[0]*Math.cos(t)+p[1]*Math.sin(t)};};
+    for(let pass=0;pass<2;pass++)for(let i=0;i<4;i++){const p=q[i],r=q[(i+1)%4],cur=side(p,r);if(cur.st>=35)continue;
+      const L0=lineOf(p,r),prev=lineOf(q[(i+3)%4],p),next=lineOf(r,q[(i+2)%4]);const sgn=Math.sign(cen[0]*Math.cos(L0.t)+cen[1]*Math.sin(L0.t)-L0.r);
+      let pick=null;const cv0=cen[0]*Math.cos(L0.t)+cen[1]*Math.sin(L0.t)-L0.r,out=[-Math.sign(cv0)*Math.cos(L0.t),-Math.sign(cv0)*Math.sin(L0.t)];
+      const mid=[(p[0]+r[0])/2,(p[1]+r[1])/2],maxD=Math.max(w,h)*.16;
+      for(let dd=7;dd<=maxD;dd+=1.5){for(let da=-3;da<=3;da++){const t=L0.t+da*Math.PI/180,m2=[mid[0]+out[0]*dd,mid[1]+out[1]*dd];const l={t,r:m2[0]*Math.cos(t)+m2[1]*Math.sin(t)};
+        const A=X(prev,l),B=X(l,next);if(!A||!B)continue;const sd=side(A,B);
+        if(sd.c>=.4&&sd.st>=45&&(!pick||(pick.dd===dd&&sd.c*sd.st>pick.v)))pick={v:sd.c*sd.st,A,B,dd};}
+        if(pick&&dd>pick.dd+6)break;}
+      if(pick){q[i]=pick.A;q[(i+1)%4]=pick.B;}}
+    best.quad=q;}
+  if(!best||best.mean<.5||best.mn<.3)return null;
+  return {quad:best.quad.map(([x,y])=>[Math.max(0,Math.min(1,x/w)),Math.max(0,Math.min(1,y/h))]),score:best.s,mean:best.mean,mn:best.mn};
+}
+// combine both finders: straight-edge search first (handles other papers around the sheet), the region finder as a candidate and fallback
+function detectPage(cv){let o={auto:false};try{o=detectQuad(cv);}catch(e){}
+  let n=null;try{n=detectQuadLines(cv,o.auto?[o.quad]:null);}catch(e){console.warn('edges',e);}
+  if(n)return {quad:n.quad,auto:true};if(o.auto)return o;
+  return {quad:[[.04,.04],[.96,.04],[.96,.96],[.04,.96]],auto:false};}
 /* =====================================================================
    PERSPECTIVE CORRECTION
    ===================================================================== */
@@ -2846,7 +2916,7 @@ async function newScanItem(file){
   try{img=await loadImg(url);}catch(e){URL.revokeObjectURL(url);toast('تعذّر قراءة الصورة: '+file.name,3500);return null;}
   const nw=img.naturalWidth,nh=img.naturalHeight,k=Math.min(1,420/Math.max(nw,nh));
   const small=mkCanvas(nw*k,nh*k);small.getContext('2d').drawImage(img,0,0,small.width,small.height);
-  const det=detectQuad(small);
+  const det=detectPage(small);
   const it={id:'s'+(scUid++),url,nw,nh,small,quad:det.quad,auto:det.auto,rot:0,filter:SC.f[SC.mode],card:false,busy:false};
   if(SC.mode==='id')it.card=true;
   else if(looksLikeCard(it)){it.card=true;if(SC.f.docs==='magic'||SC.f.docs==='doc')it.filter=SC.f.id;}
@@ -3019,11 +3089,18 @@ async function openCrop(it){
   const k=Math.min(1,2000/Math.max(it.nw,it.nh));CR.big=mkCanvas(it.nw*k,it.nh*k);CR.big.getContext('2d').drawImage(CR.img,0,0,CR.big.width,CR.big.height);
   $('#crop').hidden=false;
   $('#crFilters').innerHTML=FILTERS.map(([k,n])=>`<button class="tchip${k===CR.filter?' on':''}" data-cf="${k}">${n}</button>`).join('');
-  $('#crFilters').querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{CR.filter=b.dataset.cf;$('#crFilters').querySelectorAll('[data-cf]').forEach(x=>x.classList.toggle('on',x===b));});
-  crRotLabel();requestAnimationFrame(layoutCrop);
+  $('#crFilters').querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{CR.filter=b.dataset.cf;$('#crFilters').querySelectorAll('[data-cf]').forEach(x=>x.classList.toggle('on',x===b));crPreview();});
+  crRotLabel();requestAnimationFrame(()=>{layoutCrop();crPreview();});
 }
 function crRotLabel(){$('#crRot').innerHTML=ic('rotR')+'<span>'+(CR.rot?'تدوير ('+ar(CR.rot)+'°)':'تدوير')+'</span>';}
-function closeCrop(){$('#crop').hidden=true;$('#crLoupe').hidden=true;if(CR.big)CR.big.width=CR.big.height=0;CR.img=CR.big=null;CR.it=null;}
+// live result next to the photo: the cropped, straightened page with the chosen filter
+function crPreview(){const it=CR.it,c=$('#crPrev');if(!it||!c||!CR.big)return;
+  const src=CR.big,k=Math.min(1,900/Math.max(src.width,src.height)),sw=Math.round(src.width*k),sh=Math.round(src.height*k);
+  if(!CR.pv||CR.pv.width!==sw){CR.pv=mkCanvas(sw,sh);CR.pv.getContext('2d').drawImage(src,0,0,sw,sh);CR.pvd=CR.pv.getContext('2d').getImageData(0,0,sw,sh);}
+  const q=CR.q.map(([x,y])=>[x*sw,y*sh]);let [W,H]=outSize(q,it.card);const m=Math.min(1,340/Math.max(W,H));W=Math.max(8,Math.round(W*m));H=Math.max(8,Math.round(H*m));
+  let o=mkCanvas(W,H);o.getContext('2d').putImageData(warpData(CR.pvd,q,W,H),0,0);filterCanvas(o,CR.filter);if(CR.rot)o=rotCanvas(o,CR.rot);
+  c.width=o.width;c.height=o.height;c.getContext('2d').drawImage(o,0,0);const box=$('#crPv');if(box){box.hidden=false;box.querySelector('span').textContent='الناتج · '+(FNAME[CR.filter]||'');}}
+function closeCrop(){CR.pv=null;CR.pvd=null;$('#crop').hidden=true;$('#crLoupe').hidden=true;if(CR.big)CR.big.width=CR.big.height=0;CR.img=CR.big=null;CR.it=null;}
 function layoutCrop(){if(!CR.img)return;const st=$('#crStage'),r=st.getBoundingClientRect(),W=r.width,H=r.height,nw=CR.it.nw,nh=CR.it.nh;
   const pad=Math.max(22,Math.min(36,W*.06)),s=Math.min((W-pad*2)/nw,(H-pad*2)/nh);CR.fit={s,ox:(W-nw*s)/2,oy:(H-nh*s)/2,W,H,nw,nh};
   for(const id of ['crImg','crOv']){const c=$('#'+id);c.width=Math.round(W*DPR);c.height=Math.round(H*DPR);}
@@ -3054,7 +3131,7 @@ function crMove(p){const f=CR.fit,d=CR.drag;if(!d)return;const cl=v=>Math.max(0,
     for(const i of idx)CR.q[i]=[d.q0[i][0]+dx,d.q0[i][1]+dy];
     if(d.t==='e')crLoupe(lerp2(CR.q[idx[0]],CR.q[idx[1]],.5));else $('#crLoupe').hidden=true;}
   drawCropOv();}
-function crUp(){CR.drag=null;$('#crLoupe').hidden=true;drawCropOv();}
+function crUp(){const was=!!CR.drag;CR.drag=null;$('#crLoupe').hidden=true;drawCropOv();if(was)crPreview();}
 function crLoupe(n){const L=$('#crLoupe'),f=CR.fit,size=116,sx=f.ox+n[0]*f.nw*f.s,sy=f.oy+n[1]*f.nh*f.s;
   L.hidden=false;L.width=L.height=Math.round(size*DPR);let ly=sy-size-48;if(ly<8)ly=sy+48;const lx=Math.max(8,Math.min(f.W-size-8,sx-size/2));L.style.left=lx+'px';L.style.top=ly+'px';
   const x=L.getContext('2d'),B=CR.big,bs=B.width/f.nw,zoom=3,k=f.s*zoom*DPR/ 1; // screen px per image px in loupe
@@ -3094,9 +3171,9 @@ function wireScanner(){
   const st=$('#crStage');st.addEventListener('pointerdown',crDown);st.addEventListener('pointermove',e=>{if(CR.drag)crMove(crPos(e));});
   st.addEventListener('pointerup',crUp);st.addEventListener('pointercancel',crUp);
   $('#crAuto').innerHTML=ic('wand')+'<span>كشف تلقائي</span>';$('#crFull').innerHTML=ic('fit')+'<span>الصورة كاملة</span>';
-  $('#crAuto').onclick=()=>{const d=detectQuad(CR.it.small);CR.q=d.quad;drawCropOv();toast(d.auto?'اكتُشفت الحواف':'لم تُكتشف حواف واضحة، اسحب الزوايا يدوياً',3000);};
-  $('#crFull').onclick=()=>{CR.q=[[0,0],[1,0],[1,1],[0,1]];drawCropOv();};
-  $('#crRot').onclick=()=>{CR.rot=(CR.rot+90)%360;crRotLabel();};
+  $('#crAuto').onclick=()=>{const d=detectPage(CR.it.small);CR.q=d.quad;drawCropOv();crPreview();toast(d.auto?'اكتُشفت الحواف':'لم تُكتشف حواف واضحة، اسحب الزوايا يدوياً',3000);};
+  $('#crFull').onclick=()=>{CR.q=[[0,0],[1,0],[1,1],[0,1]];drawCropOv();crPreview();};
+  $('#crRot').onclick=()=>{CR.rot=(CR.rot+90)%360;crRotLabel();crPreview();};
   $('#crCancel').onclick=closeCrop;$('#crOk').onclick=cropDone;
   window.addEventListener('resize',()=>{if(!$('#crop').hidden)layoutCrop();});
 }
