@@ -112,6 +112,20 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.65;str
 .fvd{display:block;width:var(--d);height:var(--d);border-radius:50%;background:var(--c)}.fvd.mk{border-radius:3px;width:calc(var(--d) + 6px);opacity:var(--o)}
 .fvs svg{width:18px;height:18px}
 .rd-fav{width:30px;height:30px}
+.micons{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:2px 2px 6px}.micons button{border:0;background:none;border-radius:12px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--ink)}
+.micons button:hover{background:var(--raise)}.micons span{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--raise);color:var(--accent-strong)}.micons b{font-size:13px;font-weight:600}
+.lcard.selm .lthumb .pg{transition:transform .12s}.lcard.selm.on .lthumb .pg{transform:scale(.94);box-shadow:0 0 0 3px var(--accent)}
+.selck{position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.25);display:grid;place-items:center;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.lcard.on .selck,.lrow.on .selck{background:var(--accent);border-color:var(--accent)}.selck svg{width:14px;height:14px}
+.selcnt{font-size:14px}
+.bulkbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;gap:2px;padding:6px;border-radius:18px;background:var(--chrome);color:var(--chrome-ink);box-shadow:var(--shadow-lg);max-width:calc(100% - 24px);overflow-x:auto}
+.bulkbar button{border:0;background:none;color:inherit;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 11px;border-radius:12px;font-size:11.5px;min-width:56px}.bulkbar button:disabled{opacity:.4}.bulkbar button.dng{color:#ff8a80}.bulkbar svg{width:20px;height:20px}
+.llist{display:flex;flex-direction:column;gap:6px}.lrow{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:6px}
+.lrow.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}.lrmain{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border:0;background:none;text-align:right;color:var(--ink);position:relative;padding:2px}
+.lrthumb{width:42px;height:54px;flex:none;border-radius:6px;background:#fff;box-shadow:0 0 0 1px var(--line);overflow:hidden}.lrthumb img{width:100%;height:100%;object-fit:cover}
+.lrtxt{display:flex;flex-direction:column;min-width:0}.lrtxt b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lrtxt small{color:var(--muted);font-size:12px}
+.lrow .selck{position:static;flex:none;border-color:var(--line-strong);background:transparent;color:#fff}
+.fcards.subf{margin-bottom:16px}
 .glabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}.glabs label{display:flex;align-items:center;gap:6px}.glabs span{color:var(--muted);font-size:12px;min-width:16px}.glabs input{width:100%;padding:8px;border-radius:9px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font:inherit;font-size:16px;text-align:center}
 .bgpv{display:grid;place-items:center;padding:10px;border-radius:14px;border:1px solid var(--line);background-color:#fff;background-image:linear-gradient(45deg,#e5e7eb 25%,transparent 25%,transparent 75%,#e5e7eb 75%),linear-gradient(45deg,#e5e7eb 25%,transparent 25%,transparent 75%,#e5e7eb 75%);background-size:18px 18px;background-position:0 0,9px 9px}
 .bgpv canvas{max-width:100%;max-height:42vh;display:block}
@@ -854,7 +868,7 @@ const AR='٠١٢٣٤٥٦٧٨٩';
 const ar=n=>String(n).replace(/\d/g,d=>AR[d]);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const DPR=Math.min(2,window.devicePixelRatio||1);
-const CNT={page:['صفحة واحدة','صفحتان','صفحات','صفحة'],img:['صورة واحدة','صورتان','صور','صورة'],field:['حقل واحد','حقلان','حقول','حقلاً'],file:['ملف واحد','ملفان','ملفات','ملفاً'],item:['عنصر واحد','عنصران','عناصر','عنصراً']};
+const CNT={page:['صفحة واحدة','صفحتان','صفحات','صفحة'],img:['صورة واحدة','صورتان','صور','صورة'],field:['حقل واحد','حقلان','حقول','حقلاً'],file:['ملف واحد','ملفان','ملفات','ملفاً'],item:['عنصر واحد','عنصران','عناصر','عنصراً'],folder:['مجلد واحد','مجلدان','مجلدات','مجلداً']};
 function cnt(n,k){const w=CNT[k];if(n===0)return 'لا '+w[2];if(n===1)return w[0];if(n===2)return w[1];return ar(n)+' '+(n%100>=3&&n%100<=10?w[2]:w[3]);}
 
 /* ---------- icons ---------- */
@@ -4107,7 +4121,7 @@ function applyTheme(t){if(t==='dark'||t==='light')document.documentElement.datas
    FILE LIBRARY  (kept in this browser with IndexedDB; edits autosave)
    ===================================================================== */
 let DB=null;
-const LB={docs:[],folders:[],tab:'home',seg:'recent',sort:'opened',folder:null,q:''};
+const LB={docs:[],folders:[],tab:'home',seg:'recent',sort:store.get('safahat-libsort','opened'),view:store.get('safahat-libview','grid'),folder:null,q:'',selecting:false,sel:new Set()};
 function idbOpen(){return new Promise(res=>{let done=false;const fin=v=>{if(done)return;done=true;clearTimeout(t);res(v);};const t=setTimeout(()=>fin(null),2500);
   try{const r=indexedDB.open('safahat-library',1);
     r.onupgradeneeded=()=>{const d=r.result;for(const n of ['docs','data','folders'])if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'});};
@@ -4232,31 +4246,95 @@ function folderArt(f,cls='fart'){const c=(f&&f.color)||'#0f8a74',id='fa'+(++fart
   return `<svg viewBox="0 0 60 72" class="${cls}" aria-hidden="true"><defs><clipPath id="${id}"><path d="${back}"/></clipPath><linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
     ${cov?`<g clip-path="url(#${id})"><image href="${cov}" x="2" y="7" width="56" height="63" preserveAspectRatio="xMidYMid slice"/><path d="${front}" fill="#fff" opacity=".1"/><path d="M2 27C18 22.5 42 22.5 58 27" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1.4"/></g>`
       :`<path d="${back}" fill="${shade(c,-.22)}"/><path d="${front}" fill="${c}"/><path d="${front}" fill="url(#${id}g)"/><path d="M2 27C18 22.5 42 22.5 58 27" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1"/><rect x="21" y="49" width="18" height="3" rx="1.5" fill="#fff" opacity=".5"/>`}</svg>`;}
-function folderStats(fid){const docs=liveDocs().filter(d=>d.folder===fid);const last=docs.reduce((m,d)=>Math.max(m,d.modified||d.opened||0),0);return {n:docs.length,last};}
+function folderStats(fid){const docs=liveDocs().filter(d=>d.folder===fid),subs=LB.folders.filter(f=>f.parent===fid).length;const last=docs.reduce((m,d)=>Math.max(m,d.modified||d.opened||0),0);return {n:docs.length,last,subs};}
 function folderCard(f){const st=folderStats(f.id);
-  return `<div class="fcard"><button class="fcmain" data-folder="${f.id}"><span class="fcart">${folderArt(f)}</span><span class="fctxt"><b>${esc(f.name)}</b><small>${cnt(st.n,'file')}${st.last?' · '+fmtWhen(st.last):''}</small></span></button>
+  return `<div class="fcard"><button class="fcmain" data-folder="${f.id}"><span class="fcart">${folderArt(f)}</span><span class="fctxt"><b>${esc(f.name)}</b><small>${st.subs?cnt(st.subs,'folder')+' · ':''}${cnt(st.n,'file')}${st.last?' · '+fmtWhen(st.last):''}</small></span></button>
     <button class="fcstar${f.fav?' on':''}" data-ffav="${f.id}" aria-label="${f.fav?'إزالة من المفضلة':'تثبيت في المفضلة'}">${ic('star')}</button>
     <button class="fcmore" data-fmenu="${f.id}" aria-label="خيارات المجلد ${esc(f.name)}">${ic('chev')}</button></div>`;}
 async function pickCover(){return new Promise(res=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
   inp.onchange=async()=>{const file=inp.files[0];if(!file){res(null);return;}try{const url=URL.createObjectURL(file);const im=await loadImg(url);
       const W=360,H=420,c=mkCanvas(W,H),x=c.getContext('2d');const k=Math.max(W/im.naturalWidth,H/im.naturalHeight);const w=im.naturalWidth*k,h=im.naturalHeight*k;
       x.drawImage(im,(W-w)/2,(H-h)/2,w,h);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',.82));}catch(e){toast('تعذّرت قراءة الصورة');res(null);}};inp.click();});}
-function folderMenu(f,btn){
-  openMenu(btn,`<div class="mhead">${esc(f.name)}</div>`+mrow('look','palette','#6a46d6','اللون والغلاف','لون المجلد أو صورة تغطيه')+mrow('rename','textedit','#5b6b6e','إعادة تسمية','')+mrow('fav','star','#e0a100',f.fav?'إزالة من المفضلة':'تثبيت في المفضلة','يظهر أولاً')+
-    mrow('imp','open','#0f8a74','استيراد ملفات إليه','PDF، صور، ZIP')+mrow('exp','save','#0f8a74','تصدير المجلد','ZIP أو نسخة قابلة للاستيراد')+'<div class="msep"></div>'+mrow('del','trash','#c0362c','حذف المجلد','تُنقل ملفاته إلى «ملفاتي»'),async k=>{
-    if(k==='look'||k==='rename')folderSheet(f);
+function folderPath(f){const out=[];let x=f,guard=0;while(x&&guard++<20){out.unshift(x.name);x=LB.folders.find(y=>y.id===x.parent);}return out.join(' / ');}
+const isInside=(fid,anc)=>{let x=LB.folders.find(y=>y.id===fid),g=0;while(x&&g++<30){if(x.id===anc)return true;x=LB.folders.find(y=>y.id===x.parent);}return false;};
+// choose a destination folder (ملفاتي or any folder, shown with its path)
+function pickFolderSheet(title,exclude,onPick){const list=[{id:'',name:'ملفاتي',path:'بدون مجلد'},...LB.folders.filter(f=>!exclude||!(f.id===exclude||isInside(f.id,exclude))).map(f=>({...f,path:folderPath(f)})).sort((a,b)=>a.path.localeCompare(b.path,'ar'))];
+  openSheet(`<h3>${ic('folder')} ${esc(title)}</h3><div class="plist">${list.map(f=>`<button data-pf="${f.id}">${f.id?folderArt(LB.folders.find(x=>x.id===f.id),'fart sm'):ic('layers','i big')}<span><b>${esc(f.name)}</b><small>${esc(f.id?f.path:f.path)}</small></span></button>`).join('')}</div>
+    <div class="acts"><button class="hbtn" id="pfNew">${ic('folderplus')}مجلد جديد</button>${cancelBtn}</div>`);
+  wireClose();sheet.querySelectorAll('[data-pf]').forEach(b=>b.onclick=()=>{closeSheet();onPick(b.dataset.pf||null);});
+  $('#pfNew').onclick=()=>{closeSheet();newFolderPrompt(null,fo=>onPick(fo.id));};}
+function newFolderPrompt(parent,done){openSheet(`<h3>${ic('folderplus')} مجلد جديد${parent?' داخل «'+esc((LB.folders.find(f=>f.id===parent)||{}).name||'')+'»':''}</h3><label>اسم المجلد<input type="text" id="nfName" placeholder="مثال: الفصل الأول"></label><div class="acts"><button class="hbtn primary" id="nfOk">إنشاء</button>${cancelBtn}</div>`);wireClose();
+  const go=async()=>{const n=$('#nfName').value.trim();if(!n)return;closeSheet();const pf=LB.folders.find(f=>f.id===parent);const fo={id:nidL('f'),name:n,created:Date.now(),color:pf?pf.color:undefined};if(parent)fo.parent=parent;await dbPut('folders',fo);LB.folders.push(fo);if(done)done(fo);else{renderLib();toast('أُنشئ المجلد «'+n+'»');}};
+  $('#nfOk').onclick=go;$('#nfName').onkeydown=e=>{if(e.key==='Enter')go();};}
+async function copyDocTo(d,fid){const data=await dbGet('data',d.id);if(!data)return false;const nidv=nidL('d');await dbPut('data',{...data,id:nidv});const m={...d,id:nidv,created:Date.now(),fav:false,folder:fid||null};await dbPut('docs',m);LB.docs.push(m);return true;}
+// PDF files for several library documents (each is opened, flattened and closed again)
+async function docsAsFiles(docs){const files=[],used={};showBusy('جارٍ تجهيز الملفات…');
+  try{for(let i=0;i<docs.length;i++){await openDoc(docs[i].id);const b=await buildPdf({});let n=(docs[i].name||'ملف').replace(/[\\/:*?"<>|]/g,'-');if(used[n])n+=' ('+(++used[n])+')';else used[n]=1;files.push(new File([b],n+'.pdf',{type:'application/pdf'}));setBusy((i+1)/docs.length);}}
+  finally{hideBusy();showLibrary();}return files;}
+async function shareDocs(docs,label){if(!docs.length){toast('لا توجد ملفات');return;}let files;try{files=await docsAsFiles(docs);}catch(e){toast('تعذّر تجهيز الملفات');return;}
+  try{if(navigator.canShare&&navigator.share&&navigator.canShare({files})){await navigator.share({files,title:label});toast('تمت المشاركة');return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  if(files.length===1){await saveFile(files[0].name,files[0]);return;}
+  const zip=new JSZip();files.forEach(f=>zip.file(f.name,f));await saveFile(label+'.zip',await zip.generateAsync({type:'blob'}));}
+async function bulkAction(k){const docs=LB.docs.filter(d=>LB.sel.has(d.id)&&!d.deleted);if(!docs.length)return;
+  if(k==='share'){await shareDocs(docs,'ملفات صفحات');return;}
+  if(k==='zip'){const files=await docsAsFiles(docs);const zip=new JSZip();files.forEach(f=>zip.file(f.name,f));await saveFile('ملفات صفحات.zip',await zip.generateAsync({type:'blob'}));return;}
+  if(k==='move'){pickFolderSheet('نقل '+cnt(docs.length,'file')+' إلى…',null,async fid=>{for(const d of docs){d.folder=fid;await dbPut('docs',d);}LB.selecting=false;LB.sel.clear();renderLib();toast('نُقل '+cnt(docs.length,'file'));});return;}
+  if(k==='copy'){pickFolderSheet('نسخ '+cnt(docs.length,'file')+' إلى…',null,async fid=>{showBusy('جارٍ النسخ…');let i=0;for(const d of docs){await copyDocTo(d,fid);setBusy(++i/docs.length);}hideBusy();LB.selecting=false;LB.sel.clear();renderLib();toast('نُسخ '+cnt(docs.length,'file'));});return;}
+  if(k==='fav'){const all=docs.every(d=>d.fav);for(const d of docs){d.fav=!all;await dbPut('docs',d);}renderLib();toast(all?'أُزيلت من المفضلة':'أُضيفت إلى المفضلة');return;}
+  if(k==='del')confirmSheet('حذف '+cnt(docs.length,'file')+'؟','تُنقل إلى «المحذوفة مؤخراً» ويمكن استعادتها خلال ٣٠ يوماً.','حذف',async()=>{for(const d of docs){d.deleted=Date.now();await dbPut('docs',d);if(S.docId===d.id)S.docId=null;}LB.selecting=false;LB.sel.clear();renderLib();toast('نُقل إلى المحذوفة مؤخراً');});}
+function virtualFolderMenu(btn){const docs=folderDocs(),label=LB.folder==='fav'?'المفضلة':'كل الملفات';
+  openMenu(btn,`<div class="mhead">${label}</div><div class="micons">${[['share','share','مشاركة'],['email','send','بريد'],['upload','layers','رفع']].map(([k,i,l])=>`<button data-k="${k}" role="menuitem"><span>${ic(i)}</span><b>${l}</b></button>`).join('')}</div><div class="msep"></div>`+
+    mrow('select','check','#0f8a74','تحديد','')+mrow('newF','folderplus','#2459d6','مجلد جديد','')+'<div class="msep"></div>'+mrow('view','all','#6a46d6','العرض',LB.view==='list'?'قائمة':'شبكة')+mrow('sort','list','#a95a06','الترتيب',{opened:'آخر فتح',name:'الاسم',size:'الحجم'}[LB.sort]||'')+mrow('help','bulb','#2459d6','مركز المساعدة',''),async k=>{
+    if(k==='share'||k==='email'){if(k==='email')toast('اختر «البريد» من قائمة المشاركة',2600);await shareDocs(docs,label);}else if(k==='upload')syncSheet();
+    else if(k==='select'){LB.selecting=true;LB.sel.clear();renderLib();}else if(k==='newF')newFolderPrompt(null);
+    else if(k==='view')openMenu(btn,'<div class="mhead">العرض</div>'+mrow('grid','all','#6a46d6','شبكة','',LB.view!=='list')+mrow('list','list','#6a46d6','قائمة','',LB.view==='list'),v=>{LB.view=v;store.set('safahat-libview',v);renderLib();});
+    else if(k==='sort')openMenu(btn,'<div class="mhead">الترتيب</div>'+mrow('opened','clock','#2459d6','آخر فتح','',LB.sort==='opened')+mrow('name','text','#0f8a74','الاسم','',LB.sort==='name')+mrow('size','layers','#a95a06','الحجم','',LB.sort==='size'),v=>{LB.sort=v;store.set('safahat-libsort',v);renderLib();});
+    else if(k==='help')libHelpSheet();});}
+function libHelpSheet(){openSheet(`<h3>${ic('bulb')} مركز المساعدة</h3><div class="ptips">
+  <p><b>المجلدات:</b> أنشئ مجلداً من «ملفاتي» أو داخل مجلد آخر، وغيّر لونه أو ضع صورة غلاف من خياراته.</p>
+  <p><b>تحديد عدة ملفات:</b> من ⋯ داخل المجلد اختر «تحديد»، ثم اضغط على الملفات لتحديدها، ومن الشريط السفلي: مشاركة، نقل، نسخ، مفضلة، تصدير، حذف.</p>
+  <p><b>نقل ونسخ:</b> «نقل إلى» يغيّر مكان المجلد أو الملف، و«نسخ إلى» يصنع نسخة مستقلة في المكان الجديد.</p>
+  <p><b>العرض والترتيب:</b> شبكة أو قائمة، والترتيب حسب آخر فتح أو الاسم أو الحجم. يتذكر التطبيق اختيارك.</p>
+  <p><b>المشاركة والبريد:</b> تُجهَّز ملفات المجلد بصيغة PDF مع كل التعديلات، ثم تختار واتساب أو البريد أو AirDrop أو «حفظ في الملفات».</p>
+  <p><b>الرفع:</b> يرفع ملفاتك إلى المزامنة المشفّرة لتظهر على أجهزتك الأخرى.</p>
+  <p><b>الحذف:</b> الملفات المحذوفة تبقى ٣٠ يوماً في «المحذوفة مؤخراً».</p>
+  <p><b>تواصل:</b> ${esc(APP_INFO.email)}</p></div><div class="acts"><button class="hbtn" id="hlpMail">${ic('send')}تواصل مع المطوّر</button><button class="hbtn primary" data-close>تم</button></div>`);wireClose();$('#hlpMail').onclick=()=>{closeSheet();contactSheet();};}
+function folderMenu(f,btn){const inside=LB.tab==='files'&&LB.folder===f.id;const docs=()=>liveDocs().filter(d=>d.folder===f.id);
+  const icons=`<div class="micons">${[['share','share','مشاركة'],['email','send','بريد'],['upload','layers','رفع']].map(([k,i,l])=>`<button data-k="${k}" role="menuitem"><span>${ic(i)}</span><b>${l}</b></button>`).join('')}</div><div class="msep"></div>`;
+  openMenu(btn,`<div class="mhead">${esc(f.name)}</div>`+icons+(inside?mrow('select','check','#0f8a74','تحديد','عدة ملفات للمشاركة أو النقل أو الحذف'):'')+mrow('newSub','folderplus','#2459d6','مجلد جديد','داخل هذا المجلد')+'<div class="msep"></div>'+
+    mrow('moveF','folder','#2459d6','نقل إلى',f.parent?folderPath(LB.folders.find(x=>x.id===f.parent)||{}):'ملفاتي')+mrow('copyF','copy','#5b6b6e','نسخ إلى','نسخة من ملفاته في مكان آخر')+mrow('fav','star','#e0a100',f.fav?'إزالة من المفضلة':'إضافة إلى المفضلة','')+'<div class="msep"></div>'+
+    mrow('view','all','#6a46d6','العرض',LB.view==='list'?'قائمة':'شبكة')+mrow('sort','list','#a95a06','الترتيب',{opened:'آخر فتح',name:'الاسم',size:'الحجم'}[LB.sort]||'')+'<div class="msep"></div>'+
+    mrow('look','palette','#6a46d6','اللون والغلاف','')+mrow('rename','textedit','#5b6b6e','إعادة تسمية','')+mrow('imp','open','#0f8a74','استيراد ملفات إليه','PDF، صور، ZIP')+mrow('exp','save','#0f8a74','تصدير المجلد','ZIP أو نسخة قابلة للاستيراد')+
+    mrow('help','bulb','#2459d6','مركز المساعدة','')+'<div class="msep"></div>'+mrow('del','trash','#c0362c','حذف المجلد','تُنقل محتوياته إلى المجلد الأعلى'),async k=>{
+    if(k==='share'||k==='email'){const d=docs();if(!d.length){toast('المجلد فارغ');return;}if(k==='email')toast('اختر «البريد» من قائمة المشاركة',2600);await shareDocs(d,f.name);}
+    else if(k==='upload')syncSheet();
+    else if(k==='select'){LB.selecting=true;LB.sel.clear();renderLib();toast('اضغط على الملفات لتحديدها',1800);}
+    else if(k==='newSub')newFolderPrompt(f.id);
+    else if(k==='moveF')pickFolderSheet('نقل المجلد «'+f.name+'» إلى…',f.id,async pid=>{if(pid)f.parent=pid;else delete f.parent;await dbPut('folders',f);renderLib();toast('نُقل المجلد');});
+    else if(k==='copyF')pickFolderSheet('نسخ ملفات «'+f.name+'» إلى…',null,async pid=>{const d=docs();if(!d.length){toast('المجلد فارغ');return;}const fo={id:nidL('f'),name:f.name+' - نسخة',created:Date.now(),color:f.color};if(f.cover)fo.cover=f.cover;if(pid)fo.parent=pid;await dbPut('folders',fo);LB.folders.push(fo);
+      showBusy('جارٍ النسخ…');let i=0;for(const x of d){await copyDocTo(x,fo.id);setBusy(++i/d.length);}hideBusy();renderLib();toast('نُسخ المجلد «'+f.name+'»');});
     else if(k==='fav'){f.fav=!f.fav;await dbPut('folders',f);renderLib();}
+    else if(k==='view')openMenu(btn,'<div class="mhead">العرض</div>'+mrow('grid','all','#6a46d6','شبكة','',LB.view!=='list')+mrow('list','list','#6a46d6','قائمة','',LB.view==='list'),v=>{LB.view=v;store.set('safahat-libview',v);renderLib();});
+    else if(k==='sort')openMenu(btn,'<div class="mhead">الترتيب</div>'+mrow('opened','clock','#2459d6','آخر فتح','',LB.sort==='opened')+mrow('name','text','#0f8a74','الاسم','',LB.sort==='name')+mrow('size','layers','#a95a06','الحجم','',LB.sort==='size'),v=>{LB.sort=v;store.set('safahat-libsort',v);renderLib();});
+    else if(k==='look'||k==='rename')folderSheet(f);
     else if(k==='imp')importIntoFolder(f.id);else if(k==='exp')exportFolderSheet(f.id);
-    else confirmSheet('حذف المجلد «'+esc(f.name)+'»؟','تبقى الملفات وتُنقل إلى «ملفاتي».','حذف المجلد',async()=>{for(const d of LB.docs.filter(d=>d.folder===f.id)){d.folder=null;await dbPut('docs',d);}await dbDel('folders',f.id);LB.folders=LB.folders.filter(x=>x!==f);if(LB.folder===f.id)LB.folder=null;renderLib();toast('حُذف المجلد');});});
+    else if(k==='help')libHelpSheet();
+    else confirmSheet('حذف المجلد «'+esc(f.name)+'»؟','تبقى الملفات والمجلدات الداخلية وتُنقل إلى '+(f.parent?'المجلد الأعلى':'«ملفاتي»')+'.','حذف المجلد',async()=>{const up=f.parent||null;
+      for(const d of LB.docs.filter(d=>d.folder===f.id)){d.folder=up;await dbPut('docs',d);}for(const c of LB.folders.filter(x=>x.parent===f.id)){if(up)c.parent=up;else delete c.parent;await dbPut('folders',c);}
+      await dbDel('folders',f.id);LB.folders=LB.folders.filter(x=>x!==f);if(LB.folder===f.id)LB.folder=up;renderLib();toast('حُذف المجلد');});});
 }
 function sortFolders(){return LB.folders.slice().sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)||a.name.localeCompare(b.name,'ar'));}
 const FOLDER_SVG='<svg viewBox="0 0 64 50" class="fsvg" aria-hidden="true"><path d="M3 7a4 4 0 0 1 4-4h15.5l5.5 5.5h29a4 4 0 0 1 4 4V43a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z" fill="#5ea8ee"/><path d="M3 15.5h58V43a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z" fill="#8dc5f6"/><path d="M3 15.5h58v1.6H3z" fill="#fff" opacity=".55"/></svg>';
 function sortDocs(list){const k=LB.sort;return list.slice().sort((a,b)=>k==='name'?a.name.localeCompare(b.name,'ar'):k==='size'?(b.size||0)-(a.size||0):(b.opened||b.modified||0)-(a.opened||a.modified||0));}
 function docCard(d,trash){
+  if(LB.selecting&&!trash){const on=LB.sel.has(d.id);return `<div class="lcard selm${on?' on':''}"><button class="lthumb" data-open="${d.id}" aria-pressed="${on}" aria-label="تحديد ${esc(d.name)}"><span class="pg">${d.thumb?`<img src="${d.thumb}" alt="">`:'<span class="ph"></span>'}<i class="pdfb">PDF</i><i class="selck">${on?ic('check'):''}</i></span></button>
+    <div class="lname">${esc(d.name)}</div><div class="ldate">${fmtWhen(d.opened||d.modified)}</div></div>`;}
   return `<div class="lcard"><button class="lthumb" data-open="${d.id}" aria-label="فتح ${esc(d.name)}"><span class="pg">${d.thumb?`<img src="${d.thumb}" alt="">`:'<span class="ph"></span>'}<i class="pdfb">PDF</i>${d.fav&&!trash?`<i class="favb">${ic('star')}</i>`:''}</span></button>
     <div class="lname">${esc(d.name)}</div><div class="ldate">${trash?'حُذف '+fmtWhen(d.deleted):fmtWhen(d.opened||d.modified)}</div>
     <button class="lmore" data-dm="${d.id}" aria-label="خيارات ${esc(d.name)}">${ic('more')}</button></div>`;}
-function gridOrEmpty(list,empty,trash){return list.length?`<div class="lgrid">${list.map(d=>docCard(d,trash)).join('')}</div>`:`<div class="lempty">${ic('file','i big')}<p>${empty}</p></div>`;}
+function docRow(d,trash){const on=LB.selecting&&LB.sel.has(d.id);
+  return `<div class="lrow${on?' on':''}"><button class="lrmain" data-open="${d.id}"><span class="lrthumb">${d.thumb?`<img src="${d.thumb}" alt="">`:''}</span><span class="lrtxt"><b>${esc(d.name)}</b><small>${trash?'حُذف '+fmtWhen(d.deleted):fmtWhen(d.opened||d.modified)}${d.pages?' · '+cnt(d.pages,'page'):''}${d.size?' · '+fmtSize(d.size):''}</small></span>${LB.selecting?`<i class="selck">${on?ic('check'):''}</i>`:''}</button>${LB.selecting?'':`<button class="lmore" data-dm="${d.id}" aria-label="خيارات ${esc(d.name)}">${ic('more')}</button>`}</div>`;}
+function gridOrEmpty(list,empty,trash){if(list.length&&LB.view==='list'&&LB.tab!=='home')return `<div class="llist">${list.map(d=>docRow(d,trash)).join('')}</div>`;return list.length?`<div class="lgrid">${list.map(d=>docCard(d,trash)).join('')}</div>`:`<div class="lempty">${ic('file','i big')}<p>${empty}</p></div>`;}
 function libHome(){
   const docs=sortDocs(liveDocs()),last=docs[0],favs=docs.filter(d=>d.fav);
   const qa=(k,icon,c,t,s)=>`<button data-la="${k}" style="--c:${c}"><span class="ic">${ic(icon)}</span><b>${t}</b><small>${s}</small></button>`;
@@ -4296,16 +4374,23 @@ function libFiles(){
     <div class="ftiles">${tile('all',sq('layers','#5b6b6e'),'كل الملفات',live.length)}${tile('fav',sq('star','#e0a100'),'المفضلة',live.filter(d=>d.fav).length)}${tile('trash',sq('trash','#8a9796'),'المحذوفة مؤخراً',trash.length)}<button class="ftile" data-folder="vault"><span class="fic">${sq('lock','#a95a06')}</span><b>المجلد الخاص</b><small>مشفّر برمز سري</small></button>
     </div>
     <div class="lsec"><h3>المجلدات</h3><button data-la="newFolder">${ic('plus')} مجلد جديد</button></div>
-    ${LB.folders.length?`<div class="fcards">${sortFolders().map(folderCard).join('')}</div>`:`<div class="lempty"><p>لا توجد مجلدات بعد. أنشئ مجلداً واختر لونه أو صورة غلافه.</p></div>`}`;
+    ${LB.folders.length?`<div class="fcards">${sortFolders().filter(f=>!f.parent||!LB.folders.some(x=>x.id===f.parent)).map(folderCard).join('')}</div>`:`<div class="lempty"><p>لا توجد مجلدات بعد. أنشئ مجلداً واختر لونه أو صورة غلافه.</p></div>`}`;
 }
+function folderDocs(){const f=LB.folder,live=liveDocs();return f==='all'?live:f==='fav'?live.filter(d=>d.fav):live.filter(d=>d.folder===f);}
 function libFolder(){
   const f=LB.folder,live=liveDocs();let title,list,empty,trash=false;
   if(f==='all'){title='كل الملفات';list=live;empty='لا توجد ملفات.';}
   else if(f==='fav'){title='المفضلة';list=live.filter(d=>d.fav);empty='لا توجد ملفات مفضلة.';}
   else if(f==='trash'){title='المحذوفة مؤخراً';list=LB.docs.filter(d=>d.deleted).sort((a,b)=>b.deleted-a.deleted);empty='لا توجد ملفات محذوفة.';trash=true;}
   else{const fo=LB.folders.find(x=>x.id===f);if(!fo){LB.folder=null;return libFiles();}title=fo.name;list=live.filter(d=>d.folder===f);empty='المجلد فارغ. اضغط + لإضافة ملف إليه، أو انقل ملفاً من خيارات الملف.';}
-  return `<div class="ltop"><button class="lback" data-la="up">${ic('prev')}ملفاتي</button><span class="sp"></span>${trash&&list.length?`<button class="hbtn" data-la="emptyTrash">${ic('trash')}إفراغ</button>`:''}${!['all','fav','trash'].includes(f)?`<button class="rbtn" data-la="folderMenu" aria-label="خيارات المجلد">${ic('more')}</button>`:''}</div>
-    <h1 class="ltitle">${LB.folders.find(x=>x.id===f)?`<span class="ltart">${folderArt(LB.folders.find(x=>x.id===f))}</span>`:''}${esc(title)}</h1>${trash?'<p class="hint">تُحذف الملفات نهائياً بعد ٣٠ يوماً.</p>':''}${gridOrEmpty(trash?list:sortDocs(list),empty,trash)}`;
+  const fo=LB.folders.find(x=>x.id===f),par=fo&&fo.parent&&LB.folders.find(x=>x.id===fo.parent),subs=fo?sortFolders().filter(x=>x.parent===f):[];
+  if(LB.selecting&&!trash){const n=LB.sel.size,all=list.length&&list.every(d=>LB.sel.has(d.id));
+    return `<div class="ltop"><button class="hbtn" data-la="selAll">${all?'إلغاء تحديد الكل':'تحديد الكل'}</button><span class="sp"></span><b class="selcnt">${n?'حُدد '+cnt(n,'file'):'اختر الملفات'}</b><span class="sp"></span><button class="hbtn primary" data-la="selDone">تم</button></div>
+      <h1 class="ltitle">${esc(title)}</h1>${gridOrEmpty(sortDocs(list),empty,false)}
+      <div class="bulkbar" role="toolbar">${[['share','share','مشاركة'],['move','folder','نقل'],['copy','copy','نسخ'],['fav','star','مفضلة'],['zip','save','تصدير'],['del','trash','حذف']].map(([k,i,l])=>`<button data-la="bulk:${k}" ${n?'':'disabled'} class="${k==='del'?'dng':''}">${ic(i)}<span>${l}</span></button>`).join('')}</div>`;}
+  return `<div class="ltop"><button class="lback" data-la="up">${ic('prev')}${par?esc(par.name):'ملفاتي'}</button><span class="sp"></span>${trash&&list.length?`<button class="hbtn" data-la="emptyTrash">${ic('trash')}إفراغ</button>`:''}${!trash?`<button class="rbtn" data-la="folderMenu" aria-label="خيارات المجلد">${ic('more')}</button>`:''}</div>
+    <h1 class="ltitle">${fo?`<span class="ltart">${folderArt(fo)}</span>`:''}${esc(title)}</h1>${trash?'<p class="hint">تُحذف الملفات نهائياً بعد ٣٠ يوماً.</p>':''}
+    ${subs.length?`<div class="fcards subf">${subs.map(folderCard).join('')}</div>`:''}${list.length||!subs.length?gridOrEmpty(trash?list:sortDocs(list),empty,trash):''}`;
 }
 const LTOOLS=[['scan','camera','#c0362c','مسح ضوئي','التقاط مستند بالكاميرا مع قص تلقائي'],['idcard','idcard','#2459d6','البطاقة المدنية','الوجهان في صفحة واحدة'],
   ['imgs','imgs','#c0362c','صور إلى PDF','اختر صوراً لتُقص وتُجمع'],['merge','merge','#0f8a74','دمج ملفات','اختر عدة ملفات PDF لتصبح ملفاً واحداً'],
@@ -4353,11 +4438,12 @@ function libSearch(){
       (!byName.length&&!byText.length&&!fos.length?'<div class="lempty"><p>لا توجد نتائج.</p></div>':''))+'</div>';
 }
 function renderLib(){
+  if(LB.selecting&&(LB.tab!=='files'||!LB.folder||LB.folder==='trash')){LB.selecting=false;LB.sel.clear();}
   const t=LB.tab;document.querySelectorAll('[data-lt]').forEach(b=>{b.classList.toggle('on',b.dataset.lt===t);b.setAttribute('aria-current',b.dataset.lt===t?'page':'false');});
   const main=$('#libIn');
   main.innerHTML=t==='home'?libHome():t==='files'?(LB.folder?libFolder():libFiles()):t==='recent'?libRecent():t==='tools'?libTools():libSearch();
-  $('#fab').hidden=!(t==='home'||t==='files'||t==='recent')||LB.folder==='trash';
-  main.querySelectorAll('[data-open]').forEach(b=>b.onclick=async()=>{const d=LB.docs.find(x=>x.id===b.dataset.open);if(d&&d.deleted){docMenu(d.id,b);return;}await openDoc(b.dataset.open);
+  $('#fab').hidden=!(t==='home'||t==='files'||t==='recent')||LB.folder==='trash'||LB.selecting;
+  main.querySelectorAll('[data-open]').forEach(b=>b.onclick=async()=>{if(LB.selecting&&LB.tab==='files'){const id=b.dataset.open;if(LB.sel.has(id))LB.sel.delete(id);else LB.sel.add(id);renderLib();return;}const d=LB.docs.find(x=>x.id===b.dataset.open);if(d&&d.deleted){docMenu(d.id,b);return;}await openDoc(b.dataset.open);
     if(b.dataset.page){const i=+b.dataset.page-1;setTimeout(()=>{scrollToPage(i);S.cur=i;},350);}});
   if(t==='search'&&indexPending().length&&!idxRun)indexAll((k,n)=>{const el=$('#idxSt');if(el)el.textContent=`جارٍ فهرسة المحتوى… ${ar(k)} من ${ar(n)}`;}).then(()=>{if(LB.tab==='search'){const q=$('#libQ');const had=q&&document.activeElement===q;renderLib();if(had){const n=$('#libQ');n.focus();}}});
   if(t==='home')fillDash();
@@ -4386,9 +4472,12 @@ function libAction(a,btn){
   if(a.startsWith('t:')){libTool(a.slice(2));return;}
   if(a==='exportFolder'){exportFolderSheet(LB.folder||'all');return;}
   if(a==='importFolder'){importIntoFolder(LB.folder);return;}
-  if(a==='up'){LB.folder=null;renderLib();return;}
+  if(a==='up'){const fo=LB.folders.find(x=>x.id===LB.folder);LB.folder=fo&&fo.parent&&LB.folders.some(x=>x.id===fo.parent)?fo.parent:null;LB.selecting=false;LB.sel.clear();renderLib();return;}
+  if(a==='selDone'){LB.selecting=false;LB.sel.clear();renderLib();return;}
+  if(a==='selAll'){const ids=folderDocs().map(d=>d.id);if(ids.every(i=>LB.sel.has(i)))LB.sel.clear();else ids.forEach(i=>LB.sel.add(i));renderLib();return;}
+  if(a.startsWith('bulk:')){bulkAction(a.slice(5));return;}
   if(a==='newFolder'){folderSheet();return;}
-  if(a==='folderMenu'){const f=LB.folders.find(x=>x.id===LB.folder);if(!f)return;folderMenu(f,btn);return;
+  if(a==='folderMenu'){const f=LB.folders.find(x=>x.id===LB.folder);if(!f){virtualFolderMenu(btn);return;}folderMenu(f,btn);return;
     openMenu(btn,mrow('rename','textedit','#5b6b6e','إعادة تسمية المجلد','')+mrow('imp','open','#0f8a74','استيراد ملفات إليه','PDF، صور، ZIP')+mrow('exp','save','#0f8a74','تصدير المجلد','ZIP أو نسخة قابلة للاستيراد')+mrow('del','trash','#c0362c','حذف المجلد','تُنقل ملفاته إلى «ملفاتي»'),async k=>{
       if(k==='rename')folderSheet(f);else if(k==='imp')importIntoFolder(f.id);else if(k==='exp')exportFolderSheet(f.id);else{for(const d of LB.docs.filter(d=>d.folder===f.id)){d.folder=null;await dbPut('docs',d);}await dbDel('folders',f.id);LB.folders=LB.folders.filter(x=>x!==f);LB.folder=null;renderLib();toast('حُذف المجلد');}});return;}
   if(a==='emptyTrash'){confirmSheet('إفراغ المحذوفة مؤخراً؟','ستُحذف الملفات نهائياً ولا يمكن استعادتها.','حذف نهائي',async()=>{for(const d of LB.docs.filter(d=>d.deleted)){await dbDel('docs',d.id);await dbDel('data',d.id);}LB.docs=LB.docs.filter(d=>!d.deleted);renderLib();toast('أُفرغت المحذوفة مؤخراً');});return;}
@@ -4396,7 +4485,7 @@ function libAction(a,btn){
     '<div class="msep"></div>'+mrow('newFolder','folderplus','#2459d6','مجلد جديد','')+mrow('importFolder','open','#0f8a74','استيراد ملفات أو مجلد','PDF، صور، ZIP، نسخة صفحات')+mrow('exportFolder','save','#0f8a74','تصدير الملفات','ZIP أو نسخة قابلة للاستيراد')+
     '<div class="msep"></div>'+mrow('backup','save','#0f8a74','النسخ الاحتياطي والاستعادة','')+mrow('sync','layers','#2459d6','المزامنة بين الأجهزة','')+mrow('dups','copy','#a95a06','الملفات المكررة','')+
     '<div class="msep"></div>'+mrow('shareApp','share','#2459d6','مشاركة التطبيق','')+mrow('contact','send','#0f8a74','تواصل مع المطوّر',APP_INFO.email),
-    k=>{if(k==='shareApp')shareAppSheet();else if(k==='contact')contactSheet();else if(['newFolder','importFolder','exportFolder','backup','sync','dups'].includes(k))libAction(k);else{LB.sort=k;renderLib();}});return;}
+    k=>{if(k==='shareApp')shareAppSheet();else if(k==='contact')contactSheet();else if(['newFolder','importFolder','exportFolder','backup','sync','dups'].includes(k))libAction(k);else{LB.sort=k;store.set('safahat-libsort',k);renderLib();}});return;}
 }
 function libTool(k){
   if(k==='scan')return openScanner('docs','cam',true);if(k==='idcard')return openScanner('id',null,true);if(k==='imgs')return openScanner('docs','gal',true);
@@ -4469,7 +4558,7 @@ async function moveDocToVault(d){
 function moveSheet(d){
   const cur=d.folder||'';
   openSheet(`<h3>${ic('folder')} نقل «${esc(d.name)}» إلى…</h3><div class="plist">
-    ${[{id:'',name:'ملفاتي',sub:'بدون مجلد'},...LB.folders].map(f=>`<button data-mv="${f.id}" class="${cur===f.id?'on':''}">${f.id?folderArt(f,'fart sm'):ic('layers','i big')}<span><b>${esc(f.name)}</b><small>${f.sub||cnt(liveDocs().filter(x=>x.folder===f.id).length,'file')}${cur===f.id?' · المكان الحالي':''}</small></span></button>`).join('')}
+    ${[{id:'',name:'ملفاتي',sub:'بدون مجلد'},...LB.folders.slice().sort((a,b)=>folderPath(a).localeCompare(folderPath(b),'ar'))].map(f=>`<button data-mv="${f.id}" class="${cur===f.id?'on':''}">${f.id?folderArt(f,'fart sm'):ic('layers','i big')}<span><b>${esc(f.name)}</b><small>${f.sub||(f.parent?esc(folderPath(f))+' · ':'')+cnt(liveDocs().filter(x=>x.folder===f.id).length,'file')}${cur===f.id?' · المكان الحالي':''}</small></span></button>`).join('')}
     <button data-mv="__vault">${ic('lock','i big')}<span><b>المجلد الخاص</b><small>يُشفَّر برمزك السري ولا يظهر في المكتبة</small></span></button>
     </div><div class="acts"><button class="hbtn" id="mvNew">${ic('folderplus')}مجلد جديد</button>${cancelBtn}</div>`);
   wireClose();
@@ -4486,13 +4575,14 @@ function docMenu(id,btn){
     if(k==='restore'){d.deleted=null;await dbPut('docs',d);renderLib();toast('استُعيد الملف');}
     else confirmSheet('حذف الملف نهائياً؟','«'+esc(d.name)+'» سيُحذف ولا يمكن استعادته.','حذف نهائي',async()=>{await dbDel('docs',id);await dbDel('data',id);LB.docs=LB.docs.filter(x=>x!==d);renderLib();});});return;}
   openMenu(btn,`<div class="mhead">${esc(d.name)}</div>`+mrow('open','open','#0f8a74','فتح','')+mrow('fav','star','#e0a100',d.fav?'إزالة من المفضلة':'إضافة إلى المفضلة','')+
-    mrow('rename','textedit','#5b6b6e','إعادة تسمية','')+mrow('share','share','#2459d6','مشاركة','واتساب، بريد، AirDrop…')+mrow('move','folder','#2459d6','نقل إلى…',d.folder?(LB.folders.find(f=>f.id===d.folder)||{}).name||'':'مجلد أو المجلد الخاص')+mrow('dup','copy','#5b6b6e','إنشاء نسخة','')+
+    mrow('rename','textedit','#5b6b6e','إعادة تسمية','')+mrow('share','share','#2459d6','مشاركة','واتساب، بريد، AirDrop…')+mrow('move','folder','#2459d6','نقل إلى…',d.folder?(LB.folders.find(f=>f.id===d.folder)||{}).name||'':'مجلد أو المجلد الخاص')+mrow('dup','copy','#5b6b6e','إنشاء نسخة','')+mrow('copyto','copy','#5b6b6e','نسخ إلى…','نسخة في مجلد آخر')+
     mrow('export','save','#0f8a74','حفظ نسخة PDF','')+'<div class="msep"></div>'+mrow('del','trash','#c0362c','حذف','يُنقل إلى المحذوفة مؤخراً'),async k=>{
     if(k==='open')openDoc(id);
     else if(k==='fav'){d.fav=!d.fav;await dbPut('docs',d);renderLib();toast(d.fav?'أُضيف إلى المفضلة':'أُزيل من المفضلة');}
     else if(k==='rename'){openSheet(`<h3>إعادة تسمية</h3><label>اسم الملف<input type="text" id="rnName" value="${esc(d.name)}"></label><div class="acts"><button class="hbtn primary" id="rnOk">حفظ</button>${cancelBtn}</div>`);wireClose();
       const go=async()=>{const n=$('#rnName').value.trim();if(!n)return;closeSheet();d.name=n;await dbPut('docs',d);if(S.docId===id){S.name=n;setName();}renderLib();};$('#rnOk').onclick=go;$('#rnName').onkeydown=e=>{if(e.key==='Enter')go();};}
     else if(k==='move')moveSheet(d);
+    else if(k==='copyto')pickFolderSheet('نسخ «'+d.name+'» إلى…',null,async fid=>{await copyDocTo(d,fid);renderLib();toast('نُسخ الملف');});
     else if(k==='share'){await openDoc(id);shareSheet();}
     else if(k==='dup'){const data=await dbGet('data',id);if(!data)return;const nidv=nidL('d');await dbPut('data',{...data,id:nidv});const m={...d,id:nidv,name:d.name+' - نسخة',created:Date.now(),opened:Date.now(),fav:false};await dbPut('docs',m);LB.docs.push(m);renderLib();toast('أُنشئت نسخة');}
     else if(k==='export'){await openDoc(id);savePdf();}
