@@ -1,5 +1,5 @@
 // Adds what صفحات needs to the generated native projects (run after `npx cap add <platform>`):
-//  iOS:     camera/photos permissions, "Open in صفحات" for PDFs and images, Files-app folder, Arabic, iPad orientations, build number
+//  iOS:     Apple Pencil double-tap/squeeze, camera/photos permissions, "Open in صفحات" for PDFs and images, Files-app folder, Arabic, iPad orientations, build number
 //  Android: camera permission, "Open with صفحات" for PDFs, version code
 import fs from 'node:fs';
 import path from 'node:path';
@@ -44,6 +44,79 @@ if (platform === 'ios') {
     let x = fs.readFileSync(pbx, 'utf8');
     x = x.replace(/CURRENT_PROJECT_VERSION = [^;]+;/g, `CURRENT_PROJECT_VERSION = ${build};`).replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${version};`);
     fs.writeFileSync(pbx, x);
+  }
+  // Apple Pencil double-tap and squeeze (Pencil Pro) are only delivered to native code:
+  // forward them to the page, which opens its tool circle at the pencil tip or switches to the eraser.
+  const appDelegate = path.join(root, 'ios/App/App/AppDelegate.swift');
+  if (fs.existsSync(appDelegate)) {
+    let sw = fs.readFileSync(appDelegate, 'utf8');
+    if (!sw.includes('SafahatPencil')) {
+      if (!/import WebKit/.test(sw)) sw = sw.replace(/import UIKit\n/, 'import UIKit\nimport WebKit\n');
+      sw = sw.replace(/(didFinishLaunchingWithOptions[^{]*\{)/, '$1\n        SafahatPencil.shared.hook()');
+      must(sw.includes('SafahatPencil.shared.hook()'), 'could not hook AppDelegate');
+      sw += `
+// MARK: - Apple Pencil double-tap / squeeze -> صفحات (added by scripts/patch-native.mjs)
+final class SafahatPencil: NSObject, UIPencilInteractionDelegate {
+    static let shared = SafahatPencil()
+    private weak var web: WKWebView?
+
+    func hook(_ tries: Int = 0) {
+        if web != nil { return }
+        let root = (UIApplication.shared.delegate as? AppDelegate)?.window?.rootViewController
+        if let v = root?.view, let w = SafahatPencil.find(v) {
+            web = w
+            let interaction = UIPencilInteraction()
+            interaction.delegate = self
+            w.addInteraction(interaction)
+            return
+        }
+        if tries < 60 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.hook(tries + 1) }
+        }
+    }
+
+    private static func find(_ v: UIView) -> WKWebView? {
+        if let w = v as? WKWebView { return w }
+        for s in v.subviews { if let w = find(s) { return w } }
+        return nil
+    }
+
+    private func name(_ a: UIPencilPreferredAction) -> String {
+        switch a {
+        case .ignore: return "ignore"
+        case .switchEraser: return "eraser"
+        case .switchPrevious: return "previous"
+        default: return "menu"
+        }
+    }
+
+    private func send(_ kind: String, _ p: CGPoint?, _ action: String) {
+        guard let w = web else { return }
+        let x = p.map { String(format: "%.1f", Double($0.x)) } ?? "null"
+        let y = p.map { String(format: "%.1f", Double($0.y)) } ?? "null"
+        w.evaluateJavaScript("window.safahatPencilEvent&&window.safahatPencilEvent('\\(kind)',\\(x),\\(y),'\\(action)')", completionHandler: nil)
+    }
+
+    // iPadOS 12.1 to 17.4
+    func pencilInteractionDidTap(_ interaction: UIPencilInteraction) {
+        send("tap", nil, name(UIPencilInteraction.preferredTapAction))
+    }
+
+    @available(iOS 17.5, *)
+    func pencilInteraction(_ interaction: UIPencilInteraction, didReceiveTap tap: UIPencilInteraction.Tap) {
+        send("tap", tap.hoverPose?.location, name(UIPencilInteraction.preferredTapAction))
+    }
+
+    @available(iOS 17.5, *)
+    func pencilInteraction(_ interaction: UIPencilInteraction, didReceiveSqueeze squeeze: UIPencilInteraction.Squeeze) {
+        if squeeze.phase == .ended {
+            send("squeeze", squeeze.hoverPose?.location, name(UIPencilInteraction.preferredSqueezeAction))
+        }
+    }
+}
+`;
+      fs.writeFileSync(appDelegate, sw);
+    }
   }
   console.log('iOS patched (build ' + build + ')');
 }
