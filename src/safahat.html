@@ -858,7 +858,7 @@ const P={
  move:'M12 3v18M3 12h18M12 3 9 6m3-3 3 3m-3 15-3-3m3 3 3-3M3 12l3-3m-3 3 3 3m15-3-3-3m3 3-3 3',
  pen:'M4 20l4-1L19 8l-3-3L5 16zM14 6l3 3',
  marker:'M15 4l5 5-8 8H7v-5zM7 17l-3 3h6',
- rect:'M4 6h16v12H4z',ruler:'M3.5 16.5 16.5 3.5l4 4-13 13zM7.5 12.5l1.8 1.8M10.5 9.5l1.8 1.8M13.5 6.5l1.8 1.8',mperim:'M12 3.5l8 6-3 10.5H7L4 9.5z',marea:'M12 3.5l8 6-3 10.5H7L4 9.5zM7.5 13l5 5M6 9.5l9 9M9.5 6.5l7.5 7.5',mangle:'M4 19.5h16M4 19.5 15.5 6M9.5 19.5a5.6 5.6 0 0 0-1.9-4.2',star:'M12 3.6l2.6 5.3 5.8.9-4.2 4.1 1 5.8L12 17l-5.2 2.7 1-5.8-4.2-4.1 5.8-.9z',starf:'M12 3.6l2.6 5.3 5.8.9-4.2 4.1 1 5.8L12 17l-5.2 2.7 1-5.8-4.2-4.1 5.8-.9zM12 7.5l1.5 3 3.3.5-2.4 2.3.6 3.3L12 15l-2.9 1.6.6-3.3-2.4-2.3 3.3-.5z',selrect:'M4 4h4M10 4h4M16 4h4v4M20 10v4M20 16v4h-4M14 20h-4M8 20H4v-4M4 14v-4M4 8V4',fill:'M5 11 11 5l7 7-6 6a2 2 0 0 1-3 0l-4-4a2 2 0 0 1 0-3zM5 13h13M20 15.5s2 2.3 2 3.4a2 2 0 0 1-4 0c0-1.1 2-3.4 2-3.4',
+ rect:'M4 6h16v12H4z',flipH:'M12 3v18M9 7 3 12l6 5zM15 7l6 5-6 5z',flipV:'M3 12h18M7 9l5-6 5 6zM7 15l5 6 5-6z',ruler:'M3.5 16.5 16.5 3.5l4 4-13 13zM7.5 12.5l1.8 1.8M10.5 9.5l1.8 1.8M13.5 6.5l1.8 1.8',mperim:'M12 3.5l8 6-3 10.5H7L4 9.5z',marea:'M12 3.5l8 6-3 10.5H7L4 9.5zM7.5 13l5 5M6 9.5l9 9M9.5 6.5l7.5 7.5',mangle:'M4 19.5h16M4 19.5 15.5 6M9.5 19.5a5.6 5.6 0 0 0-1.9-4.2',star:'M12 3.6l2.6 5.3 5.8.9-4.2 4.1 1 5.8L12 17l-5.2 2.7 1-5.8-4.2-4.1 5.8-.9z',starf:'M12 3.6l2.6 5.3 5.8.9-4.2 4.1 1 5.8L12 17l-5.2 2.7 1-5.8-4.2-4.1 5.8-.9zM12 7.5l1.5 3 3.3.5-2.4 2.3.6 3.3L12 15l-2.9 1.6.6-3.3-2.4-2.3 3.3-.5z',selrect:'M4 4h4M10 4h4M16 4h4v4M20 10v4M20 16v4h-4M14 20h-4M8 20H4v-4M4 14v-4M4 8V4',fill:'M5 11 11 5l7 7-6 6a2 2 0 0 1-3 0l-4-4a2 2 0 0 1 0-3zM5 13h13M20 15.5s2 2.3 2 3.4a2 2 0 0 1-4 0c0-1.1 2-3.4 2-3.4',
  ellipse:'M12 5c4.4 0 8 3.1 8 7s-3.6 7-8 7-8-3.1-8-7 3.6-7 8-7z',
  line:'M5 19 19 5',
  arrow:'M5 19 19 5m0 0h-8m8 0v8',
@@ -1154,7 +1154,8 @@ function drawOverlay(id){railRefreshSoon(id);
     x.strokeRect(Math.min(drag.start[0],drag.cur[0])*W,Math.min(drag.start[1],drag.cur[1])*H,Math.abs(drag.cur[0]-drag.start[0])*W,Math.abs(drag.cur[1]-drag.start[1])*H);x.restore();}
   if(S.tool==='edittext')drawRunHints(x,p,W,H,drag&&drag.kind==='etext'&&drag.id===id?drag:null);
   if(S.mpoly&&S.mpoly.id===id){const mp=S.mpoly;drawA(x,{type:'measure',mk:mp.mk,pts:mp.hover&&!(mp.mk==='angle'&&mp.pts.length>=3)?mp.pts.concat([mp.hover]):mp.pts,closed:false,preview:true,...mprops(p)},W,H);}
-  if(S.msel&&S.msel.id===id)drawMsel(x,p,W,H);
+  if(S.icrop&&S.icrop.id===id)drawCrop(x,p,W,H);
+  else if(S.msel&&S.msel.id===id)drawMsel(x,p,W,H);
   if(drag&&drag.kind==='lasso'&&drag.id===id)drawLasso(x,drag.pts,W,H);
   if(S.sel&&S.sel.id===id&&S.sel.a&&p.annots.includes(S.sel.a)){const b=bbox(S.sel.a,W/H);x.save();x.strokeStyle='#0b6e5f';x.setLineDash([6*DPR,4*DPR]);x.lineWidth=1.5*DPR;
     x.strokeRect((b.x-.006)*W,(b.y-.006*W/H)*H,(b.w+.012)*W,(b.h+.012*W/H)*H);x.restore();}
@@ -1444,7 +1445,9 @@ function drawA(c,a,W,H){
     case 'math':{const fs=a.size*W;c.fillStyle=c.strokeStyle=a.color||'#111111';const L=mathLayout(a.tex,fs,c,a.rtl);L.draw(a.rtl?X(pts[0][0])-L.w:X(pts[0][0]),Y(pts[0][1])+L.a);break;}
     case 'measure':mDraw(c,a,W,H);break;
     case 'image':{
-      const im=S.imgs[a.key];if(im)c.drawImage(im.el,X(pts[0][0]),Y(pts[0][1]),X(a.w),Y(a.h));break;}
+      const im=S.imgs[a.key];if(!im)break;const x=X(pts[0][0]),y=Y(pts[0][1]),w=X(a.w),h=Y(a.h),iw=im.el.naturalWidth||im.el.width,ih=im.el.naturalHeight||im.el.height,cr=a.crop;
+      if(a.flip){c.translate(x+w/2,y+h/2);c.scale(a.flip.includes('h')?-1:1,a.flip.includes('v')?-1:1);c.translate(-(x+w/2),-(y+h/2));}
+      if(cr&&iw)c.drawImage(im.el,cr[0]*iw,cr[1]*ih,Math.max(1,(cr[2]-cr[0])*iw),Math.max(1,(cr[3]-cr[1])*ih),x,y,w,h);else c.drawImage(im.el,x,y,w,h);break;}
   }
   c.restore();
 }
@@ -1703,6 +1706,10 @@ function attachOverlay(o,id){
       drag={id,kind:'mark',start:pt,cur:pt,style:MARK[t],color:pr.color,op:pr.op,items:null,a:null};
       pageItems(p).then(it=>{if(drag&&drag.kind==='mark'&&drag.id===id){drag.items=it;markUpd(id);}});drawOverlay(id);return;}
     if(t==='lasso'){o.setPointerCapture(e.pointerId);e.preventDefault();const m=S.msel,r=pageRatio(p);const rectSel=(S.props.lasso||{}).mode==='rect';
+      if(S.icrop){const v=views.get(id);if(S.icrop.id===id){const hs=cropHandles(v),q=[pt[0]*v.cssW,pt[1]*v.cssH];let bi=-1,bd=26;hs.forEach((h,i)=>{const d=Math.hypot(h[0]-q[0],h[1]-q[1]);if(d<bd){bd=d;bi=i;}});
+          if(bi>=0){drag={id,kind:'icrop',h:bi};return;}}cropEnd(true);return;}
+      if(m&&m.id===id&&canResize(m)){const v=views.get(id),q=[pt[0]*v.cssW,pt[1]*v.cssH];let bi=-1,bd=18;resHandles(m,v).forEach((h,i)=>{const d=Math.hypot(h[0]-q[0],h[1]-q[1]);if(d<bd){bd=d;bi=i;}});
+        if(bi>=0){pushUndo('تغيير الحجم');drag={id,kind:'mres',h:bi,b0:{...m.box},keep:m.items.length>1||m.items.some(a=>a.type==='image'),orig:m.items.map(a=>({pts:a.pts.map(q=>q.slice()),w:a.w,h:a.h}))};$('#selbar').hidden=true;return;}}
       if(m&&m.id===id&&m.items.length&&m.items.some(canRot)){const v=views.get(id),hp=rotHandle(m,v);if(hp&&Math.hypot(pt[0]*v.cssW-hp[0],pt[1]*v.cssH-hp[1])<24){
         pushUndo('تدوير');const b=m.box,C=[b.x+b.w/2,(b.y+b.h/2)/r];drag={id,kind:'mrot',C,a0:Math.atan2(pt[1]/r-C[1],pt[0]-C[0]),orig:m.items.map(a=>({pts:a.pts.map(q=>q.slice()),rot:a.rot})),ang:0};$('#selbar').hidden=true;return;}}
       if(m&&m.id===id&&m.items.length){const b=m.box,pad=.015;if(pt[0]>=b.x-pad&&pt[0]<=b.x+b.w+pad&&pt[1]>=b.y-pad*r&&pt[1]<=b.y+b.h+pad*r){
@@ -1738,6 +1745,10 @@ function attachOverlay(o,id){
     if(S.mpoly&&S.mpoly.id===id&&MPOLY.includes(S.tool)&&!drag){S.mpoly.hover=npt(e,o);liveDraw(id);}
     if(e.pointerType==='pen'){lastPenT=performance.now();lastPenXY=[e.clientX,e.clientY];if(!drag&&!e.buttons){showPenCursor(e,o);return;}}
     if(!drag||drag.id!==id)return;const pt=npt(e,o);
+    if(drag.kind==='mres'){const nb=resBox(drag,pt);applyRes(S.msel.items,drag.orig,drag.b0,nb);S.msel.box=unionBox(S.msel.items,pageRatio(byId(id)));drag.moved=true;liveDraw(id);return;}
+    if(drag.kind==='icrop'){const c=S.icrop;if(!c)return;const F=c.F,u=Math.max(0,Math.min(1,(pt[0]-F.x)/F.w)),w=Math.max(0,Math.min(1,(pt[1]-F.y)/F.h)),dc=c.dc,h=drag.h,mn=.04;
+      if([0,6,7].includes(h))dc[0]=Math.min(u,dc[2]-mn);if([2,3,4].includes(h))dc[2]=Math.max(u,dc[0]+mn);if([0,1,2].includes(h))dc[1]=Math.min(w,dc[3]-mn);if([4,5,6].includes(h))dc[3]=Math.max(w,dc[1]+mn);
+      cropApply();liveDraw(id);return;}
     if(drag.kind==='mrot'){const r=pageRatio(byId(id));let ang=Math.atan2(pt[1]/r-drag.C[1],pt[0]-drag.C[0])-drag.a0;ang=Math.atan2(Math.sin(ang),Math.cos(ang));
       const deg=ang*180/Math.PI,sn=Math.round(deg/15)*15;if(Math.abs(deg-sn)<4)ang=sn*Math.PI/180;drag.ang=ang;
       applyRot(S.msel.items,drag.orig,ang,drag.C,r);S.msel.box=unionBox(S.msel.items,r);hudBadge(ar(Math.round(ang*180/Math.PI))+'°');liveDraw(id);return;}
@@ -1778,6 +1789,8 @@ function attachOverlay(o,id){
     else if(d.kind==='etext'){drawOverlay(id);if(e.type==='pointerup')editTextAt(id,d,e);}
     else if(d.kind==='lasso'){const tap=(d.rect?Math.hypot(e.clientX-d.x,e.clientY-d.y)<10:d.pts.length<4&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<10);if(d.rect&&tap)d.pts=[d.start];drawOverlay(id);if(e.type==='pointerup')finishLasso(id,d.pts,tap?d.pts[0]:null);}
     else if(d.kind==='mmove'){if(d.moved)markDirty();else{S.undo.pop();updUndo();}drawOverlay(id);renderSelbar();}
+    else if(d.kind==='mres'){if(d.moved)markDirty();else{S.undo.pop();updUndo();}drawOverlay(id);renderSelbar();}
+    else if(d.kind==='icrop'){drawOverlay(id);}
     else if(d.kind==='mrot'){hudBadge(null);if(Math.abs(d.ang)>1e-3)markDirty();else{S.undo.pop();updUndo();}drawOverlay(id);renderSelbar();}
     else if(d.kind==='tap'&&e.type==='pointerup'){if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>12)return;tapAction(id,d.pt);}
   };
@@ -1862,6 +1875,37 @@ function mDraw(c,a,W,H){const P=a.pts.map(([x,y])=>[x*W,y*H]),cm=([x1,y1],[x2,y2
 function mpolyFinish(closed){const mp=S.mpoly;if(!mp)return;const p=byId(mp.id);S.mpoly=null;
   const need=mp.mk==='angle'?3:mp.mk==='area'?3:2;if(!p||mp.pts.length<need){drawOverlay(mp.id);renderProps();return;}
   const a={type:'measure',mk:mp.mk,pts:mp.pts,closed:mp.mk==='area'?true:!!closed,...mprops(p)};pushUndo('قياس');p.annots.push(a);markDirty();drawOverlay(mp.id);renderProps();}
+/* resize handles on a selection, and cropping / flipping pictures */
+const RES_PT=['pen','marker','line','arrow','darrow','rect','ellipse','tri','rtri','axes','numline','measure','whiteout','redact'];
+const canResize=m=>!!(m&&m.items.length&&!m.rect&&m.items.every(a=>!a.rot&&(a.type==='image'||RES_PT.includes(a.type))));
+function resHandles(m,v){const b=m.box,p=6,x0=b.x*v.cssW-p,y0=b.y*v.cssH-p,x1=(b.x+b.w)*v.cssW+p,y1=(b.y+b.h)*v.cssH+p,xm=(x0+x1)/2,ym=(y0+y1)/2;return [[x0,y0],[xm,y0],[x1,y0],[x1,ym],[x1,y1],[xm,y1],[x0,y1],[x0,ym]];}
+function applyRes(items,orig,b0,nb){const sx=nb.w/b0.w,sy=nb.h/b0.h,map=([x,y])=>[nb.x+(x-b0.x)*sx,nb.y+(y-b0.y)*sy];
+  items.forEach((a,i)=>{const o=orig[i];if(a.type==='image'){a.pts=[map(o.pts[0])];a.w=o.w*sx;a.h=o.h*sy;}else a.pts=o.pts.map(map);});}
+function resBox(d,pt){const b=d.b0,h=d.h,min=.012;let x0=b.x,y0=b.y,x1=b.x+b.w,y1=b.y+b.h;
+  if([0,6,7].includes(h))x0=Math.min(pt[0],x1-min);if([2,3,4].includes(h))x1=Math.max(pt[0],x0+min);if([0,1,2].includes(h))y0=Math.min(pt[1],y1-min);if([4,5,6].includes(h))y1=Math.max(pt[1],y0+min);
+  if(d.keep&&h%2===0){const ax=[2,4].includes(h)?b.x:b.x+b.w,ay=[4,6].includes(h)?b.y:b.y+b.h;const s=Math.max(.05,Math.max(Math.abs(pt[0]-ax)/b.w,Math.abs(pt[1]-ay)/b.h));
+    const w=b.w*s,hh=b.h*s;x0=[2,4].includes(h)?ax:ax-w;x1=x0+w;y0=[4,6].includes(h)?ay:ay-hh;y1=y0+hh;}
+  return {x:x0,y:y0,w:x1-x0,h:y1-y0};}
+// cropping happens on the page: the whole picture shows faintly and the kept part follows the handles
+function startCrop(m){const a=m.items[0];if(!a||a.type!=='image')return;if(a.rot){toast('أزل تدوير الصورة أولاً ثم قصّها');return;}
+  const cr=a.crop||[0,0,1,1],fh=a.flip&&a.flip.includes('h'),fv=a.flip&&a.flip.includes('v');const dc=[fh?1-cr[2]:cr[0],fv?1-cr[3]:cr[1],fh?1-cr[0]:cr[2],fv?1-cr[1]:cr[3]];
+  const Fw=a.w/(dc[2]-dc[0]),Fh=a.h/(dc[3]-dc[1]);S.icrop={id:m.id,a,dc,F:{x:a.pts[0][0]-dc[0]*Fw,y:a.pts[0][1]-dc[1]*Fh,w:Fw,h:Fh},orig:{pts:a.pts.map(q=>q.slice()),w:a.w,h:a.h,crop:a.crop?a.crop.slice():null}};
+  pushUndo('قص الصورة');drawOverlay(m.id);renderSelbar('crop');toast('اسحب الزوايا والأضلاع لاختيار الجزء المطلوب، ثم اضغط «تم»',3000);}
+function cropApply(){const c=S.icrop;if(!c)return;const a=c.a,dc=c.dc,F=c.F,fh=a.flip&&a.flip.includes('h'),fv=a.flip&&a.flip.includes('v');
+  a.pts=[[F.x+dc[0]*F.w,F.y+dc[1]*F.h]];a.w=(dc[2]-dc[0])*F.w;a.h=(dc[3]-dc[1])*F.h;
+  const cr=[fh?1-dc[2]:dc[0],fv?1-dc[3]:dc[1],fh?1-dc[0]:dc[2],fv?1-dc[1]:dc[3]];if(cr[0]<.001&&cr[1]<.001&&cr[2]>.999&&cr[3]>.999)delete a.crop;else a.crop=cr;}
+function cropEnd(keep){const c=S.icrop;if(!c)return;S.icrop=null;const a=c.a;
+  if(!keep){a.pts=c.orig.pts;a.w=c.orig.w;a.h=c.orig.h;if(c.orig.crop)a.crop=c.orig.crop;else delete a.crop;S.undo.pop();updUndo();}else markDirty();
+  if(S.msel)S.msel.box=unionBox(S.msel.items,pageRatio(byId(c.id)));drawOverlay(c.id);renderSelbar();}
+function cropHandles(v){const c=S.icrop,a=c.a,x0=a.pts[0][0]*v.cssW,y0=a.pts[0][1]*v.cssH,x1=(a.pts[0][0]+a.w)*v.cssW,y1=(a.pts[0][1]+a.h)*v.cssH,xm=(x0+x1)/2,ym=(y0+y1)/2;return [[x0,y0],[xm,y0],[x1,y0],[x1,ym],[x1,y1],[xm,y1],[x0,y1],[x0,ym]];}
+function drawCrop(x,p,W,H){const c=S.icrop,a=c.a,F=c.F,im=S.imgs[a.key];if(!im)return;const k=W/views.get(p.id).cssW;
+  x.save();x.globalAlpha=.32;drawA(x,{...a,pts:[[F.x,F.y]],w:F.w,h:F.h,crop:undefined},W,H);x.restore();
+  x.save();x.fillStyle='rgba(8,16,18,.28)';x.fillRect(F.x*W,F.y*H,F.w*W,F.h*H);x.restore();
+  drawA(x,a,W,H);const X0=a.pts[0][0]*W,Y0=a.pts[0][1]*H,X1=X0+a.w*W,Y1=Y0+a.h*H;
+  x.save();x.strokeStyle='#f59e0b';x.lineWidth=2*k;x.strokeRect(X0,Y0,X1-X0,Y1-Y0);x.lineWidth=4*k;const L=14*k;x.beginPath();
+  for(const [cx,cy,dx,dy] of [[X0,Y0,1,1],[X1,Y0,-1,1],[X1,Y1,-1,-1],[X0,Y1,1,-1]]){x.moveTo(cx+dx*L,cy);x.lineTo(cx,cy);x.lineTo(cx,cy+dy*L);}
+  for(const [cx,cy,hz] of [[(X0+X1)/2,Y0,1],[(X0+X1)/2,Y1,1],[X0,(Y0+Y1)/2,0],[X1,(Y0+Y1)/2,0]]){if(hz){x.moveTo(cx-L*.7,cy);x.lineTo(cx+L*.7,cy);}else{x.moveTo(cx,cy-L*.7);x.lineTo(cx,cy+L*.7);}}
+  x.stroke();x.restore();}
 function tapAction(id,pt){
   const p=byId(id),t=S.tool,d=dims(p),r=d.w/d.h;
   if(t==='eraser'){const a=hit(p,pt);if(a){pushUndo();p.annots.splice(p.annots.indexOf(a),1);markDirty();drawOverlay(id);}return;}
@@ -1870,7 +1914,7 @@ function tapAction(id,pt){
   if(t==='stamp'&&S.pending&&S.pending.label){pushUndo();p.annots.push({type:'stamp',pts:[pt],label:S.pending.label,color:S.pending.color,size:.045});markDirty();drawOverlay(id);return;}
   if((t==='sign'||t==='image')&&S.pending&&S.pending.key){const im=S.imgs[S.pending.key].el;const w=t==='sign'?.3:.45;const h=w*r*im.naturalHeight/im.naturalWidth;
     pushUndo();p.annots.push({type:'image',key:S.pending.key,pts:[[Math.max(0,pt[0]-w/2),Math.max(0,pt[1]-h/2)]],w,h});markDirty();drawOverlay(id);
-    setTool('move');S.sel={id,a:p.annots[p.annots.length-1]};drawOverlay(id);updSelBtns();toast('اسحب لتحريكه، واستخدم «أكبر/أصغر» لتغيير الحجم');return;}
+    const na=p.annots[p.annots.length-1];setTool('lasso');selectItems(id,[na]);toast('اسحبها لتحريكها، واسحب المربعات الصغيرة لتغيير حجمها، أو اختر «قص» أو «قلب»',3600);return;}
   if(t==='sign')openSignSheet();else if(t==='stamp')openStampSheet();else if(t==='image')$('#fileImg').click();
 }
 function scaleSel(f){if(!S.sel||!S.sel.a)return;const a=S.sel.a,p=byId(S.sel.id);pushUndo();
@@ -1889,7 +1933,7 @@ const MODES=[
   {id:'draw',label:'الرسم',sub:'قلم، أشكال، أسهم',icon:'pen',c:'#7c3aed',tools:['browse','move','lasso','pen','hwrite','rect','ellipse','tri','rtri','line','arrow','darrow','axes','numline','eraser'],def:'pen'},
   {id:'edit',label:'تحرير PDF',sub:'تعديل نصوص الملف وصوره وروابطه',icon:'textedit',c:'#c0362c',tools:['browse','move','lasso','edittext','text','image','link','whiteout','eraser'],def:'edittext'},
   {id:'sign',label:'التعبئة والتوقيع',sub:'تعبئة النماذج، توقيع، ختم',icon:'sign',c:'#0284c7',tools:['browse','move','lasso','text','hwrite','sign','stamp','eraser'],def:'text'},
-  {id:'insert',label:'الإدراج',sub:'صفحات، ملفات، صور، مسح ضوئي',icon:'blank',c:'#ea580c',tools:['browse','move','image','link','note','eraser'],def:'browse'},
+  {id:'insert',label:'الإدراج',sub:'صفحات، ملفات، صور، مسح ضوئي',icon:'blank',c:'#ea580c',tools:['browse','move','lasso','image','link','note','eraser'],def:'browse'},
   {id:'fav',label:'المفضلة',sub:'أقلامك وأدواتك المحفوظة',icon:'star',c:'#d4a017',tools:['browse','move','lasso','pen','hwrite','marker','rect','ellipse','tri','rtri','line','arrow','darrow','eraser'],def:'browse'},
   {id:'measure',label:'القياس',sub:'أطوال، محيط، مساحة، زوايا',icon:'ruler',c:'#0891b2',tools:['browse','move','lasso','mdist','mperim','marea','mangle','eraser'],def:'mdist'},
   {id:'redline',label:'الحجب',sub:'إخفاء المعلومات الحساسة',icon:'redact',c:'#334155',tools:['browse','move','lasso','redact','whiteout','eraser'],def:'redact'},
@@ -4763,7 +4807,7 @@ function itemInPoly(a,poly,r){
   if(a.type==='formval')return false;
   if(a.pts&&a.pts.length>2&&['pen','marker','markup'].includes(a.type)){let n=0;for(const q of a.pts)if(inPoly(q,poly))n++;return n>=a.pts.length*.6;}
   const b=bbox(a,r);return inPoly([b.x+b.w/2,b.y+b.h/2],poly);}
-function clearMsel(noDraw){const id=S.msel&&S.msel.id;S.msel=null;const sb=$('#selbar');if(sb)sb.hidden=true;if(id&&!noDraw)drawOverlay(id);}
+function clearMsel(noDraw){if(S.icrop)cropEnd(true);const id=S.msel&&S.msel.id;S.msel=null;const sb=$('#selbar');if(sb)sb.hidden=true;if(id&&!noDraw)drawOverlay(id);}
 function shiftA(a,dx,dy){a.pts=a.pts.map(([x,y])=>[x+dx,y+dy]);}
 function scaleA(a,f,cx,cy){a.pts=a.pts.map(([x,y])=>[cx+(x-cx)*f,cy+(y-cy)*f]);if(a.type==='image'){a.w*=f;a.h*=f;}else if(a.w)a.w*=f;if(a.size)a.size*=f;}
 function runsText(its){return linesOf(its).map(L=>{const rtl=L.items.filter(i=>i.rtl).length*2>=L.items.length;
@@ -4813,6 +4857,8 @@ function drawMsel(x,p,W,H){
   if(m.runs&&m.runs.length){x.fillStyle='rgba(36,89,214,.2)';for(const it of m.runs)x.fillRect(it.x0*W,it.y0*H,(it.x1-it.x0)*W,(it.y1-it.y0)*H);}
   x.fillStyle='rgba(36,89,214,.06)';x.strokeStyle='#2459d6';x.lineWidth=1.6*DPR;x.setLineDash([7*DPR,5*DPR]);
   x.fillRect(b.x*W-pad,b.y*H-pad,b.w*W+pad*2,b.h*H+pad*2);x.strokeRect(b.x*W-pad,b.y*H-pad,b.w*W+pad*2,b.h*H+pad*2);
+  {const v=views.get(p.id);if(v&&S.tool==='lasso'&&canResize(m)){const k=W/v.cssW;x.setLineDash([]);x.fillStyle='#fff';x.strokeStyle='#2459d6';x.lineWidth=1.6*k;
+    for(const [hx,hy] of resHandles(m,v)){const s=9*k;x.fillRect(hx*k-s/2,hy*k-s/2,s,s);x.strokeRect(hx*k-s/2,hy*k-s/2,s,s);}}}
   const v=views.get(p.id);if(m.items.length&&m.items.some(canRot)&&v&&S.tool==='lasso'){const k=W/v.cssW,hp=rotHandle(m,v);if(hp){const hx=hp[0]*k,hy=hp[1]*k,edge=hy<b.y*H?b.y*H-pad:(b.y+b.h)*H+pad;
     x.setLineDash([]);x.strokeStyle='#2459d6';x.lineWidth=1.4*k;x.beginPath();x.moveTo(hx,edge);x.lineTo(hx,hy+(hy<edge?13:-13)*k);x.stroke();
     x.fillStyle='#fff';x.lineWidth=2*k;x.beginPath();x.arc(hx,hy,13*k,0,Math.PI*2);x.fill();x.stroke();
@@ -4832,6 +4878,7 @@ function renderSelbar(mode){
     h=B('back','prev','رجوع')+SIZE_PRESETS.pen.map((v,i)=>`<button class="sbw" data-sbw="${i}" aria-label="سماكة ${ar(i+1)}" title="سماكة ${ar(i+1)}"><i style="width:${Math.round(4+i*3.6)}px;height:${Math.round(4+i*3.6)}px"></i></button>`).join('')+
       `<button data-sbz="0.8" title="أرفع">${ic('smaller')}<span>أرفع</span></button><button data-sbz="1.25" title="أعرض">${ic('bigger')}<span>أعرض</span></button>`+
       (mk?'':DASHES.map(([v,l,svg])=>`<button class="sbd" data-sbd="${v}" title="${l}" aria-label="${l}">${svg}</button>`).join(''));}
+  else if(mode==='crop'){h=B('cropok','check','تم','hi')+B('cropfull','fit','الصورة كاملة')+B('cropx','x','إلغاء');sb.innerHTML=h;sb.hidden=false;sb.scrollLeft=0;positionSelbar();return;}
   else if(mode==='rot'){const one=m.items.length===1&&ROT_BOX.includes(m.items[0].type),cur=one?Math.round((m.items[0].rot||0)*180/Math.PI):0;
     h=B('back','prev','رجوع')+`<button data-sbr="-90">${ic('rotL')}<span>٩٠°</span></button><button data-sbr="-15">${ic('rotL')}<span>١٥°</span></button><button data-sbr="15">${ic('rotR')}<span>١٥°</span></button><button data-sbr="90">${ic('rotR')}<span>٩٠°</span></button>`+
       `<label class="sbang"><span>الزاوية</span><input id="sbAng" type="number" inputmode="numeric" step="1" min="-360" max="360" value="${cur}" dir="ltr"><b>°</b></label>`+(one&&cur?`<button data-sbr0="1">${ic('x')}<span>بدون تدوير</span></button>`:'');}
@@ -4841,9 +4888,9 @@ function renderSelbar(mode){
   else if(m.items.length){const ink=m.items.some(a=>INK.includes(a.type));
     const one=m.items.length===1&&['text','math'].includes(m.items[0].type),txt=m.items.some(a=>a.type==='text'||a.type==='edit'),ax=m.items.some(a=>a.type==='axes'||a.type==='numline');
     const mth=m.items.length===1&&m.items[0].type==='math'&&MSOLVE.compute(m.items[0].tex,m.items[0].rtl);
-    const hasW=m.items.some(a=>a.w&&a.type!=='image');
+    const hasW=m.items.some(a=>a.w&&a.type!=='image');const pic=m.items.length===1&&m.items[0].type==='image';
     if(m.rect){h=B('copyimg','copy','نسخ','hi')+B('erase','eraser','مسح','dng')+B('copy','layers','نسخ العناصر')+(CLIP?B('paste','paste','لصق'):'')+B('img','image','حفظ صورة')+B('cover','whiteout','تغطية');sb.innerHTML=h+B('x','x','إغلاق');sb.hidden=false;sb.scrollLeft=0;positionSelbar();return;}
-    h=(ink?B('ink','hw','تحويل','hi'):'')+(one?B('editx','textedit','تعديل','hi'):'')+(hasW?B('thick','line','السماكة'):'')+(mth?B('calc','check','الحل','hi'):'')+(ax?B('nums','num','الأرقام'):'')+(m.items.some(canFill)?B('fillm','fill','التعبئة'):'')+(m.items.some(canRot)?B('rotm','rotR','تدوير'):'')+(txt?B('font','text','الخط'):'')+B('color','palette','اللون')+B('copy','copy','نسخ')+B('dup','plus','تكرار')+B('big','bigger','أكبر')+B('small','smaller','أصغر')+B('front','front','للأمام')+B('del','trash','حذف','dng');}
+    h=(pic?B('cropi','crop','قص','hi')+B('flipH','flipH','قلب')+B('flipV','flipV','قلب رأسي'):'')+(ink?B('ink','hw','تحويل','hi'):'')+(one?B('editx','textedit','تعديل','hi'):'')+(hasW?B('thick','line','السماكة'):'')+(mth?B('calc','check','الحل','hi'):'')+(ax?B('nums','num','الأرقام'):'')+(m.items.some(canFill)?B('fillm','fill','التعبئة'):'')+(m.items.some(canRot)?B('rotm','rotR','تدوير'):'')+(txt?B('font','text','الخط'):'')+B('color','palette','اللون')+B('copy','copy','نسخ')+B('dup','plus','تكرار')+B('big','bigger','أكبر')+B('small','smaller','أصغر')+B('front','front','للأمام')+B('del','trash','حذف','dng');}
   else{const t=!!m.text;
     h=(t?B('copytext','copy','نسخ النص','hi')+B('hl','hltext','تظليل')+B('ul','under','تسطير')+B('st','strike','شطب'):'')+
       (AI?B('convert','hw','تحويل الكتابة',t?'':'hi')+B('read','ocr',t?'قراءة':'قراءة النص')+B('explain','bulb','شرح')+B('translate','globe','ترجمة'):'')+
@@ -4915,6 +4962,11 @@ function selAction(k,colorVal){
     case 'thick':renderSelbar('thick');break;
     case 'fillm':renderSelbar('fill');break;
     case 'rotm':renderSelbar('rot');break;
+    case 'cropi':startCrop(m);break;
+    case 'cropok':cropEnd(true);break;
+    case 'cropx':cropEnd(false);break;
+    case 'cropfull':if(S.icrop){S.icrop.dc=[0,0,1,1];cropApply();drawOverlay(S.icrop.id);}break;
+    case 'flipH':case 'flipV':{const a=m.items[0];if(!a||a.type!=='image')break;pushUndo('قلب');const ch=k==='flipH'?'h':'v';let f=a.flip||'';f=f.includes(ch)?f.replace(ch,''):f+ch;if(f)a.flip=f;else delete a.flip;markDirty();drawOverlay(m.id);break;}
     case 'calc':{const a=m.items[0];pushUndo('كتابة الناتج');const r=applyCalc(p,a);if(!r){S.undo.pop();updUndo();toast('لم أستطع حساب هذه المعادلة');break;}markDirty();drawOverlay(m.id);selectItems(m.id,[a]);toast(r.mode==='line'?'كُتب الحل تحت المعادلة':r.mode==='check'?(r.ok?'الإجابة صحيحة ✓':'الإجابة غير صحيحة ✗'):'كُتب الناتج');break;}
     case 'nums':{pushUndo('الأرقام');const cur=m.items.find(a=>a.type==='axes'||a.type==='numline');const nv=(cur.nums||'ar')==='ar'?'en':'ar';for(const a of m.items)if(a.type==='axes'||a.type==='numline')a.nums=nv;markDirty();drawOverlay(m.id);toast(nv==='ar'?'أرقام عربية وتسميات س وص':'أرقام إنكليزية وتسميات x وy');break;}
     case 'font':openFontSheet(m.items.filter(a=>a.type==='text'||a.type==='edit'),m.id);break;
