@@ -112,6 +112,21 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.65;str
 .fvd{display:block;width:var(--d);height:var(--d);border-radius:50%;background:var(--c)}.fvd.mk{border-radius:3px;width:calc(var(--d) + 6px);opacity:var(--o)}
 .fvs svg{width:18px;height:18px}
 .rd-fav{width:30px;height:30px}
+.live{position:fixed;inset:0;z-index:70;background:#000;color:#fff;display:flex;flex-direction:column;color-scheme:dark}
+.live[hidden]{display:none!important}
+.lvstage{position:relative;flex:1;min-height:0}.lvstage video,.lvstage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.lvflash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}.lvflash.go{animation:lvfl .35s ease-out}@keyframes lvfl{0%{opacity:.85}100%{opacity:0}}
+.lvmsg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(20,24,26,.82);color:#fff;padding:12px 20px;border-radius:99px;font-size:15px;white-space:nowrap;pointer-events:none}
+.lvmsg.ok{background:rgba(15,138,116,.9)}
+.lvtop{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 10px max(14px,env(safe-area-inset-left,0px));z-index:2}
+.lvtop .sp{flex:1}.lvb{width:46px;height:46px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center}.lvb svg{width:22px;height:22px}.lvb.on{background:#f5c518;color:#111}
+.lvauto{display:flex;flex-direction:column;gap:0;line-height:1}.lvauto b{font-size:16px}.lvauto small{font-size:9px}
+.lvbot{flex:none;background:#000;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.lvmodes{display:flex;justify-content:center;gap:22px}.lvmodes button{border:0;background:none;color:#cfd6d4;font-size:15px;padding:4px 2px}.lvmodes button.on{color:#5eb1ff;font-weight:700;text-decoration:underline;text-underline-offset:6px}
+.lvrow{display:flex;align-items:center;justify-content:space-between}
+.lvshut{width:76px;height:76px;border-radius:50%;border:4px solid #fff;background:none;display:grid;place-items:center;padding:0}.lvshut i{width:60px;height:60px;border-radius:50%;background:#fff;transition:transform .1s}.lvshut:active i{transform:scale(.9)}
+.lvthumb{position:relative;width:52px;height:64px;border-radius:8px;border:2px solid #fff;background:#222;padding:0;overflow:visible}.lvthumb img{width:100%;height:100%;object-fit:cover;border-radius:6px;display:block}.lvthumb img:not([src]){visibility:hidden}
+.lvthumb b{position:absolute;bottom:-8px;left:-8px;min-width:24px;height:24px;border-radius:12px;background:#2459d6;color:#fff;font-size:13px;display:grid;place-items:center;padding:0 5px}
 .micons{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:2px 2px 6px}.micons button{border:0;background:none;border-radius:12px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--ink)}
 .micons button:hover{background:var(--raise)}.micons span{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--raise);color:var(--accent-strong)}.micons b{font-size:13px;font-weight:600}
 .lcard.selm .lthumb .pg{transition:transform .12s}.lcard.selm.on .lthumb .pg{transform:scale(.94);box-shadow:0 0 0 3px var(--accent)}
@@ -2251,12 +2266,13 @@ function setTool(t){
   syncToolbar();renderProps();
   if(t==='edittext')loadRunsAll();else if(S.pages.length)redrawAll();
   const tips={lasso:'ارسم دائرة حول العناصر أو النص لتحديدها، ثم اختر من الخيارات. اضغط على عنصر لتحديده وحده',hwrite:'اكتب بخط يدك نصاً أو معادلة، وبعد توقف قصير تتحول إلى نص مطبوع أو معادلة منسّقة. اختر نوع التحويل من الشريط',hltext:'اسحب فوق السطور لتظليل النص بدقة',under:'اسحب فوق السطور لوضع خط تحتها',strike:'اسحب فوق السطور لشطبها',
-    link:'اسحب مستطيلاً فوق المنطقة التي تريدها رابطاً',note:'اضغط في أي مكان لإضافة ملاحظة لاصقة',edittext:'اضغط على أي سطر في الملف لتعديله. في الصفحات المصوّرة اسحب مستطيلاً فوق النص لاستبداله',text:'اضغط على الصفحة في المكان الذي تريد الكتابة فيه',whiteout:'اسحب فوق النص لتغطيته باللون الأبيض',redact:'اسحب فوق المعلومات الحساسة. عند الحفظ تتحول الصفحة إلى صورة فيُحذف النص المخفي فعلياً',eraser:'اسحب الممحاة فوق الخطوط لمسحها، أو اضغط على عنصر لحذفه',move:'اضغط على تعليق لتحديده ثم اسحبه'};
+    link:'اسحب مستطيلاً فوق المنطقة التي تريدها رابطاً',note:'اضغط في أي مكان لإضافة ملاحظة لاصقة',edittext:'المربعات الزرقاء نصوص: اضغط على أي منها لتعديله. والمربعات الرمادية صور: اضغط عليها لتحريكها أو تغيير حجمها أو قصها أو حذفها. في الصفحات المصوّرة اسحب مستطيلاً فوق النص لاستبداله',text:'اضغط على الصفحة في المكان الذي تريد الكتابة فيه',whiteout:'اسحب فوق النص لتغطيته باللون الأبيض',redact:'اسحب فوق المعلومات الحساسة. عند الحفظ تتحول الصفحة إلى صورة فيُحذف النص المخفي فعلياً',eraser:'اسحب الممحاة فوق الخطوط لمسحها، أو اضغط على عنصر لحذفه',move:'اضغط على تعليق لتحديده ثم اسحبه'};
   Object.assign(tips,{poly:'اضغط على رؤوس الشكل واحداً بعد الآخر، ثم على الرأس الأول لإغلاقه. اسحب أي رأس لاحقاً لتغيير الشكل',mdist:'اسحب من نقطة إلى أخرى لقياس الطول',mperim:'اضغط على رؤوس الشكل، ثم على الرأس الأول لإغلاقه',marea:'اضغط على رؤوس الشكل، ثم على الرأس الأول لإغلاقه وحساب المساحة',mangle:'اضغط على نقطة من الضلع الأول، ثم على رأس الزاوية، ثم على نقطة من الضلع الثاني'});
   if(tips[t])toast(tips[t],3200);
 }
 function setTab(t){
-  const M=MODE[t]||MODE.view;t=M.id;S.tab=t;
+  const M=MODE[t]||MODE.view;t=M.id;const fromTab=S.tab;S.tab=t;
+  if(t==='edit'&&fromTab!=='edit'&&S.tool!=='edittext'&&inViewer())setTool('edittext');
   $('#modeName').textContent=M.label;$('#modeIc').innerHTML=ic(M.icon);$('#modeIc').style.color=M.c;
   const VW=inViewer();
   $('#tbar').innerHTML=tbFor(t);$('#tbar').scrollLeft=0;$('#ribbon').hidden=(t==='tools'||t==='ai'||t==='files');
@@ -3183,8 +3199,9 @@ async function newScanItem(file){
   try{img=await loadImg(url);}catch(e){URL.revokeObjectURL(url);toast('تعذّر قراءة الصورة: '+file.name,3500);return null;}
   const nw=img.naturalWidth,nh=img.naturalHeight,k=Math.min(1,420/Math.max(nw,nh));
   const small=mkCanvas(nw*k,nh*k);small.getContext('2d').drawImage(img,0,0,small.width,small.height);
-  const det=detectPage(small);
+  const det=LV.nextQuad?{quad:LV.nextQuad,auto:true}:detectPage(small);LV.nextQuad=null;
   const it={id:'s'+(scUid++),url,nw,nh,small,quad:det.quad,auto:det.auto,rot:0,filter:SC.f[SC.mode],card:false,busy:false};
+  if(LV.nextFilter){it.filter=LV.nextFilter;LV.nextFilter=null;}
   if(SC.mode==='id')it.card=true;
   else if(looksLikeCard(it)){it.card=true;if(SC.f.docs==='magic'||SC.f.docs==='doc')it.filter=SC.f.id;}
   return it;
@@ -3225,7 +3242,59 @@ function closeScanner(force){
     $('#scKeep').onclick=()=>closeSheet();$('#scDrop').onclick=()=>{closeSheet();closeScanner(true);};return;}
   resetScanner();$('#scan').hidden=true;
 }
-function scanCam(slot){SC.slot=slot||null;$('#fileCam').click();}
+function scanCam(slot){SC.slot=slot||null;if(liveOK()){openLive().catch(e=>{console.warn('live',e);closeLive(true);toast('تعذّر فتح الكاميرا المباشرة، فاستُخدمت كاميرا الجهاز',3000);$('#fileCam').click();});return;}$('#fileCam').click();}
+/* ---------- live camera scanning: the sheet is found while you aim, and captured on its own when the phone is steady ---------- */
+const LV={on:false,stream:null,auto:store.get('safahat-lvauto',true),mode:'docs',hist:[],q:null,t:0,busy:false,armed:true,lostT:0,capQ:null,torch:false,nextQuad:null,nextFilter:null,shots:0};
+const liveOK=()=>!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)&&(!!window.SAFAHAT_NATIVE||window.top===window)&&store.get('safahat-lvoff',false)!==true;
+function liveEl(){let el=$('#live');if(el)return el;el=document.createElement('div');el.className='live';el.id='live';el.hidden=true;el.dir='rtl';
+  el.innerHTML=`<div class="lvstage"><video id="lvVid" playsinline muted autoplay></video><canvas id="lvOv"></canvas><div class="lvflash" id="lvFlash"></div><div class="lvmsg" id="lvMsg"></div></div>
+    <div class="lvtop"><button class="lvb" id="lvClose" aria-label="إغلاق">${ic('x')}</button><span class="sp"></span><button class="lvb" id="lvTorch" aria-label="الفلاش" hidden>${ic('bulb')}</button><button class="lvb lvauto" id="lvAuto" aria-label="الالتقاط التلقائي"><b>A</b><small></small></button></div>
+    <div class="lvbot"><div class="lvmodes" id="lvModes">${[['board','سبورة'],['docs','مستند'],['id','البطاقة المدنية']].map(([k,l])=>`<button data-lm="${k}">${l}</button>`).join('')}</div>
+      <div class="lvrow"><button class="lvb" id="lvGal" aria-label="من الصور">${ic('image')}</button><button class="lvshut" id="lvShut" aria-label="التقاط"><i></i></button><button class="lvthumb" id="lvDone" aria-label="مراجعة الصور"><img id="lvTh" alt=""><b id="lvN" hidden></b></button></div></div>`;
+  document.body.appendChild(el);
+  $('#lvClose').onclick=()=>closeLive();$('#lvDone').onclick=()=>closeLive();$('#lvShut').onclick=()=>liveCapture(LV.q);
+  $('#lvGal').onclick=()=>{closeLive();scanGal();};
+  $('#lvAuto').onclick=()=>{LV.auto=!LV.auto;store.set('safahat-lvauto',LV.auto);liveUi();toast(LV.auto?'الالتقاط التلقائي: يلتقط الصفحة وحده حين يثبت الجهاز':'الالتقاط يدوي: اضغط الزر الأبيض',2200);};
+  $('#lvTorch').onclick=async()=>{const tr=LV.stream&&LV.stream.getVideoTracks()[0];if(!tr)return;LV.torch=!LV.torch;try{await tr.applyConstraints({advanced:[{torch:LV.torch}]});}catch(e){LV.torch=false;}liveUi();};
+  el.querySelectorAll('[data-lm]').forEach(b=>b.onclick=()=>{LV.mode=b.dataset.lm;SC.mode=LV.mode==='id'?'id':'docs';LV.hist=[];liveUi();renderScanner();});
+  return el;}
+function liveUi(){const el=$('#live');if(!el)return;el.querySelectorAll('[data-lm]').forEach(b=>b.classList.toggle('on',b.dataset.lm===LV.mode));
+  const a=$('#lvAuto');a.classList.toggle('on',LV.auto);a.querySelector('small').textContent=LV.auto?'تلقائي':'يدوي';$('#lvTorch').classList.toggle('on',LV.torch);
+  const n=SC.mode==='id'?(SC.front?1:0)+(SC.back?1:0):SC.items.length;const nb=$('#lvN');nb.hidden=!n;nb.textContent=ar(n);}
+async function openLive(){const el=liveEl();LV.mode=SC.mode==='id'?'id':(LV.mode==='board'?'board':'docs');
+  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:3264},height:{ideal:2448}},audio:false});
+  LV.stream=stream;const v=$('#lvVid');v.srcObject=stream;el.hidden=false;try{await v.play();}catch(e){}
+  const tr=stream.getVideoTracks()[0],caps=tr.getCapabilities?tr.getCapabilities():{};$('#lvTorch').hidden=!caps.torch;
+  LV.on=true;LV.hist=[];LV.q=null;LV.armed=true;LV.capQ=null;liveUi();liveLoop();}
+function closeLive(silent){LV.on=false;if(LV.stream){LV.stream.getTracks().forEach(t=>t.stop());LV.stream=null;}const el=$('#live');if(el)el.hidden=true;LV.torch=false;if(!silent)renderScanner();}
+function liveLoop(){if(!LV.on)return;requestAnimationFrame(liveLoop);const now=performance.now();if(LV.busy||now-LV.t<150)return;LV.t=now;liveDetect(now);}
+function liveDetect(now){const v=$('#lvVid'),W=v.videoWidth,H=v.videoHeight;if(!W)return;LV.busy=true;
+  try{const k=320/Math.max(W,H),c=LV.small||(LV.small=mkCanvas(1,1));c.width=Math.round(W*k);c.height=Math.round(H*k);c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+    let q=null;try{const d=detectPage(c);if(d.auto&&polyArea(d.quad)>.08)q=d.quad;}catch(e){}
+    if(q&&LV.q){const dd=Math.max(...q.map((p,i)=>Math.hypot(p[0]-LV.q[i][0],p[1]-LV.q[i][1])));if(dd<.06)q=q.map((p,i)=>[LV.q[i][0]*.5+p[0]*.5,LV.q[i][1]*.5+p[1]*.5]);}
+    LV.q=q;LV.hist.push(q);if(LV.hist.length>7)LV.hist.shift();
+    if(!q){if(!LV.lostT)LV.lostT=now;if(now-LV.lostT>500)LV.armed=true;}else LV.lostT=0;
+    if(q&&LV.capQ&&Math.max(...q.map((p,i)=>Math.hypot(p[0]-LV.capQ[i][0],p[1]-LV.capQ[i][1])))>.12)LV.armed=true;
+    const recent=LV.hist.slice(-5),stable=q&&recent.length===5&&recent.every(r=>r&&Math.max(...r.map((p,i)=>Math.hypot(p[0]-q[i][0],p[1]-q[i][1])))<.025);
+    lvPaint(q,stable);const msg=$('#lvMsg');
+    if(!q){msg.textContent=LV.mode==='id'?'وجّه الكاميرا نحو البطاقة':'وجّه الكاميرا نحو المستند';msg.className='lvmsg';}
+    else if(!LV.armed){msg.textContent='التُقطت. وجّه الكاميرا إلى الصفحة التالية';msg.className='lvmsg ok';}
+    else if(LV.auto&&stable){msg.textContent='جارٍ الالتقاط… ثبّت الجهاز';msg.className='lvmsg ok';liveCapture(q);}
+    else{msg.textContent=LV.auto?'ثبّت الجهاز قليلاً':'اضغط الزر لالتقاط الصفحة';msg.className='lvmsg';}}
+  finally{LV.busy=false;}}
+function lvPaint(q,stable){const v=$('#lvVid'),cv=$('#lvOv'),r=v.getBoundingClientRect(),W=v.videoWidth,H=v.videoHeight;cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);
+  const x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);if(!q||!W)return;const s=Math.min(r.width/W,r.height/H),ox=(r.width-W*s)/2,oy=(r.height-H*s)/2;
+  const P=q.map(([a,b])=>[(ox+a*W*s)*DPR,(oy+b*H*s)*DPR]);x.beginPath();P.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.closePath();
+  x.fillStyle=stable?'rgba(52,196,167,.32)':'rgba(59,130,246,.30)';x.fill();x.lineWidth=4*DPR;x.strokeStyle=stable?'#34c4a7':'#3b82f6';x.lineJoin='round';x.stroke();}
+async function liveCapture(q){if(!LV.on||LV.capturing)return;LV.capturing=true;LV.armed=false;LV.capQ=q?q.map(p=>p.slice()):null;
+  try{const v=$('#lvVid'),W=v.videoWidth,H=v.videoHeight;if(!W)return;const c=mkCanvas(W,H);c.getContext('2d').drawImage(v,0,0,W,H);
+    const fl=$('#lvFlash');fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');try{navigator.vibrate&&navigator.vibrate(15);}catch(_){}
+    const blob=await new Promise(res=>c.toBlob(res,'image/jpeg',.92));c.width=c.height=0;if(!blob)return;
+    $('#lvTh').src=URL.createObjectURL(blob);LV.shots++;
+    const f=new File([blob],'مسح '+ar(LV.shots)+'.jpg',{type:'image/jpeg'});if(q)LV.nextQuad=q.map(p=>p.slice());if(LV.mode==='board')LV.nextFilter='sharp';
+    const p=scanAddFiles([f]);liveUi();await p;liveUi();
+    if(LV.mode==='id'&&SC.front&&SC.back){toast('التُقط وجها البطاقة',1800);closeLive();}}
+  finally{LV.capturing=false;}}
 function scanGal(slot){SC.slot=slot||null;$('#fileScan').click();}
 async function scanAddFiles(files){
   files=files.filter(f=>f.type.startsWith('image/')||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name));
@@ -3498,10 +3567,37 @@ async function pageRuns(p){
     l.text=s.replace(/\s+/g,' ').trim();}
   return runCache[key]=lines.filter(l=>l.text);
 }
+const imgCache={};
+async function pageImgs(p){
+  if(!p||p.src.kind!=='pdf')return [];const key=p.src.doc+':'+p.src.n+':'+p.rot;if(imgCache[key])return imgCache[key];
+  const out=[];
+  try{const pg=await S.sources[p.src.doc].pdf.getPage(p.src.n);const vp=pg.getViewport({scale:1,rotation:(p.src.inh+p.rot)%360});const ol=await pg.getOperatorList();
+    const O=pdfjsLib.OPS,U=pdfjsLib.Util,paint=new Set([O.paintImageXObject,O.paintInlineImageXObject,O.paintImageMaskXObject,O.paintImageXObjectRepeat,O.paintJpegXObject].filter(v=>v!=null));
+    let m=[1,0,0,1,0,0];const st=[];
+    for(let i=0;i<ol.fnArray.length;i++){const f=ol.fnArray[i],a=ol.argsArray[i];
+      if(f===O.save)st.push(m);else if(f===O.restore)m=st.pop()||m;else if(f===O.transform)m=U.transform(m,a);
+      else if(f===O.paintFormXObjectBegin){st.push(m);if(a&&a[0])m=U.transform(m,a[0]);}else if(f===O.paintFormXObjectEnd)m=st.pop()||m;
+      else if(paint.has(f)){const cs=[[0,0],[1,0],[1,1],[0,1]].map(q=>vp.convertToViewportPoint(m[0]*q[0]+m[2]*q[1]+m[4],m[1]*q[0]+m[3]*q[1]+m[5]));const xs=cs.map(c=>c[0]/vp.width),ys=cs.map(c=>c[1]/vp.height);
+        const b={x0:Math.max(0,Math.min(...xs)),x1:Math.min(1,Math.max(...xs)),y0:Math.max(0,Math.min(...ys)),y1:Math.min(1,Math.max(...ys))};
+        const w=b.x1-b.x0,h=b.y1-b.y0;if(w>.03&&h>.02&&w*h<.8&&!out.some(o=>Math.abs(o.x0-b.x0)<.002&&Math.abs(o.y0-b.y0)<.002&&Math.abs(o.x1-b.x1)<.002))out.push(b);}}}
+  catch(e){console.warn(e);}
+  return imgCache[key]=out;}
+function cachedImgs(p){return p.src.kind==='pdf'?imgCache[p.src.doc+':'+p.src.n+':'+p.rot]||[]:[];}
+const lifted=(p,b)=>p.annots.some(a=>a.lift&&Math.abs(a.lift[0]-b.x0)<1e-4&&Math.abs(a.lift[1]-b.y0)<1e-4);
+// lift a picture out of the PDF: it becomes an image you can move, resize, crop, flip or delete
+async function liftImage(id,b){const p=byId(id),d=dims(p);toast('جارٍ تجهيز الصورة…',1500);
+  const W=Math.min(4200,Math.max(1800,Math.round(1.6/(b.x1-b.x0)*600))),H=Math.round(W*d.h/d.w);const c=mkCanvas(W,H);await paintSource(p,c.getContext('2d'),W,H);
+  const px=Math.floor(b.x0*W),py=Math.floor(b.y0*H),pw=Math.max(2,Math.ceil((b.x1-b.x0)*W)),ph=Math.max(2,Math.ceil((b.y1-b.y0)*H));
+  const r=mkCanvas(pw,ph);r.getContext('2d').drawImage(c,px,py,pw,ph,0,0,pw,ph);c.width=c.height=0;
+  const key=await addImg(r.toDataURL('image/png'));r.width=r.height=0;
+  pushUndo('تحريك صورة الملف');const pad=.0015;
+  p.annots.push({type:'whiteout',pts:[[Math.max(0,b.x0-pad),Math.max(0,b.y0-pad)],[Math.min(1,b.x1+pad),Math.min(1,b.y1+pad)]],lift:[b.x0,b.y0]});
+  const a={type:'image',key,pts:[[b.x0,b.y0]],w:b.x1-b.x0,h:b.y1-b.y0,lift:[b.x0,b.y0]};p.annots.push(a);markDirty();
+  setTool('lasso');selectItems(id,[a]);toast('الصورة جاهزة: اسحبها لتحريكها، أو استخدم المقابض والخيارات للقص والقلب والحذف',3800);}
 async function loadRunsAll(){
   const pdfPages=S.pages.filter(p=>p.src.kind==='pdf');
   if(!pdfPages.length){toast('صفحات هذا الملف مصوّرة: اسحب مستطيلاً فوق أي نص لاستبداله',4200);redrawAll();return;}
-  for(const p of S.pages){if(S.tool!=='edittext')return;await pageRuns(p);drawOverlay(p.id);}
+  for(const p of S.pages){if(S.tool!=='edittext')return;await pageRuns(p);await pageImgs(p);drawOverlay(p.id);}
   const any=S.pages.some(p=>(runCache[p.src.doc+':'+p.src.n+':'+p.rot]||[]).length);
   if(!any)toast('لم أجد نصاً قابلاً للتحرير، فالملف مصوّر. اسحب مستطيلاً فوق النص لاستبداله',4500);
 }
@@ -3510,9 +3606,11 @@ function drawRunHints(x,p,W,H,dr){
   x.save();x.lineWidth=Math.max(1,W/700);
   const edited=p.annots.filter(a=>a.type==='edit');
   for(const l of cachedRuns(p)){if(edited.some(a=>a.src&&Math.abs(a.src[0]-l.x0)<1e-4&&Math.abs(a.src[1]-l.y0)<1e-4))continue;
-    x.fillStyle='rgba(36,89,214,.07)';x.strokeStyle='rgba(36,89,214,.45)';x.setLineDash([4*DPR,3*DPR]);
-    x.fillRect(l.x0*W,l.y0*H,(l.x1-l.x0)*W,(l.y1-l.y0)*H);x.strokeRect(l.x0*W,l.y0*H,(l.x1-l.x0)*W,(l.y1-l.y0)*H);}
-  x.setLineDash([]);x.strokeStyle='rgba(15,138,116,.85)';
+    const pd=2*DPR;x.strokeStyle='rgba(59,130,246,.9)';x.lineWidth=Math.max(1.2*DPR,W/900);
+    x.strokeRect(l.x0*W-pd,l.y0*H-pd,(l.x1-l.x0)*W+2*pd,(l.y1-l.y0)*H+2*pd);}
+  for(const b of cachedImgs(p)){if(lifted(p,b))continue;x.strokeStyle='rgba(30,35,40,.85)';x.lineWidth=Math.max(1.5*DPR,W/700);x.strokeRect(b.x0*W-1,b.y0*H-1,(b.x1-b.x0)*W+2,(b.y1-b.y0)*H+2);
+    const s=Math.min(26*DPR,(b.x1-b.x0)*W*.25);x.fillStyle='rgba(30,35,40,.75)';x.fillRect(b.x1*W-s,b.y0*H,s,s);x.fillStyle='#fff';x.font=`${Math.round(s*.6)}px sans-serif`;x.textAlign='center';x.textBaseline='middle';x.fillText('✥',b.x1*W-s/2,b.y0*H+s/2);}
+  x.setLineDash([]);x.lineWidth=Math.max(1,W/700);x.strokeStyle='rgba(15,138,116,.85)';
   for(const a of edited){const b=bbox(a,W/H);x.strokeRect(b.x*W-2,b.y*H-2,b.w*W+4,b.h*H+4);}
   if(dr){const x0=Math.min(dr.start[0],dr.cur[0]),y0=Math.min(dr.start[1],dr.cur[1]),w=Math.abs(dr.cur[0]-dr.start[0]),h=Math.abs(dr.cur[1]-dr.start[1]);
     x.setLineDash([6*DPR,4*DPR]);x.strokeStyle='#0f8a74';x.lineWidth=2*DPR;x.fillStyle='rgba(15,138,116,.08)';x.fillRect(x0*W,y0*H,w*W,h*H);x.strokeRect(x0*W,y0*H,w*W,h*H);}
@@ -3541,6 +3639,8 @@ function editTextAt(id,d,e){
     const ln=cachedRuns(p).find(l=>pt[0]>=l.x0-.004&&pt[0]<=l.x1+.004&&pt[1]>=l.y0-.003&&pt[1]<=l.y1+.003);
     if(ln){const c=sampleColors(id,[ln.x0,ln.y0,ln.x1,ln.y1]);
       return openEditText(id,{box:[ln.x0,ln.y0,ln.x1,ln.y1],text:ln.text,size:ln.size*.98,color:c.fg,bg:c.bg,rtl:ln.rtl,font:ln.font,src:[ln.x0,ln.y0]});}
+    const im=cachedImgs(p).find(b=>!lifted(p,b)&&pt[0]>=b.x0&&pt[0]<=b.x1&&pt[1]>=b.y0&&pt[1]<=b.y1);
+    if(im)return liftImage(id,im);
     toast(p.src.kind==='pdf'?'لا يوجد نص قابل للتحرير هنا. اسحب مستطيلاً فوق المنطقة لاستبدالها':'هذه صفحة مصوّرة: اسحب مستطيلاً فوق النص الذي تريد استبداله',3800);return;}
   const x0=Math.min(d.start[0],d.cur[0]),y0=Math.min(d.start[1],d.cur[1]),x1=Math.max(d.start[0],d.cur[0]),y1=Math.max(d.start[1],d.cur[1]);
   if(x1-x0<.01||y1-y0<.004)return;
@@ -3609,7 +3709,7 @@ function drawEditPreview(id,a,ex){
    PRO FEATURES  (text geometry, editing, links, notes, bookmarks, forms,
    OCR, chat, conversions, password, my files + private folder, layouts)
    ===================================================================== */
-function clearCaches(){for(const k in textCache)delete textCache[k];for(const k in runCache)delete runCache[k];}
+function clearCaches(){for(const k in textCache)delete textCache[k];for(const k in runCache)delete runCache[k];for(const k in imgCache)delete imgCache[k];}
 const hasAr=s=>/[؀-ۿ]/.test(s||'');
 const toLatin=s=>String(s).replace(/[٠-٩]/g,d=>AR.indexOf(d));
 function aiHelpText(){return window.SAFAHAT_NATIVE?'هذه الميزة تحتاج تفعيل المساعد الذكي في التطبيق: افتح قسم «المساعد الذكي» وأدخل مفتاح Claude API.':'المساعد الذكي غير متاح الآن. افتح التطبيق داخل Claude وأنت مسجّل الدخول، واسمح له باستخدام Claude إن ظهر طلب الإذن.';}
