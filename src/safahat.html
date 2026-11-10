@@ -2067,9 +2067,9 @@ function tbFor(m){
     grp('وضع القراءة',tbAct('rm','sun','نهاري','data-mode="day"')+tbAct('rm','book','ورقي','data-mode="sepia"')+tbAct('rm','moon','ليلي','data-mode="night"'))+
     grp('التخطيط',tbAct('lay','single','صفحة','data-layout="single"')+tbAct('lay','spread','صفحتان','data-layout="spread"')+tbAct('present','present','عرض تقديمي'))+
     grp('المحتوى',tbAct('search','search','بحث')+tbAct('bm','bookmark','الفهرس')+tbAct('speak','speak','قراءة بصوت','id="bSpeak"'))+
-    grp('الصفحة',tbAct('ocr','ocr','نص الصور')+tbAct('filter','wand','فلاتر'));
+    grp('الصفحة',tbAct('ocr','ocr','نص الصور')+tbAct('filter','wand','فلاتر')+tbAct('pgEdge','crop','تعديل الحواف'));
   if(m==='pages')return grp('التحديد',tbAct('pgAll','all','تحديد الكل'))+
-    grp('على المحددة',tbAct('pgRot','rotR','تدوير')+tbAct('pgFilter','wand','فلاتر')+tbAct('pgDup','copy','نسخ')+tbAct('pgExt','extract','استخراج')+tbAct('pgDel','trash','حذف'))+
+    grp('على المحددة',tbAct('pgRot','rotR','تدوير')+tbAct('pgEdgeSel','crop','تعديل الحواف')+tbAct('pgFilter','wand','فلاتر')+tbAct('pgDup','copy','نسخ')+tbAct('pgExt','extract','استخراج')+tbAct('pgDel','trash','حذف'))+
     grp('الإضافة',tbAct('pgBlank','blank','صفحة فارغة')+tbAct('pgAdd','plus','ملفات'))+grp('الترتيب',tbAct('pgRev','reverse','عكس'));
   if(m==='fav'){const cur=favKey(favOf());return grp('التحديد',T('browse')+T('move')+T('lasso'))+
     grp('المفضلة',FAVS.length?FAVS.map((f,i)=>`<button class="tb favtb${favKey(f)===cur&&FAV_TOOLS.includes(S.tool)?' on':''}" data-act="fav" data-i="${i}" title="${TOOL_INFO[f.tool]?TOOL_INFO[f.tool][1]:''}">${favIcon(f)}<span>${TOOL_INFO[f.tool]?TOOL_INFO[f.tool][1]:''}</span></button>`).join(''):tbAct('favHelp','star','كيف أضيف؟'))+grp('الحذف',T('eraser'));}
@@ -2318,6 +2318,7 @@ function onToolbarClick(e){
   const ACT={zIn:()=>setZoom(S.zoom*1.2),zOut:()=>setZoom(S.zoom/1.2),zFit:()=>setZoom(1),search:openSearch,speak,filter:()=>openPageFilter('cur'),
     scan:()=>openScanner('docs'),idcard:()=>openScanner('id'),selBig:()=>scaleSel(1.2),selSmall:()=>scaleSel(1/1.2),selDel:delSel,pgFilter:()=>openPageFilter('sel'),
     pgAll:()=>pageOp('all'),pgRot:()=>pageOp('rot'),pgDel:()=>pageOp('del'),pgExt:()=>pageOp('ext'),pgDup:()=>pageOp('dup'),pgBlank:()=>pageOp('blank'),pgAdd:()=>pageOp('add'),pgRev:()=>pageOp('rev'),
+    pgEdge:()=>editPageEdges(S.pages[S.cur]),pgEdgeSel:()=>{const sel=S.pages.filter(p=>S.selectedPages.has(p.id));if(sel.length>1){toast('حدّد صفحة واحدة لتعديل حوافها');return;}editPageEdges(sel[0]||S.pages[S.cur]);},
     present,bm:()=>openBookmarks(),ocr:openOcr,comments:openComments,forms:openForms};
   if(ACT[a])ACT[a]();
 }
@@ -3330,13 +3331,31 @@ function scanAction(a,id,slot){
   if(a==='up'&&i>0){[SC.items[i-1],SC.items[i]]=[SC.items[i],SC.items[i-1]];renderScanner();}
   if(a==='down'&&i<SC.items.length-1){[SC.items[i+1],SC.items[i]]=[SC.items[i],SC.items[i+1]];renderScanner();}
 }
+// the photo as taken (at most 2000 px), kept beside the finished page
+async function scanOriginal(it){const img=await loadImg(it.url);const k=Math.min(1,2000/Math.max(it.nw,it.nh));const c=mkCanvas(it.nw*k,it.nh*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  const key=await addImg(c.toDataURL('image/jpeg',.86));const o={key,nw:c.width,nh:c.height};c.width=c.height=0;return o;}
+// re-cut a page that came from the scanner (or any picture page): same corner editor and filters as while scanning
+async function editPageEdges(p){p=p||S.pages[S.cur];if(!p){toast('افتح ملفاً أولاً');return;}
+  if(p.src.kind!=='img'){toast('تعديل الحواف متاح للصفحات المصوّرة والممسوحة ضوئياً');return;}
+  const sc=p.scan&&S.imgs[p.scan.key]?p.scan:null,srcKey=sc?sc.key:p.src.key,im=S.imgs[srcKey];if(!im){toast('تعذّر فتح صورة الصفحة');return;}
+  const nw=im.el.naturalWidth||im.el.width,nh=im.el.naturalHeight||im.el.height,k=Math.min(1,420/Math.max(nw,nh));const small=mkCanvas(nw*k,nh*k);small.getContext('2d').drawImage(im.el,0,0,small.width,small.height);
+  const it={id:'pg'+p.id,pageId:p.id,url:im.url,nw,nh,small,quad:sc?sc.quad.map(q=>q.slice()):[[0,0],[1,0],[1,1],[0,1]],rot:sc?sc.rot||0:0,filter:sc?sc.filter||'none':'none',card:sc?!!sc.card:false,noDeskew:!sc,srcKey};
+  await openCrop(it);if(!sc)toast('هذه الصفحة بلا صورة أصلية محفوظة، فيمكن قصّها وتعديل ميلها فقط. الصفحات الممسوحة من الآن تحفظ صورتها الأصلية',4600);}
+async function applyPageEdges(it){const p=S.pages.find(x=>x.id===it.pageId);if(!p)return;showBusy('جارٍ تعديل الصفحة…');
+  try{await processItem(it);const key=await addImg(it.outUrl);pushUndo('تعديل الحواف');
+    const bw=p.src.bw||595.28;let bh=bw*it.outH/it.outW;if(Math.abs(bh/bw-1.414)<.06)bh=841.89;p.src={...p.src,key,bh};
+    p.scan={key:it.srcKey,nw:it.nw,nh:it.nh,quad:it.quad.map(q=>q.slice()),rot:it.rot||0,filter:it.filter||'none',card:!!it.card};
+    markDirty();hideBusy();refreshAll();toast('عُدّلت حواف الصفحة');}
+  catch(e){console.error(e);hideBusy();toast('تعذّر تعديل الصفحة');}}
 async function scanCommit(append){
   const plan=SC.mode==='id'?[{type:'card',front:SC.front,back:SC.back}]:scanPlan();if(!plan.length)return;
   const wasId=SC.mode==='id';showBusy('جارٍ إنشاء الصفحات…');const pages=[];
   try{for(let i=0;i<plan.length;i++){const s=plan[i];let key,bw=595.28,bh=841.89;
+      let scan=null;
       if(s.type==='card'){const c=await makeCardPage(s.front,s.back);key=await addImg(c.toDataURL('image/jpeg',.9));c.width=c.height=0;}
-      else{key=await addImg(s.it.outUrl);bh=bw*s.it.outH/s.it.outW;if(Math.abs(bh/bw-1.414)<.06)bh=841.89;}
-      pages.push({id:nid(),src:{kind:'img',key,inh:0,bw,bh},rot:0,annots:[]});setBusy((i+1)/plan.length);}}
+      else{key=await addImg(s.it.outUrl);bh=bw*s.it.outH/s.it.outW;if(Math.abs(bh/bw-1.414)<.06)bh=841.89;
+        try{const o=await scanOriginal(s.it);if(o)scan={key:o.key,nw:o.nw,nh:o.nh,quad:s.it.quad.map(q=>q.slice()),rot:s.it.rot||0,filter:s.it.filter||'none',card:!!s.it.card};}catch(e){}}
+      const pg={id:nid(),src:{kind:'img',key,inh:0,bw,bh},rot:0,annots:[]};if(scan)pg.scan=scan;pages.push(pg);setBusy((i+1)/plan.length);}}
   catch(e){console.error(e);hideBusy();toast('تعذّر إنشاء الصفحات',3500);return;}
   hideBusy();resetScanner();$('#scan').hidden=true;
   if(append&&S.pages.length){showEditor();pushUndo();const at=S.pages.length;S.pages.push(...pages);markDirty();refreshAll();setTab('view');requestAnimationFrame(()=>scrollToPage(at));
@@ -3408,6 +3427,7 @@ function crLoupe(n){const L=$('#crLoupe'),f=CR.fit,size=116,sx=f.ox+n[0]*f.nw*f.
   x.strokeStyle='#34c4a7';x.lineWidth=2*DPR;x.beginPath();x.moveTo(P[0][0],P[0][1]);for(let j=1;j<4;j++)x.lineTo(P[j][0],P[j][1]);x.closePath();x.stroke();
   x.strokeStyle='#fff';x.lineWidth=1.5*DPR;x.beginPath();x.moveTo(half-11*DPR,half);x.lineTo(half+11*DPR,half);x.moveTo(half,half-11*DPR);x.lineTo(half,half+11*DPR);x.stroke();}
 function cropDone(){const it=CR.it;if(!it)return;it.quad=CR.q.map(p=>p.slice());it.rot=CR.rot;it.filter=CR.filter;it.auto=true;
+  if(it.pageId){closeCrop();applyPageEdges(it);return;}
   if(SC.mode==='docs'){const was=it.card;it.card=looksLikeCard(it);if(it.card&&!was)toast('تم التعرف على بطاقة');}
   closeCrop();reprocess([it]);}
 
@@ -4173,7 +4193,7 @@ function setSaveState(st){const el=$('#dirty');if(!el)return;el.hidden=false;el.
 function scheduleSave(){if(!DB||!S.docId)return;setSaveState('pending');clearTimeout(saveTimer);saveTimer=setTimeout(saveProject,1100);}
 async function saveProject(){
   if(!DB||!S.docId)return;if(saving){scheduleSave();return;}saving=true;clearTimeout(saveTimer);
-  try{const used=new Set();for(const p of S.pages){if(p.src.kind==='img')used.add(p.src.key);for(const a of p.annots){if(a.key)used.add(a.key);if(a.origKey)used.add(a.origKey);}}
+  try{const used=new Set();for(const p of S.pages){if(p.src.kind==='img')used.add(p.src.key);if(p.scan&&p.scan.key)used.add(p.scan.key);for(const a of p.annots){if(a.key)used.add(a.key);if(a.origKey)used.add(a.origKey);}}
     const plain=v=>JSON.parse(JSON.stringify(v,(k,x)=>(typeof HTMLElement!=='undefined'&&x instanceof HTMLElement)||(typeof ImageBitmap!=='undefined'&&x instanceof ImageBitmap)||typeof x==='function'?undefined:x));
     S.versions=S.versions||[];const lv=S.versions[S.versions.length-1];
     if(S.pages.length&&(!lv||Date.now()-lv.t>15*60*1000)){S.versions.push({t:Date.now(),s:snap(),n:S.pages.length,a:S.pages.reduce((x,p)=>x+p.annots.length,0)});
@@ -4814,7 +4834,7 @@ async function batchMerge(ids){
   try{if(S.dirty&&S.docId)await saveProject();const all={id:nidL('d'),sources:[],imgs:{},pages:[],settings:{wm:null,pn:null},uid:1,versions:[]};const metas=[];let k=0;
     for(const id of ids){const data=await dbGet('data',id);const m=LB.docs.find(d=>d.id===id);if(!data)continue;metas.push(m);const off=all.sources.length,pre='b'+(k++)+'_';
       all.sources.push(...data.sources.map(s=>({name:s.name,bytes:s.bytes})));for(const [key,u] of Object.entries(data.imgs||{}))all.imgs[pre+key]=u;
-      for(const p of data.pages||[]){const q=JSON.parse(JSON.stringify(p));q.id='m'+(all.uid++);if(q.src.kind==='pdf')q.src.doc+=off;if(q.src.key)q.src.key=pre+q.src.key;for(const a of q.annots||[])if(a.key)a.key=pre+a.key;all.pages.push(q);}
+      for(const p of data.pages||[]){const q=JSON.parse(JSON.stringify(p));q.id='m'+(all.uid++);if(q.src.kind==='pdf')q.src.doc+=off;if(q.src.key)q.src.key=pre+q.src.key;if(q.scan&&q.scan.key)q.scan.key=pre+q.scan.key;for(const a of q.annots||[]){if(a.key)a.key=pre+a.key;if(a.origKey)a.origKey=pre+a.origKey;}all.pages.push(q);}
       setBusy(k/ids.length*.9);}
     const size=all.sources.reduce((a,s)=>a+s.bytes.length,0)+Object.values(all.imgs).reduce((a,u)=>a+u.length*.75,0);
     const meta={id:all.id,name:'دمج - '+metas.map(m=>m.name).join(' + ').slice(0,80),created:Date.now(),opened:Date.now(),modified:Date.now(),pages:all.pages.length,size:Math.round(size),thumb:(metas[0]||{}).thumb||'',fav:false,folder:null,deleted:null};
