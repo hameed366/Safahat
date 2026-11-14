@@ -29,6 +29,8 @@ for (const [url, [from, to]] of Object.entries(LIBS)) {
   fs.copyFileSync(nm(from), path.join(www, 'lib', to));
   html = html.split(url).join('lib/' + to);
 }
+// connection hints for the CDNs are pointless once everything is local
+html = html.replace(/<link rel="preconnect" href="https:\/\/cdnjs\.cloudflare\.com"[^>]*>\n?/g, '');
 const leftover = html.match(/https:\/\/cdnjs\.cloudflare\.com[^'"`\s)]*/g);
 if (leftover) { console.error('Unmapped CDN URLs:', leftover); process.exit(1); }
 

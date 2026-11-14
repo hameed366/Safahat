@@ -26,6 +26,7 @@ if (platform === 'ios') {
   setKey('CFBundleShortVersionString', `<string>${version}</string>`);
   setKey('CFBundleVersion', `<string>${build}</string>`);
   setKey('NSCameraUsageDescription', '<string>لتصوير المستندات والبطاقة المدنية وتحويلها إلى ملفات PDF.</string>');
+  setKey('NSMicrophoneUsageDescription', '<string>لتسجيل الملاحظات الصوتية وإرفاقها بالملف.</string>');
   setKey('NSPhotoLibraryUsageDescription', '<string>لاختيار صور من مكتبتك وتحويلها إلى ملفات PDF.</string>');
   setKey('NSPhotoLibraryAddUsageDescription', '<string>لحفظ الصفحات المصدَّرة كصور في مكتبة الصور.</string>');
   setKey('UIFileSharingEnabled', '<true/>');
@@ -126,6 +127,8 @@ else if (platform === 'android') {
   let m = fs.readFileSync(mPath, 'utf8');
   const perm = n => { if (!m.includes(`android.permission.${n}"`)) m = m.replace(/(<manifest[^>]*>)/, `$1\n    <uses-permission android:name="android.permission.${n}" />`); };
   perm('CAMERA');
+  perm('RECORD_AUDIO');
+  perm('MODIFY_AUDIO_SETTINGS');
   if (!m.includes('android.hardware.camera')) m = m.replace(/(<manifest[^>]*>)/, `$1\n    <uses-feature android:name="android.hardware.camera" android:required="false" />`);
   const filters = `
             <intent-filter>
