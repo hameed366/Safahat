@@ -777,6 +777,37 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .noai{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--violet-soft);border:1px solid color-mix(in srgb,var(--violet) 30%,transparent)}
 .noai>span svg{width:20px;height:20px;color:var(--violet)}.noai>div{flex:1 1 200px;display:grid;gap:2px;min-width:0}.noai b{font-size:13.5px}.noai small{font-size:12.5px;color:var(--muted);line-height:1.6}
 
+/* ---- motion: iOS-style springs (sheets rise and settle, menus pop from their button, buttons give under the finger) ---- */
+:root{--spring:cubic-bezier(.2,1.3,.35,1);--spring-soft:cubic-bezier(.22,1.08,.36,1)}
+@supports (transition-timing-function:linear(0,1)){:root{
+  --spring:linear(0,.009,.035 2.1%,.141,.281 6.7%,.723 12.9%,.938 16.7%,1.017,1.077,1.121,1.149 24.3%,1.159,1.163,1.161,1.154 29.9%,1.129 32.8%,1.051 39.6%,1.017 43.1%,.991,.977 51%,.975 57.1%,.997 69.8%,1.003 76.9%,1);
+  --spring-soft:linear(0,.02 1.5%,.09 3.5%,.22 6%,.43 9.5%,.66 14%,.84 19%,.95 24.5%,1.01 30%,1.03 36%,1.025 44%,1.005 60%,1)}}
+@media (prefers-reduced-motion:no-preference){
+  @keyframes fxFade{from{opacity:0}}@keyframes fxFadeOut{to{opacity:0}}
+  @keyframes fxSheetUp{from{translate:0 105%}}@keyframes fxSheetDown{to{translate:0 105%}}
+  @keyframes fxPop{from{scale:.88;opacity:0}}@keyframes fxPopOut{to{scale:.94;opacity:0}}
+  @keyframes fxSwap{from{scale:.97;opacity:.35}}
+  @keyframes fxMenu{from{scale:.55;opacity:0}}@keyframes fxMenuOut{to{scale:.8;opacity:0}}
+  @keyframes fxToast{from{scale:.6;opacity:0;translate:0 14px}}
+  @keyframes fxZoom{from{scale:.94;opacity:0}}
+  @keyframes fxPushL{from{translate:-34px 0;opacity:0}}@keyframes fxPushR{from{translate:34px 0;opacity:0}}@keyframes fxRise{from{translate:0 14px;opacity:0}}
+  .scrim.fx-open{animation:fxFade .25s ease-out}.scrim.fx-open .sheet{animation:fxSheetUp .6s var(--spring-soft)}
+  .scrim.fx-swap .sheet{animation:fxSwap .38s var(--spring-soft)}
+  .scrim.fx-out{pointer-events:none!important;animation:fxFadeOut .26s ease-in forwards}.scrim.fx-out .sheet{animation:fxSheetDown .3s cubic-bezier(.4,0,1,1) forwards}
+  @media (min-width:700px){.scrim.fx-open .sheet{animation:fxPop .5s var(--spring)}.scrim.fx-out .sheet{animation:fxPopOut .2s ease-in forwards}}
+  .pop:not([hidden]) .popm{animation:fxMenu .48s var(--spring)}
+  .pop.fx-out{pointer-events:none!important}.pop.fx-out .popm{animation:fxMenuOut .17s ease-in forwards}
+  .toast.fx-in{animation:fxToast .55s var(--spring)}
+  .app.fx-in,.lib.fx-in{animation:fxZoom .5s var(--spring-soft)}
+  #libIn.fx-l>*{animation:fxPushL .45s var(--spring-soft) both}#libIn.fx-r>*{animation:fxPushR .45s var(--spring-soft) both}#libIn.fx-u>*{animation:fxRise .42s var(--spring-soft) both}
+  #libIn.fx-u>*:nth-child(2),#libIn.fx-l>*:nth-child(2),#libIn.fx-r>*:nth-child(2){animation-delay:.03s}#libIn.fx-u>*:nth-child(3){animation-delay:.06s}#libIn.fx-u>*:nth-child(4){animation-delay:.09s}#libIn.fx-u>*:nth-child(n+5){animation-delay:.12s}
+  .selbar:not([hidden]){animation:fxPop .4s var(--spring)}
+  .fab:not([hidden]){animation:fxPop .5s var(--spring)}
+  :is(.hbtn,.tb,.tool,.chip,.mrow,.cbtn,.mini,.lvb,.lvshut,.seg button,.tabbar button,.fab,.fav,.sw,.tchip,.fchip,.rt,.symg button,.symc button,.symt button,.lcard,.fcard,.lrow,.qa>*,.micons button,.bulkbar button,.rbtn,.lback,.nb,.modebtn,.doc,.docst){transition:scale .5s var(--spring),background-color .15s,border-color .15s,color .15s,box-shadow .15s,opacity .15s}
+  :is(.hbtn,.tb,.tool,.chip,.mrow,.cbtn,.mini,.lvb,.seg button,.tabbar button,.fav,.sw,.tchip,.fchip,.symg button,.symc button,.symt button,.micons button,.bulkbar button,.rbtn,.lback,.nb,.modebtn,.docst):active:not(:disabled){scale:.93;transition-duration:.08s}
+  :is(.lcard,.fcard,.lrow,.qa>*,.rt,.tool,.doc):active{scale:.97;transition-duration:.1s}.fab:active,.lvshut:active{scale:.88;transition-duration:.08s}
+  .sheet.fx-drag{transition:none!important}
+}
 .cpsrc{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--raise)}
 .cpname{display:flex;align-items:center;gap:8px;min-width:0}.cpname b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.cpname small{color:var(--muted);margin-inline-start:auto;white-space:nowrap}.cpname svg{width:18px;height:18px;color:var(--accent);flex:none}
 .imgl{display:flex;flex-direction:column;gap:6px;max-height:36vh;overflow:auto}
@@ -1125,7 +1156,7 @@ function dims(p){const {bw,bh}=p.src;return (p.rot%180)?{w:bh,h:bw}:{w:bw,h:bh};
 
 /* ---------- helpers ---------- */
 const toastEl=$('#toast');let tt;
-function toast(m,ms=2600){toastEl.textContent=m;toastEl.hidden=false;clearTimeout(tt);tt=setTimeout(()=>toastEl.hidden=true,ms);}
+function toast(m,ms=2600){const was=!toastEl.hidden;toastEl.textContent=m;toastEl.hidden=false;if(!was)fxRestart(toastEl,'fx-in');clearTimeout(tt);tt=setTimeout(()=>toastEl.hidden=true,ms);}
 function b64bytes(url){const b=atob(url.slice(url.indexOf(',')+1));const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
 function mkCanvas(w,h){const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));return c;}
 function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
@@ -2510,7 +2541,8 @@ function openMenu(anchor,html,onPick){
   let right=vw-r.right;if(vw-right-w<12)right=Math.max(12,vw-w-12);if(right<12)right=12;
   const h=m.offsetHeight,vh=window.innerHeight;let top=r.bottom+8;if(top+h>vh-8)top=r.top-8-h>=8?r.top-8-h:Math.max(8,vh-8-h);
   m.style.top=top+'px';m.style.right=right+'px';m.style.left='auto';
-  const close=()=>{pop.hidden=true;anchor.setAttribute('aria-expanded','false');m.innerHTML='';};
+  m.style.transformOrigin=`${Math.max(0,Math.min(w,r.left+r.width/2-(vw-right-w)))}px ${top>=r.bottom?0:h}px`;
+  const close=()=>{fxGhost(pop,'fx-out',200,56);pop.hidden=true;anchor.setAttribute('aria-expanded','false');m.innerHTML='';};
   pop.onclick=e=>{if(e.target===pop)close();};
   m.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{close();onPick(b.dataset.k);});
   const f=m.querySelector('.mrow.on')||m.querySelector('.mrow');if(f)f.focus();
@@ -2725,9 +2757,27 @@ function renderGrid(){
 
 /* ---------- sheets ---------- */
 const scrim=$('#scrim'),sheet=$('#sheet');let sheetClose=null;
-function openSheet(html,onClose){sheet.innerHTML=html;scrim.hidden=false;sheetClose=onClose||null;const f=sheet.querySelector('input,textarea,select');if(f&&f.type!=='file')setTimeout(()=>f.focus(),60);}
-function closeSheet(v){scrim.hidden=true;sheet.innerHTML='';const c=sheetClose;sheetClose=null;if(c)c(v);}
+const FX={ghost:null,t:0,calm:()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}}};
+function fxGhost(el,cls,ms,z){if(FX.calm()||!el||el.hidden)return null;const g=el.cloneNode(true);g.removeAttribute('id');g.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));
+  const a=el.querySelectorAll('canvas'),b=g.querySelectorAll('canvas');a.forEach((c,i)=>{try{if(c.width&&b[i]){b[i].width=c.width;b[i].height=c.height;b[i].getContext('2d').drawImage(c,0,0);}}catch(e){}});
+  g.classList.remove('fx-open','fx-swap');g.classList.add(cls);if(z)g.style.zIndex=z;g.setAttribute('aria-hidden','true');g.inert=true;document.body.appendChild(g);setTimeout(()=>g.remove(),ms);return g;}
+function fxRestart(el,cls){if(!el)return;el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);}
+function openSheet(html,onClose){const swap=FX.ghost&&performance.now()-FX.t<60;if(swap){FX.ghost.remove();FX.ghost=null;}
+  sheet.style.translate='';sheet.style.transition='';sheet.classList.remove('fx-drag');sheet.innerHTML=html;scrim.hidden=false;
+  scrim.classList.remove('fx-open','fx-swap');void scrim.offsetWidth;scrim.classList.add(swap?'fx-swap':'fx-open');sheetClose=onClose||null;const f=sheet.querySelector('input,textarea,select');if(f&&f.type!=='file')setTimeout(()=>f.focus(),60);}
+function closeSheet(v){if(!scrim.hidden&&sheet.innerHTML&&!FX.noGhost){FX.ghost=fxGhost(scrim,'fx-out',340,49);FX.t=performance.now();}FX.noGhost=false;scrim.hidden=true;sheet.innerHTML='';const c=sheetClose;sheetClose=null;if(c)c(v);}
 scrim.addEventListener('click',e=>{if(e.target===scrim)closeSheet(null);});
+// pull the sheet down by its top edge to dismiss it, as on iPhone
+(()=>{let d=null;
+  sheet.addEventListener('pointerdown',e=>{if(innerWidth>=700||e.button>0)return;const r=sheet.getBoundingClientRect();if(e.clientY-r.top>46||/INPUT|TEXTAREA|SELECT|BUTTON/.test(e.target.tagName))return;
+    d={y:e.clientY,t:performance.now(),dy:0,id:e.pointerId};});
+  addEventListener('pointermove',e=>{if(!d||e.pointerId!==d.id)return;const dy=e.clientY-d.y;if(!d.on&&dy>6){d.on=true;sheet.classList.add('fx-drag');try{sheet.setPointerCapture(d.id);}catch(_){}}
+    if(d.on){d.dy=dy;sheet.style.translate='0 '+(dy>0?dy:dy/4)+'px';}},{passive:true});
+  const up=e=>{if(!d||e.pointerId!==d.id)return;const g=d;d=null;if(!g.on)return;sheet.classList.remove('fx-drag');const v=g.dy/Math.max(1,performance.now()-g.t);
+    if(g.dy>110||(g.dy>30&&v>.6)){sheet.style.transition='translate .24s cubic-bezier(.4,0,1,1)';sheet.style.translate='0 105%';scrim.style.transition='opacity .24s';scrim.style.opacity='0';
+      setTimeout(()=>{scrim.style.opacity='';scrim.style.transition='';FX.noGhost=true;closeSheet(null);},230);}
+    else{sheet.style.transition='translate .55s var(--spring)';sheet.style.translate='0 0';}};
+  addEventListener('pointerup',up);addEventListener('pointercancel',up);})();
 document.addEventListener('keydown',e=>{
   if(PR.on){if(['ArrowLeft','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();prGo(1);return;}if(['ArrowRight','PageUp','Backspace'].includes(e.key)){e.preventDefault();prGo(-1);return;}if(e.key==='Home'){prGo(-1e6);return;}if(e.key==='End'){prGo(1e6);return;}if(e.key==='Escape'){closePresent();return;}}
   if(e.key==='Escape'){if(!$('#pop').hidden){$('#pop')._close();return;}if(!scrim.hidden){closeSheet(null);return;}if(!$('#crop').hidden){closeCrop();return;}if(!$('#scan').hidden){closeScanner();return;}}
@@ -4971,8 +5021,8 @@ async function libImport(files){
 }
 
 /* ---------- navigation ---------- */
-function showLibrary(tab){if(!DB)return;S.msel=null;$('#selbar').hidden=true;if(S.dirty)saveProject();if(tab)LB.tab=tab;$('#lib').hidden=false;document.body.classList.add('inlib');renderLib();}
-function showEditor(){$('#lib').hidden=true;document.body.classList.remove('inlib');requestAnimationFrame(layoutViewer);}
+function showLibrary(tab){if(!DB)return;S.msel=null;$('#selbar').hidden=true;if(S.dirty)saveProject();if(tab)LB.tab=tab;const wasLib=!$('#lib').hidden;$('#lib').hidden=false;document.body.classList.add('inlib');renderLib();if(!wasLib)fxRestart($('#lib'),'fx-in');}
+function showEditor(){if(!$('#lib').hidden)fxRestart($('#app'),'fx-in');$('#lib').hidden=true;document.body.classList.remove('inlib');requestAnimationFrame(layoutViewer);}
 
 /* ---------- rendering ---------- */
 function fmtWhen(ts){if(!ts)return '';const d=new Date(ts),n=new Date();
@@ -5243,6 +5293,9 @@ function renderLib(){
   if(LB.selecting&&(LB.tab!=='files'||!LB.folder||LB.folder==='trash')){LB.selecting=false;LB.sel.clear();}
   const t=LB.tab;document.querySelectorAll('[data-lt]').forEach(b=>{b.classList.toggle('on',b.dataset.lt===t);b.setAttribute('aria-current',b.dataset.lt===t?'page':'false');});
   const main=$('#libIn');
+  const route=t+'|'+(LB.folder||''),depth=(()=>{let n=0,x=LB.folder&&LB.folders.find(y=>y.id===LB.folder),g=0;if(LB.folder&&!x)return 1;while(x&&g++<30){n++;x=LB.folders.find(y=>y.id===x.parent);}return n;})();
+  const fx=LB._route&&LB._route!==route?(LB._rt===t?(depth>LB._depth?'fx-l':depth<LB._depth?'fx-r':'fx-u'):'fx-u'):null;LB._route=route;LB._rt=t;LB._depth=depth;
+  if(fx){main.classList.remove('fx-l','fx-r','fx-u');requestAnimationFrame(()=>{main.classList.add(fx);clearTimeout(LB._fxT);LB._fxT=setTimeout(()=>main.classList.remove(fx),700);});}
   main.innerHTML=t==='home'?libHome():t==='files'?(LB.folder?libFolder():libFiles()):t==='recent'?libRecent():t==='tools'?libTools():libSearch();
   $('#fab').hidden=!(t==='home'||t==='files'||t==='recent')||LB.folder==='trash'||LB.selecting;
   main.querySelectorAll('[data-open]').forEach(b=>b.onclick=async()=>{if(LB.selecting&&LB.tab==='files'){const id=b.dataset.open;if(LB.sel.has(id))LB.sel.delete(id);else LB.sel.add(id);renderLib();return;}const d=LB.docs.find(x=>x.id===b.dataset.open);if(d&&d.deleted){docMenu(d.id,b);return;}await openDoc(b.dataset.open);
