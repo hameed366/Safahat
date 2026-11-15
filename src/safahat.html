@@ -808,6 +808,10 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
   :is(.lcard,.fcard,.lrow,.qa>*,.rt,.tool,.doc):active{scale:.97;transition-duration:.1s}.fab:active,.lvshut:active{scale:.88;transition-duration:.08s}
   .sheet.fx-drag{transition:none!important}
 }
+.pgghost{position:fixed;z-index:80;pointer-events:none;box-shadow:0 22px 50px rgba(0,0,0,.35);scale:1.05;rotate:-2deg;opacity:.95}
+.card.pgsrc{opacity:.35}.card.pgb{box-shadow:inset 4px 0 0 var(--accent)}.card.pga{box-shadow:inset -4px 0 0 var(--accent)}
+#grid .thumb{touch-action:pan-y;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.infol{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0}.infol dt{color:var(--muted);font-size:13px}.infol dd{margin:0;font-weight:600;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .cpsrc{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--raise)}
 .cpname{display:flex;align-items:center;gap:8px;min-width:0}.cpname b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.cpname small{color:var(--muted);margin-inline-start:auto;white-space:nowrap}.cpname svg{width:18px;height:18px;color:var(--accent);flex:none}
 .imgl{display:flex;flex-direction:column;gap:6px;max-height:36vh;overflow:auto}
@@ -965,7 +969,7 @@ html,body{max-width:100vw;overflow-x:hidden}
       <section class="panel gut" id="p-pages" hidden><div class="wrap">
         <p class="eyebrow">تنظيم الملف</p>
         <h2 class="sec">ترتيب الصفحات</h2>
-        <p class="hint">حدّد الصفحات ثم استخدم الأزرار في الشريط العلوي، أو أزرار كل صفحة لتدويرها ونقلها ونسخها وحذفها. اضغط على المصغّرة لفتح الصفحة.</p>
+        <p class="hint">اسحب أي صفحة إلى مكانها الجديد لتغيير الترتيب (على الهاتف: اضغط مطوّلاً ثم اسحب). حدّد صفحات لتنقلها معاً أو لتستخدم أزرار الشريط العلوي. اضغط على المصغّرة لفتح الصفحة.</p>
         <div class="grid" id="grid"></div>
       </div></section>
       <section class="panel gut" id="p-tools" hidden><div class="wrap" id="toolsWrap"></div></section>
@@ -1082,6 +1086,8 @@ const P={
  merge:'M6 3v6a6 6 0 0 0 6 6h6M18 15l-3-3m3 3-3 3M6 21v-4',
  split:'M12 3v18M4 8l4 4-4 4M20 8l-4 4 4 4',
  compress:'M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7',
+ info:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5v.5',
+ printer:'M7 9V3h10v6M7 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 14h10v7H7z',
  toimg:'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4',
  word:'M6 3h9l4 4v14H6zM14 3v5h5M8.5 12l1.5 6 2-4.5 2 4.5 1.5-6',
  txt:'M6 3h9l4 4v14H6zM14 3v5h5M9 12h6M9 15h6M9 18h4',
@@ -2557,11 +2563,11 @@ function openMoreMenu(){
   openMenu($('#moreBtn'),`<div class="mhead">الملف</div>`+
     mrow('open','open','#0f8a74','فتح ملف','PDF أو صور')+mrow('scan','camera','#c0362c','مسح ضوئي','بالكاميرا أو من الصور')+mrow('idcard','idcard','#2459d6','البطاقة المدنية','الوجهان في صفحة واحدة')+
     mrow('rename','textedit','#5b6b6e','إعادة تسمية',esc(baseName()))+mrow('history','undo','#5b6b6e','سجل التعديلات','الخطوات والنسخ السابقة')+mrow('clear','trash','#c0362c','مسح التعليقات','للصفحة الحالية أو الملف كاملاً')+(window.SAFAHAT_NATIVE?mrow('aikey','spark','#6a46d6','مفتاح المساعد الذكي',window.SAFAHAT_NATIVE.getKey()?'مُفعّل':'غير مُفعّل'):'')+mrow('library','home','#0f8a74','المكتبة','كل ملفاتك وتعديلاتها')+mrow('files','lock','#a95a06','المجلد الخاص','ملفات مشفّرة برمز سري')+'<div class="msep"></div><div class="mhead">الحفظ والتصدير</div>'+
-    mrow('share','share','#2459d6','مشاركة','واتساب، بريد، AirDrop…')+mrow('save','save','#0f8a74','حفظ PDF','')+mrow('protect','shield','#a95a06','حماية بكلمة مرور','')+mrow('toimg','toimg','#2459d6','تصدير كصور','PNG أو JPG')+mrow('word','word','#2459d6','تحويل إلى Word','نص الملف')+
+    mrow('share','share','#2459d6','مشاركة','واتساب، بريد، AirDrop…')+mrow('save','save','#0f8a74','حفظ PDF','')+mrow('print','printer','#5b6b6e','طباعة','')+mrow('protect','shield','#a95a06','حماية بكلمة مرور','')+mrow('toimg','toimg','#2459d6','تصدير كصور','PNG أو JPG')+mrow('word','word','#2459d6','تحويل إلى Word','نص الملف')+
     mrow('xlsx','excel','#15803d','تحويل إلى Excel','الجداول إلى خلايا')+mrow('pptx','ppt','#c0362c','تحويل إلى PowerPoint','شريحة لكل صفحة')+mrow('toPdf','merge','#0f8a74','تحويل ملف إلى PDF','نص، جدول، Word، صور')+mrow('redline','list','#334155','مقارنة ملفين','الفروق بين نسختين')+
     mrow('compress','compress','#a95a06','ضغط الحجم','')+mrow('tools','tools','#a95a06','كل الأدوات','')+'<div class="msep"></div>'+mrow('pencil','pen','#7c3aed','قلم Apple والإيباد','الكتابة بالقلم فقط، الضغط، الإيماءات')+mrow('theme',isDark()?'sun':'moon','#5b6b6e',isDark()?'المظهر الفاتح':'المظهر الداكن','لواجهة التطبيق')+mrow('shareApp','share','#2459d6','مشاركة التطبيق','أرسله لزملائك')+mrow('contact','send','#0f8a74','تواصل مع المطوّر',APP_INFO.email),
     k=>({clear:()=>clearAnnotsSheet('page'),shareApp:shareAppSheet,contact:contactSheet,aikey:()=>{const N=window.SAFAHAT_NATIVE;if(!N)return;if(N.getKey())confirmSheet('إزالة مفتاح المساعد؟','سيتوقف المساعد الذكي في التطبيق حتى تُدخل مفتاحاً جديداً من قسم المساعد.','إزالة',()=>{N.setKey('');location.reload();});else setTab('ai');},history:historySheet,share:shareSheet,open:openFlow,scan:()=>openScanner('docs'),idcard:()=>openScanner('id'),rename:openRename,save:savePdf,
-      toimg:()=>runTool('toimg'),word:()=>runTool('word'),compress:()=>runTool('compress'),tools:()=>setTab('tools'),pencil:openPencilSheet,
+      print:printDoc,toimg:()=>runTool('toimg'),word:()=>runTool('word'),compress:()=>runTool('compress'),tools:()=>setTab('tools'),pencil:openPencilSheet,
       files:()=>setTab('files'),library:()=>{if(DB)showLibrary();else toast('المكتبة غير متاحة في هذا المتصفح');},lib:saveToLibrary,protect:()=>runTool('protect'),xlsx:()=>runTool('xlsx'),pptx:()=>runTool('pptx'),toPdf:()=>runTool('anypdf'),redline:()=>runTool('redline'),
       theme:()=>{const t=isDark()?'light':'dark';store.set('safahat-theme',t);applyTheme(t);}})[k]());
 }
@@ -2667,6 +2673,21 @@ async function buildPdf({pages=S.pages,raster=null,onProgress}={}){
   onProgress&&onProgress(1);
   return await out.save();
 }
+// printing: the installed app hands the PDF to the system (its share sheet has «Print»); the browser and the
+// home-screen app print the pages directly; inside Claude printing is not allowed, so the PDF is saved instead
+async function printDoc(){
+  if(!S.pages.length){toast('افتح ملفاً أولاً');return;}
+  const N=window.SAFAHAT_NATIVE,native=N&&!N.web,top=(()=>{try{return window.top===window;}catch(e){return false;}})();
+  if(native){showBusy('جارٍ تجهيز الملف للطباعة…');try{const b=await buildPdf({onProgress:setBusy});hideBusy();toast('اختر «طباعة» من قائمة المشاركة',3500);await saveFile(baseName()+'.pdf',new Blob([b],{type:'application/pdf'}));}catch(e){hideBusy();toast('تعذّر تجهيز الملف للطباعة');}return;}
+  if(!top){confirmSheet('الطباعة غير متاحة هنا','داخل Claude لا يُسمح بفتح نافذة الطباعة. احفظ الملف PDF ثم اطبعه من جهازك، أو استخدم التطبيق المثبّت أو نسخة الشاشة الرئيسية.','حفظ PDF',()=>savePdf());return;}
+  showBusy('جارٍ تجهيز الصفحات للطباعة…');
+  try{const imgs=[];for(let i=0;i<S.pages.length;i++){setBusy(i/S.pages.length);const p=S.pages[i],d=dims(p),k=150/72;const c=await renderFull(p,i,S.pages.length,d.w*k,d.h*k);
+      imgs.push({u:await new Promise(r=>c.toBlob(b=>r(URL.createObjectURL(b)),'image/jpeg',.9)),land:d.w>d.h});c.width=c.height=0;}
+    hideBusy();const fr=document.createElement('iframe');fr.style.cssText='position:fixed;width:0;height:0;border:0;right:0;bottom:0';document.body.appendChild(fr);
+    const doc=fr.contentDocument;doc.open();doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(baseName())}</title><style>@page{margin:0}html,body{margin:0}img{display:block;width:100%;height:auto;page-break-after:always;break-after:page}img:last-child{page-break-after:auto;break-after:auto}</style></head><body>${imgs.map(x=>`<img src="${x.u}">`).join('')}</body></html>`);doc.close();
+    await Promise.all([...doc.images].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r;})));
+    fr.contentWindow.focus();fr.contentWindow.print();setTimeout(()=>{fr.remove();imgs.forEach(x=>URL.revokeObjectURL(x.u));},60000);}
+  catch(e){console.error(e);hideBusy();toast('تعذّرت الطباعة');}}
 async function savePdf(){
   if(!S.pages.length){toast('لا توجد صفحات للحفظ');return;}
   showBusy('جارٍ تجهيز الملف…');
@@ -2725,6 +2746,34 @@ async function exportPages(pages,fname){showBusy('جارٍ إنشاء الملف
 
 /* ---------- grid ---------- */
 let gridToken=0;
+// drag pages to reorder them in the pages view
+const PGD={on:false,justDropped:false};
+function pgDragStart(e,p,card){if(e.button>0)return;const touch=e.pointerType!=='mouse';const st={x:e.clientX,y:e.clientY,id:e.pointerId,p,card,live:false,t:null};
+  const begin=()=>{if(st.live)return;st.live=true;PGD.on=true;const r=card.getBoundingClientRect();
+    const g=card.cloneNode(true);g.classList.add('pgghost');g.style.width=r.width+'px';g.style.left=r.left+'px';g.style.top=r.top+'px';st.dx=st.x-r.left;st.dy=st.y-r.top;
+    const sc=card.querySelector('canvas'),gc=g.querySelector('canvas');try{gc.width=sc.width;gc.height=sc.height;gc.getContext('2d').drawImage(sc,0,0);}catch(_){}
+    document.body.appendChild(g);st.g=g;card.classList.add('pgsrc');try{navigator.vibrate&&navigator.vibrate(12);}catch(_){}};
+  if(touch)st.t=setTimeout(begin,320);
+  const scroller=$('#p-pages');
+  const move=ev=>{if(ev.pointerId!==st.id)return;const dx=ev.clientX-st.x,dy=ev.clientY-st.y;
+    if(!st.live){if(touch){if(Math.hypot(dx,dy)>10){clearTimeout(st.t);end();}return;}if(Math.hypot(dx,dy)<8)return;begin();}
+    ev.preventDefault();st.g.style.left=(ev.clientX-st.dx)+'px';st.g.style.top=(ev.clientY-st.dy)+'px';
+    const r=scroller.getBoundingClientRect();st.auto=ev.clientY<r.top+60?-1:ev.clientY>r.bottom-60?1:0;
+    st.g.style.visibility='hidden';const el=document.elementFromPoint(ev.clientX,ev.clientY);st.g.style.visibility='';
+    const tc=el&&el.closest&&el.closest('#grid .card');document.querySelectorAll('#grid .pgb,#grid .pga').forEach(c=>c.classList.remove('pgb','pga'));st.to=null;
+    if(tc&&tc!==card){const tr=tc.getBoundingClientRect(),left=ev.clientX<tr.left+tr.width/2,rtl=getComputedStyle($('#grid')).direction==='rtl',after=rtl?left:!left;tc.classList.add(left?'pgb':'pga');st.to={pid:tc.dataset.pid,after};}};
+  const tick=()=>{if(!st.done){if(st.live&&st.auto)scroller.scrollTop+=st.auto*12;requestAnimationFrame(tick);}};requestAnimationFrame(tick);
+  const end=()=>{st.done=true;clearTimeout(st.t);removeEventListener('pointermove',move);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);card.removeEventListener('contextmenu',noMenu);};
+  const up=ev=>{if(ev.pointerId!==st.id)return;end();if(!st.live)return;PGD.on=false;st.g.remove();card.classList.remove('pgsrc');document.querySelectorAll('#grid .pgb,#grid .pga').forEach(c=>c.classList.remove('pgb','pga'));
+    PGD.justDropped=true;setTimeout(()=>PGD.justDropped=false,350);
+    if(st.to){const from=S.pages.indexOf(st.p),tgt=S.pages.findIndex(x=>x.id===st.to.pid);if(from<0||tgt<0)return;
+      // several selected pages move together
+      const moving=S.selectedPages.has(st.p.id)&&S.selectedPages.size>1?S.pages.filter(x=>S.selectedPages.has(x.id)):[st.p];
+      if(moving.some(x=>x.id===st.to.pid))return;pushUndo('ترتيب الصفحات');
+      const rest=S.pages.filter(x=>!moving.includes(x));let at=rest.findIndex(x=>x.id===st.to.pid)+(st.to.after?1:0);rest.splice(at,0,...moving);S.pages.splice(0,S.pages.length,...rest);
+      markDirty();refreshAll();toast(moving.length>1?'نُقلت '+cnt(moving.length,'page'):'نُقلت الصفحة إلى الموضع '+ar(S.pages.indexOf(moving[0])+1),1800);}};
+  const noMenu=ev=>ev.preventDefault();card.addEventListener('contextmenu',noMenu);
+  addEventListener('pointermove',move,{passive:false});addEventListener('pointerup',up);addEventListener('pointercancel',up);}
 function renderGrid(){
   const g=$('#grid');g.innerHTML='';const tok=++gridToken;
   S.pages.forEach((p,i)=>{
@@ -2739,7 +2788,8 @@ function renderGrid(){
         <button class="mini" data-a="down" title="نقل للخلف">${ic('prev')}</button>
       </div>`;
     card.querySelector('input').addEventListener('change',e=>{e.target.checked?S.selectedPages.add(p.id):S.selectedPages.delete(p.id);card.classList.toggle('sel',e.target.checked);});
-    card.querySelector('.thumb').addEventListener('click',()=>{setTab('view');requestAnimationFrame(()=>scrollToPage(S.pages.indexOf(p)));});
+    card.querySelector('.thumb').addEventListener('click',e=>{if(PGD.justDropped){e.preventDefault();return;}setTab('view');requestAnimationFrame(()=>scrollToPage(S.pages.indexOf(p)));});
+    card.dataset.pid=p.id;card.querySelector('.thumb').addEventListener('pointerdown',e=>pgDragStart(e,p,card));
     card.querySelectorAll('[data-a]').forEach(b=>b.addEventListener('click',()=>{
       const k=S.pages.indexOf(p),a=b.dataset.a;
       if(a==='up'&&k>0){pushUndo();[S.pages[k-1],S.pages[k]]=[S.pages[k],S.pages[k-1]];}
@@ -4940,6 +4990,8 @@ const realFolder=()=>LB.folder&&!['all','fav','trash'].includes(LB.folder)?LB.fo
 document.addEventListener('selectstart',e=>{const t=e.target&&(e.target.nodeType===1?e.target:e.target.parentElement);if(t&&t.closest&&t.closest('.viewer,.rail,#present'))e.preventDefault();});
 let saveTimer=null,saving=false,LAST_SAVE_ERR=null,saveRetryT=0;
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&S.dirty&&S.docId)scheduleSave();else if(document.visibilityState==='hidden'&&S.dirty&&S.docId)saveProject();});
+addEventListener('pagehide',()=>{if(S.dirty&&S.docId)saveProject();});
+window.safahatFlush=()=>{if(S.dirty&&S.docId)return saveProject();};
 function setSaveState(st){const el=$('#dirty');if(!el)return;el.hidden=false;el.dataset.st=st;
   el.textContent=st==='pending'?'جارٍ الحفظ…':st==='saved'?'محفوظ':st==='error'?'تعذّر الحفظ، اضغط للإعادة':'غير محفوظ';
   if(!el.dataset.w){el.dataset.w=1;el.addEventListener('click',e=>{if(el.dataset.st!=='error')return;e.stopPropagation();e.preventDefault();
@@ -5432,13 +5484,20 @@ function moveSheet(d){
     const go=async()=>{const n=$('#fdName').value.trim();if(!n)return;closeSheet();const fo={id:nidL('f'),name:n,created:Date.now()};await dbPut('folders',fo);LB.folders.push(fo);d.folder=fo.id;await dbPut('docs',d);renderLib();toast('نُقل إلى «'+n+'»');};
     $('#fdOk').onclick=go;$('#fdName').onkeydown=e=>{if(e.key==='Enter')go();};};
 }
+function docInfoSheet(d){const dt=t=>t?new Date(t).toLocaleString(appLanguage==='en'?'en-GB':'ar-KW',{dateStyle:'medium',timeStyle:'short'}):'—';
+  const fo=d.folder&&LB.folders.find(f=>f.id===d.folder);
+  openSheet(`<h3>${ic('info')} معلومات الملف</h3>${d.thumb?`<div class="eprev"><img src="${d.thumb}" alt="" style="max-height:160px;border-radius:4px;box-shadow:var(--shadow-sm)"></div>`:''}
+    <dl class="infol"><dt>الاسم</dt><dd>${esc(d.name||'')}</dd><dt>عدد الصفحات</dt><dd>${d.pages?ar(d.pages):'—'}</dd><dt>الحجم</dt><dd>${d.size?fmtSize(d.size):'—'}</dd>
+    <dt>المجلد</dt><dd>${fo?esc(fo.name):'ملفاتي'}</dd><dt>أُضيف</dt><dd>${dt(d.created)}</dd><dt>آخر تعديل</dt><dd>${dt(d.modified)}</dd><dt>آخر فتح</dt><dd>${dt(d.opened)}</dd><dt>في المفضلة</dt><dd>${d.fav?'نعم':'لا'}</dd></dl>
+    <div class="acts"><button class="hbtn primary" id="iOpen">${ic('open')} فتح</button>${cancelBtn}</div>`);wireClose();
+  $('#iOpen').onclick=async()=>{closeSheet();await openDoc(d.id);};}
 function docMenu(id,btn){
   const d=LB.docs.find(x=>x.id===id);if(!d)return;
   if(d.deleted){openMenu(btn,mrow('restore','undo','#0f8a74','استعادة','')+mrow('purge','trash','#c0362c','حذف نهائي',''),async k=>{
     if(k==='restore'){d.deleted=null;await dbPut('docs',d);renderLib();toast('استُعيد الملف');}
     else confirmSheet('حذف الملف نهائياً؟','«'+esc(d.name)+'» سيُحذف ولا يمكن استعادته.','حذف نهائي',async()=>{await dbDel('docs',id);await dbDel('data',id);LB.docs=LB.docs.filter(x=>x!==d);renderLib();});});return;}
   openMenu(btn,`<div class="mhead">${esc(d.name)}</div>`+mrow('open','open','#0f8a74','فتح','')+mrow('fav','star','#e0a100',d.fav?'إزالة من المفضلة':'إضافة إلى المفضلة','')+
-    mrow('rename','textedit','#5b6b6e','إعادة تسمية','')+mrow('share','share','#2459d6','مشاركة','واتساب، بريد، AirDrop…')+mrow('move','folder','#2459d6','نقل إلى…',d.folder?(LB.folders.find(f=>f.id===d.folder)||{}).name||'':'مجلد أو المجلد الخاص')+mrow('dup','copy','#5b6b6e','إنشاء نسخة','')+mrow('copyto','copy','#5b6b6e','نسخ إلى…','نسخة في مجلد آخر')+
+    mrow('info','info','#5b6b6e','معلومات الملف','الحجم والصفحات والتواريخ')+mrow('rename','textedit','#5b6b6e','إعادة تسمية','')+mrow('share','share','#2459d6','مشاركة','واتساب، بريد، AirDrop…')+mrow('move','folder','#2459d6','نقل إلى…',d.folder?(LB.folders.find(f=>f.id===d.folder)||{}).name||'':'مجلد أو المجلد الخاص')+mrow('dup','copy','#5b6b6e','إنشاء نسخة','')+mrow('copyto','copy','#5b6b6e','نسخ إلى…','نسخة في مجلد آخر')+
     mrow('export','save','#0f8a74','حفظ نسخة PDF','')+'<div class="msep"></div>'+mrow('del','trash','#c0362c','حذف','يُنقل إلى المحذوفة مؤخراً'),async k=>{
     if(k==='open')openDoc(id);
     else if(k==='fav'){d.fav=!d.fav;await dbPut('docs',d);renderLib();toast(d.fav?'أُضيف إلى المفضلة':'أُزيل من المفضلة');}
@@ -5449,6 +5508,7 @@ function docMenu(id,btn){
     else if(k==='share'){await openDoc(id);shareSheet();}
     else if(k==='dup'){const data=await dbGet('data',id);if(!data)return;const nidv=nidL('d');await dbPut('data',{...data,id:nidv});const m={...d,id:nidv,name:d.name+' - نسخة',created:Date.now(),opened:Date.now(),fav:false};await dbPut('docs',m);LB.docs.push(m);renderLib();toast('أُنشئت نسخة');}
     else if(k==='export'){await openDoc(id);savePdf();}
+    else if(k==='info')docInfoSheet(d);
     else if(k==='del'){d.deleted=Date.now();await dbPut('docs',d);if(S.docId===id)S.docId=null;renderLib();toast('نُقل إلى المحذوفة مؤخراً');}
   });
 }
@@ -7191,7 +7251,7 @@ function wire(){
 
 /* Complete app-shell localization: Arabic (RTL) / English (LTR). User document text is never translated. */
 const EN_UI={
-'القراءة':'Read','حفظ PDF':'Save PDF','تنظيم الملف':'Organize file','ترتيب الصفحات':'Reorder pages','حدّد الصفحات ثم استخدم الأزرار في الشريط العلوي، أو أزرار كل صفحة لتدويرها ونقلها ونسخها وحذفها. اضغط على المصغّرة لفتح الصفحة.':'Select pages, then use the toolbar buttons or each page’s controls to rotate, move, copy, or delete. Select a thumbnail to open a page.','صفحة':'Page','من':'of','غير محفوظ':'Unsaved','أفلت الملف هنا لفتحه':'Drop a file here to open it','الماسح الضوئي':'Scanner','مستندات':'Documents','البطاقة المدنية':'Civil ID','تعديل الحواف':'Adjust edges','اسحب الزوايا أو منتصف الأضلاع لتطابق حدود الورقة':'Drag the corners or edge handles to match the document boundaries','الناتج':'Result','إلغاء':'Cancel','تم':'Done',
+'القراءة':'Read','حفظ PDF':'Save PDF','تنظيم الملف':'Organize file','ترتيب الصفحات':'Reorder pages','اسحب أي صفحة إلى مكانها الجديد لتغيير الترتيب (على الهاتف: اضغط مطوّلاً ثم اسحب). حدّد صفحات لتنقلها معاً أو لتستخدم أزرار الشريط العلوي. اضغط على المصغّرة لفتح الصفحة.':'Select pages, then use the toolbar buttons or each page’s controls to rotate, move, copy, or delete. Select a thumbnail to open a page.','صفحة':'Page','من':'of','غير محفوظ':'Unsaved','أفلت الملف هنا لفتحه':'Drop a file here to open it','الماسح الضوئي':'Scanner','مستندات':'Documents','البطاقة المدنية':'Civil ID','تعديل الحواف':'Adjust edges','اسحب الزوايا أو منتصف الأضلاع لتطابق حدود الورقة':'Drag the corners or edge handles to match the document boundaries','الناتج':'Result','إلغاء':'Cancel','تم':'Done',
 'المكتبة':'Library','مشاركة':'Share','المزيد':'More','تراجع':'Undo','إعادة':'Redo','إعادة تسمية الملف':'Rename file','المصغرات الصفحات':'Page thumbnails','الصفحة السابقة':'Previous page','رقم الصفحة':'Page number','الصفحة التالية':'Next page','فتح ملف':'Open file','PDF أو صور':'PDF or images','بالكاميرا أو من الصور':'Use camera or choose photos','الوجهان في صفحة واحدة':'Both sides on one page','إعادة تسمية':'Rename','سجل التعديلات':'Edit history','الخطوات والنسخ السابقة':'Steps and previous versions','مسح التعليقات':'Clear annotations','لِلصفحة الحالية أو الملف كاملاً':'Current page or entire document',
 'القراءة':'Read','تكبير، وضع ليلي، بحث، قراءة بصوت':'Zoom, night mode, search, read aloud','التعليق':'Annotate','تظليل، نص، كتابة يدوية، تحديد ذكي':'Highlight, text, handwriting, smart selection','الرسم':'Draw','قلم، أشكال، أسهم':'Pen, shapes, arrows','تحرير PDF':'Edit PDF','تعديل نصوص الملف وصوره وروابطه':'Edit PDF text, images, and links','التعبئة والتوقيع':'Fill & Sign','تعبئة النماذج، توقيع، ختم':'Fill forms, sign, stamp','الإدراج':'Insert','صفحات، ملفات، صور، مسح ضوئي':'Pages, files, images, scan','المفضلة':'Favorites','أقلامك وأدواتك المحفوظة':'Your saved pens and tools','القياس':'Measure','أطوال، محيط، مساحة، زوايا':'Lengths, perimeter, area, angles','الحجب':'Redact','إخفاء المعلومات الحساسة':'Hide sensitive information','الصفحات':'Pages','ترتيب، تدوير، حذف، استخراج':'Reorder, rotate, delete, extract','التصدير والأدوات':'Export & tools','تقسيم، ضغط، تحويل، علامة مائية':'Split, compress, convert, watermark','المساعد الذكي':'AI assistant','محادثة، ترجمة، شرح، اختبارات':'Chat, translate, explain, quizzes','المجلد الخاص':'Private folder','ملفات مشفّرة برمز سري ونسخ محفوظة':'Encrypted files protected by a passcode and backups',
 'تصفّح':'Browse','تحريك':'Move','قلم':'Pen','تظليل':'Highlight','نص':'Text','مستطيل':'Rectangle','دائرة':'Circle','قطاع دائري':'Pie sector','مثلث':'Triangle','قائم الزاوية':'Right triangle','متوازي أضلاع':'Parallelogram','شبه منحرف':'Trapezoid','معيّن':'Rhombus','محاور':'Axes','خط الأعداد':'Number line','سهم مزدوج':'Double arrow','خط':'Line','سهم':'Arrow','توقيع':'Signature','ختم':'Stamp','صورة':'Image','تغطية':'Cover','حجب':'Redact','ممحاة':'Eraser','تحرير النص':'Edit text','تظليل نص':'Highlight text','تسطير':'Underline','شطب':'Strikethrough','ملاحظة':'Note','ملاحظة صوتية':'Voice note','رابط':'Link','تحديد':'Select','كتابة إلى نص':'Handwriting to text','مضلّع':'Polygon','طول':'Length','محيط':'Perimeter','مساحة':'Area','زاوية':'Angle','العنصر المحدد':'Selected item','أكبر':'Larger','أصغر':'Smaller','حذف':'Delete','التكبير':'Zoom in','تصغير':'Zoom out','تكبير':'Zoom in','ملء العرض':'Fit width','وضع القراءة':'Reading mode','نهاري':'Day','ورقي':'Paper','ليلي':'Night','التخطيط':'Layout','صفحتان':'Two pages','عرض تقديمي':'Presentation','المحتوى':'Contents','بحث':'Search','الفهرس':'Table of contents','قراءة بصوت':'Read aloud','الصفحة':'Page','نص الصور':'Image text','فلاتر':'Filters','التحديد':'Selection','تحديد الكل':'Select all','على المحددة':'Selected pages','تدوير':'Rotate','نسخ':'Copy','استخراج':'Extract','الإضافة':'Add','صفحة فارغة':'Blank page','ملفات':'Files','الترتيب':'Order','عكس':'Reverse','كيف أضيف؟':'How to add?','الحذف':'Delete','ملفات PDF':'PDF files','من الكاميرا والصور':'From camera or photos','مسح ضوئي':'Scan','المراجعة':'Review','التعليقات':'Comments','النماذج':'Forms','تعبئة النماذج':'Fill forms','بدون':'None','شفاف':'Transparent','مصمت':'Solid','متصل':'Solid line','متقطع':'Dashed','منقّط':'Dotted','القلم':'Pen','قلم التظليل':'Highlighter','الأشكال':'Shapes','النص':'Text','التسطير والشطب':'Underline & strikethrough',

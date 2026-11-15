@@ -153,6 +153,8 @@ async function openUrl(url) {
 }
 if (Capacitor.isNativePlatform()) {
   App.addListener('appUrlOpen', ev => openUrl(ev.url));
+  // save the open file the moment the app goes to the background or is closed
+  App.addListener('pause', () => { try { window.safahatFlush && window.safahatFlush(); } catch (e) {} });
   App.getLaunchUrl().then(r => r && openUrl(r.url)).catch(() => {});
   const flush = setInterval(() => { if (window.safahatOpenFiles && pending.length) { window.safahatOpenFiles(pending.splice(0)); } if (window.safahatOpenFiles && !pending.length) clearInterval(flush); }, 700);
   setTimeout(() => clearInterval(flush), 60000);
