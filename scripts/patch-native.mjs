@@ -119,6 +119,89 @@ final class SafahatPencil: NSObject, UIPencilInteractionDelegate {
       fs.writeFileSync(appDelegate, sw);
     }
   }
+  // Handwriting to text on the device: ML Kit digital ink recognition as a small Capacitor plugin.
+  {
+    const podfile = path.join(root, 'ios/App/Podfile');
+    must(fs.existsSync(podfile), 'Podfile not found');
+    let pf = fs.readFileSync(podfile, 'utf8');
+    pf = pf.replace(/platform :ios, '[^']+'/, "platform :ios, '15.5'");
+    if (!pf.includes('GoogleMLKit/DigitalInkRecognition')) pf = pf.replace(/(target 'App' do\n)/, "$1  pod 'GoogleMLKit/DigitalInkRecognition'\n");
+    must(pf.includes('GoogleMLKit/DigitalInkRecognition'), 'could not add the ML Kit pod');
+    fs.writeFileSync(podfile, pf);
+    if (fs.existsSync(pbx)) fs.writeFileSync(pbx, fs.readFileSync(pbx, 'utf8').replace(/IPHONEOS_DEPLOYMENT_TARGET = [^;]+;/g, 'IPHONEOS_DEPLOYMENT_TARGET = 15.5;'));
+    const sb = path.join(root, 'ios/App/App/Base.lproj/Main.storyboard');
+    must(fs.existsSync(sb), 'Main.storyboard not found');
+    let st = fs.readFileSync(sb, 'utf8');
+    st = st.replace(/customClass="CAPBridgeViewController" customModule="Capacitor"/, 'customClass="SafahatVC" customModule="App" customModuleProvider="target"');
+    must(st.includes('customClass="SafahatVC"'), 'could not point the storyboard at SafahatVC');
+    fs.writeFileSync(sb, st);
+    let sw = fs.readFileSync(appDelegate, 'utf8');
+    if (!sw.includes('SafahatInkPlugin')) {
+      sw = sw.replace(/import UIKit\n/, 'import UIKit\nimport MLKit\n');
+      sw += `
+// The app's web view controller: registers the handwriting plugin before the page loads.
+class SafahatVC: CAPBridgeViewController {
+    override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(SafahatInkPlugin())
+    }
+}
+
+@objc(SafahatInkPlugin)
+public class SafahatInkPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "SafahatInkPlugin"
+    public let jsName = "SafahatInk"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "recognize", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "prepare", returnType: CAPPluginReturnPromise)
+    ]
+    private var recognizers: [String: DigitalInkRecognizer] = [:]
+
+    private func model(_ lang: String) -> DigitalInkRecognitionModel? {
+        guard let id = DigitalInkRecognitionModelIdentifier(forLanguageTag: lang) else { return nil }
+        return DigitalInkRecognitionModel(modelIdentifier: id)
+    }
+    private func fetch(_ m: DigitalInkRecognitionModel) {
+        _ = ModelManager.modelManager().download(m, conditions: ModelDownloadConditions(allowsCellularAccess: true, allowsBackgroundDownloading: true))
+    }
+
+    @objc func prepare(_ call: CAPPluginCall) {
+        let lang = call.getString("lang") ?? "ar"
+        guard let m = model(lang) else { call.reject("unsupported", "unsupported"); return }
+        let ready = ModelManager.modelManager().isModelDownloaded(m)
+        if !ready { fetch(m) }
+        call.resolve(["ready": ready])
+    }
+
+    @objc func recognize(_ call: CAPPluginCall) {
+        let lang = call.getString("lang") ?? "ar"
+        guard let m = model(lang) else { call.reject("unsupported", "unsupported"); return }
+        if !ModelManager.modelManager().isModelDownloaded(m) { fetch(m); call.reject("no_model", "no_model"); return }
+        guard let json = call.getString("strokes"), let data = json.data(using: .utf8),
+              let raw = (try? JSONSerialization.jsonObject(with: data)) as? [[[NSNumber]]] else { call.reject("bad_input", "failed"); return }
+        var strokes: [Stroke] = []
+        for s in raw {
+            var pts: [StrokePoint] = []
+            for p in s where p.count >= 2 {
+                pts.append(StrokePoint(x: p[0].floatValue, y: p[1].floatValue, t: p.count > 2 ? p[2].intValue : 0))
+            }
+            if !pts.isEmpty { strokes.append(Stroke(points: pts)) }
+        }
+        if strokes.isEmpty { call.reject("empty", "failed"); return }
+        let rec: DigitalInkRecognizer
+        if let r = recognizers[lang] { rec = r } else {
+            rec = DigitalInkRecognizer.digitalInkRecognizer(options: DigitalInkRecognizerOptions(model: m))
+            recognizers[lang] = rec
+        }
+        rec.recognize(ink: Ink(strokes: strokes)) { result, error in
+            guard let result = result, let first = result.candidates.first else { call.reject(error?.localizedDescription ?? "failed", "failed"); return }
+            call.resolve(["text": first.text, "cands": result.candidates.prefix(5).map { $0.text }])
+        }
+    }
+}
+`;
+      fs.writeFileSync(appDelegate, sw);
+    }
+  }
   console.log('iOS patched (build ' + build + ')');
 }
 else if (platform === 'android') {
@@ -149,6 +232,141 @@ else if (platform === 'android') {
     let s = fs.readFileSync(g, 'utf8');
     s = s.replace(/versionCode\s+\d+/, `versionCode ${build}`).replace(/versionName\s+"[^"]*"/, `versionName "${version}"`);
     fs.writeFileSync(g, s);
+  }
+  // Handwriting to text on the device: ML Kit digital ink recognition as a small Capacitor plugin.
+  {
+    must(fs.existsSync(g), 'app/build.gradle not found');
+    let gr = fs.readFileSync(g, 'utf8');
+    if (!gr.includes('digital-ink-recognition')) gr = gr.replace(/\ndependencies\s*\{/, "\ndependencies {\n    implementation 'com.google.mlkit:digital-ink-recognition:18.1.0'");
+    must(gr.includes('digital-ink-recognition'), 'could not add the ML Kit dependency');
+    fs.writeFileSync(g, gr);
+    const find = d => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) { const r = find(f); if (r) return r; } else if (e.name === 'MainActivity.java') return f; } return null; };
+    const main = find(path.join(root, 'android/app/src/main/java'));
+    must(main, 'MainActivity.java not found');
+    let mj = fs.readFileSync(main, 'utf8');
+    const pkg = (mj.match(/package\s+([\w.]+);/) || [])[1];
+    must(pkg, 'could not read the Android package name');
+    if (!mj.includes('SafahatInkPlugin')) {
+      mj = `package ${pkg};
+
+import android.os.Bundle;
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(SafahatInkPlugin.class);
+        super.onCreate(savedInstanceState);
+    }
+}
+`;
+      fs.writeFileSync(main, mj);
+    }
+    fs.writeFileSync(path.join(path.dirname(main), 'SafahatInkPlugin.java'), `package ${pkg};
+
+import com.getcapacitor.JSArray;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+import com.google.mlkit.common.model.DownloadConditions;
+import com.google.mlkit.common.model.RemoteModelManager;
+import com.google.mlkit.vision.digitalink.DigitalInkRecognition;
+import com.google.mlkit.vision.digitalink.DigitalInkRecognitionModel;
+import com.google.mlkit.vision.digitalink.DigitalInkRecognitionModelIdentifier;
+import com.google.mlkit.vision.digitalink.DigitalInkRecognizer;
+import com.google.mlkit.vision.digitalink.DigitalInkRecognizerOptions;
+import com.google.mlkit.vision.digitalink.Ink;
+import com.google.mlkit.vision.digitalink.RecognitionCandidate;
+import java.util.HashMap;
+import java.util.Map;
+import org.json.JSONArray;
+
+/** Handwriting to text on the device: strokes in, text out. Works offline once the language model is downloaded. */
+@CapacitorPlugin(name = "SafahatInk")
+public class SafahatInkPlugin extends Plugin {
+    private final Map<String, DigitalInkRecognizer> recognizers = new HashMap<>();
+
+    private DigitalInkRecognitionModel model(String lang) {
+        try {
+            DigitalInkRecognitionModelIdentifier id = DigitalInkRecognitionModelIdentifier.fromLanguageTag(lang);
+            return id == null ? null : DigitalInkRecognitionModel.builder(id).build();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void fetch(DigitalInkRecognitionModel m) {
+        RemoteModelManager.getInstance().download(m, new DownloadConditions.Builder().build());
+    }
+
+    @PluginMethod
+    public void prepare(PluginCall call) {
+        final DigitalInkRecognitionModel m = model(call.getString("lang", "ar"));
+        if (m == null) { call.reject("unsupported", "unsupported"); return; }
+        RemoteModelManager.getInstance().isModelDownloaded(m)
+            .addOnSuccessListener(ready -> {
+                if (!ready) fetch(m);
+                JSObject r = new JSObject();
+                r.put("ready", ready);
+                call.resolve(r);
+            })
+            .addOnFailureListener(e -> call.reject("failed", "failed"));
+    }
+
+    @PluginMethod
+    public void recognize(PluginCall call) {
+        final String lang = call.getString("lang", "ar");
+        final DigitalInkRecognitionModel m = model(lang);
+        if (m == null) { call.reject("unsupported", "unsupported"); return; }
+        final Ink ink;
+        try {
+            JSONArray strokes = new JSONArray(call.getString("strokes", "[]"));
+            Ink.Builder ib = Ink.builder();
+            for (int i = 0; i < strokes.length(); i++) {
+                JSONArray s = strokes.getJSONArray(i);
+                Ink.Stroke.Builder sb = Ink.Stroke.builder();
+                int n = 0;
+                for (int j = 0; j < s.length(); j++) {
+                    JSONArray p = s.getJSONArray(j);
+                    if (p.length() < 2) continue;
+                    sb.addPoint(Ink.Point.create((float) p.getDouble(0), (float) p.getDouble(1), p.length() > 2 ? p.getLong(2) : 0L));
+                    n++;
+                }
+                if (n > 0) ib.addStroke(sb.build());
+            }
+            ink = ib.build();
+        } catch (Exception e) {
+            call.reject("bad_input", "failed");
+            return;
+        }
+        if (ink.getStrokes().isEmpty()) { call.reject("empty", "failed"); return; }
+        RemoteModelManager.getInstance().isModelDownloaded(m)
+            .addOnSuccessListener(ready -> {
+                if (!ready) { fetch(m); call.reject("no_model", "no_model"); return; }
+                DigitalInkRecognizer rec = recognizers.get(lang);
+                if (rec == null) {
+                    rec = DigitalInkRecognition.getClient(DigitalInkRecognizerOptions.builder(m).build());
+                    recognizers.put(lang, rec);
+                }
+                rec.recognize(ink)
+                    .addOnSuccessListener(res -> {
+                        if (res.getCandidates().isEmpty()) { call.reject("failed", "failed"); return; }
+                        JSObject r = new JSObject();
+                        r.put("text", res.getCandidates().get(0).getText());
+                        JSArray cands = new JSArray();
+                        int k = 0;
+                        for (RecognitionCandidate c : res.getCandidates()) { if (k++ >= 5) break; cands.put(c.getText()); }
+                        r.put("cands", cands);
+                        call.resolve(r);
+                    })
+                    .addOnFailureListener(e -> call.reject("failed", "failed"));
+            })
+            .addOnFailureListener(e -> call.reject("failed", "failed"));
+    }
+}
+`);
   }
   // Arabic app name
   const strings = path.join(root, 'android/app/src/main/res/values/strings.xml');

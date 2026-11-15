@@ -7,7 +7,7 @@
  *   assets / db / user → not available (cloud sync stays off; backup files still work)
  * It also forwards PDFs opened "with صفحات" from other apps.
  */
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { App } from '@capacitor/app';
@@ -111,7 +111,23 @@ window.claude = {
     return null;
   },
 };
+/* ---------- handwriting → text on the device (ML Kit digital ink, offline once the language model is on the device) ---------- */
+const InkNative = registerPlugin('SafahatInk');
+const INK_TAG = { ar: 'ar', en: 'en-US' };
+const ink = {
+  available: Capacitor.isNativePlatform(),
+  // strokes: [[[x, y, t], …], …] for one written line
+  async recognize(strokes, lang) {
+    try { return await InkNative.recognize({ lang: INK_TAG[lang] || INK_TAG.ar, strokes: JSON.stringify(strokes) }); }
+    catch (e) { throw { code: e && (e.code === 'no_model' || /no_model/.test(e.message || '')) ? 'no_model' : 'failed' }; }
+  },
+  prepare: lang => InkNative.prepare({ lang: INK_TAG[lang] || INK_TAG.ar }).catch(() => ({ ready: false })),
+};
+// fetch both language models in the background the first time the app is online
+if (ink.available) setTimeout(() => { ink.prepare('ar'); ink.prepare('en'); }, 4000);
+
 window.SAFAHAT_NATIVE = {
+  ink,
   platform: Capacitor.getPlatform(),
   getKey: () => store.get(KEY),
   setKey: v => store.set(KEY, v),

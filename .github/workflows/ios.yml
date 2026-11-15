@@ -55,7 +55,7 @@ jobs:
         run: |
           xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
             -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/sim" \
-            CODE_SIGNING_ALLOWED=NO -quiet build
+            CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=arm64 -quiet build
           (cd "$RUNNER_TEMP/sim/Build/Products/Debug-iphonesimulator" && zip -qry "$GITHUB_WORKSPACE/Safahat-simulator.zip" App.app)
 
       - name: Upload unsigned builds

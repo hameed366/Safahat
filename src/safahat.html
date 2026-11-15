@@ -777,6 +777,16 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .noai{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--violet-soft);border:1px solid color-mix(in srgb,var(--violet) 30%,transparent)}
 .noai>span svg{width:20px;height:20px;color:var(--violet)}.noai>div{flex:1 1 200px;display:grid;gap:2px;min-width:0}.noai b{font-size:13.5px}.noai small{font-size:12.5px;color:var(--muted);line-height:1.6}
 
+.symp{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:8px;background:var(--raise)}
+.symt{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.symt::-webkit-scrollbar{display:none}
+.symt button{flex:none;border:0;background:none;color:var(--muted);padding:6px 11px;border-radius:999px;font-size:12.5px;white-space:nowrap}.symt button.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.symg{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:5px;max-height:172px;overflow-y:auto}
+.symg button{position:relative;min-height:40px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;padding:2px 4px;font-size:16px;font-family:"Times New Roman","Amiri",serif;line-height:1.1}
+.symg button.wide{grid-column:span 2;font-size:13.5px;font-family:inherit}.symg button:active{background:var(--accent-soft)}
+.symg.el button{font-family:inherit;font-size:14px;font-weight:600}.symg button i{position:absolute;top:1px;inset-inline-start:4px;font-size:8.5px;font-style:normal;color:var(--muted);font-weight:400}
+.symc{display:flex;flex-direction:column;gap:5px;max-height:190px;overflow-y:auto}
+.symc button{display:grid;grid-template-columns:44px 1fr;gap:0 8px;align-items:center;text-align:start;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:6px 10px}
+.symc button b{grid-row:span 2;font:italic 700 17px "Times New Roman",serif;text-align:center}.symc button span{font-size:13px}.symc button small{font-size:12px;color:var(--muted);text-align:end;unicode-bidi:plaintext}
 .locnote{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:12px;background:var(--accent-soft);color:var(--accent-strong)}
 .locnote>span svg{width:18px;height:18px}.locnote small{flex:1 1 200px;font-size:12.5px;line-height:1.6;color:var(--ink)}
 .noai[hidden],.locnote[hidden]{display:none}
@@ -6068,7 +6078,30 @@ function selAction(k,colorVal){
 const MCMD={times:'×',div:'÷',pm:'±',mp:'∓',cdot:'·',le:'≤',leq:'≤',ge:'≥',geq:'≥',ne:'≠',neq:'≠',approx:'≈',equiv:'≡',pi:'π',infty:'∞',degree:'°',circ:'°',angle:'∠',
   triangle:'△',perp:'⊥',parallel:'∥',in:'∈',notin:'∉',cup:'∪',cap:'∩',subset:'⊂',cdots:'⋯',ldots:'…',dots:'…',alpha:'α',beta:'β',theta:'θ',gamma:'γ',lambda:'λ',mu:'μ',
   sigma:'σ',Delta:'Δ',to:'→',rightarrow:'→',Rightarrow:'⇒',therefore:'∴',percent:'%','%':'%',quad:' ',qquad:'  ',',':' ',';':' ',' ':' ','{':'{','}':'}',lbrace:'{',rbrace:'}'};
-const MOPS='+−=<>≤≥≠≈±∓×÷·≡→⇒∈∉⊂∪∩';
+Object.assign(MCMD,{
+  // Greek
+  delta:'δ',epsilon:'ε',varepsilon:'ε',zeta:'ζ',eta:'η',vartheta:'ϑ',iota:'ι',kappa:'κ',nu:'ν',xi:'ξ',rho:'ρ',varrho:'ϱ',tau:'τ',upsilon:'υ',phi:'φ',varphi:'φ',chi:'χ',psi:'ψ',omega:'ω',varsigma:'ς',
+  Gamma:'Γ',Theta:'Θ',Lambda:'Λ',Xi:'Ξ',Pi:'Π',Sigma:'Σ',Upsilon:'Υ',Phi:'Φ',Psi:'Ψ',Omega:'Ω',
+  // operations and relations
+  ast:'∗',star:'⋆',bullet:'•',oplus:'⊕',ominus:'⊖',otimes:'⊗',odot:'⊙',setminus:'∖',backslash:'∖',mid:'∣',nmid:'∤',
+  sim:'∼',simeq:'≃',cong:'≅',ncong:'≇',propto:'∝',ll:'≪',gg:'≫',nless:'≮',ngtr:'≯',doteq:'≐',asymp:'≍',prec:'≺',succ:'≻',
+  // sets and logic
+  subseteq:'⊆',supset:'⊃',supseteq:'⊇',nsubseteq:'⊈',notsubset:'⊄',ni:'∋',emptyset:'∅',varnothing:'∅',forall:'∀',exists:'∃',nexists:'∄',neg:'¬',lnot:'¬',land:'∧',wedge:'∧',lor:'∨',vee:'∨',
+  N:'ℕ',Z:'ℤ',Q:'ℚ',R:'ℝ',C:'ℂ',aleph:'ℵ',
+  // arrows
+  leftarrow:'←',gets:'←',leftrightarrow:'↔',Leftarrow:'⇐',Leftrightarrow:'⇔',iff:'⇔',implies:'⇒',uparrow:'↑',downarrow:'↓',updownarrow:'↕',mapsto:'↦',nearrow:'↗',searrow:'↘',
+  rightleftharpoons:'⇌',leftrightharpoons:'⇋',longrightarrow:'⟶',longleftarrow:'⟵',rightharpoonup:'⇀',
+  // calculus
+  int:'∫',iint:'∬',iiint:'∭',oint:'∮',sum:'∑',prod:'∏',partial:'∂',nabla:'∇',prime:'′',because:'∵',
+  // geometry
+  measuredangle:'∡',sphericalangle:'∢',square:'□',Box:'□',bigcirc:'○',diamond:'◇',nparallel:'∦',sim2:'∼',arc:'⌒',overarc:'⌒',
+  // physics and misc
+  hbar:'ℏ',ell:'ℓ',Re:'ℜ',Im:'ℑ',wp:'℘',angstrom:'Å',AA:'Å',ohm:'Ω',mho:'℧',celsius:'℃',micro:'µ',permil:'‰',dagger:'†',checkmark:'✓',
+  lfloor:'⌊',rfloor:'⌋',lceil:'⌈',rceil:'⌉',langle:'⟨',rangle:'⟩',vert:'|',Vert:'‖',lvert:'|',rvert:'|','|':'‖',
+  '!':'','.':'','&':' ','#':'#','$':'$','_':'_'});
+const MFUNC=['sin','cos','tan','cot','sec','csc','arcsin','arccos','arctan','sinh','cosh','tanh','log','ln','lg','exp','lim','max','min','det','gcd','lcm','mod','deg','dim','arg'];
+const MACC=['vec','overrightarrow','overleftarrow','bar','overline','underline','hat','widehat','tilde','dot','ddot'];
+const MOPS='+−=<>≤≥≠≈±∓×÷·≡→⇒∈∉⊂∪∩∝∼≃≅≪≫⊆⊃⊇←↔⇐⇔⇌⇋⟶⟵↦∧∨';
 const MMIRROR={'(':')',')':'(','[':']',']':'[','{':'}','}':'{','<':'>','>':'<','≤':'≥','≥':'≤'};
 function mParse(src){
   const s=String(src||'');let i=0;
@@ -6081,7 +6114,13 @@ function mParse(src){
       if(n==='frac'||n==='dfrac'||n==='tfrac'){const a=group(),b=group();return {t:'frac',n:a,d:b};}
       if(n==='sqrt'){let idx=null;while(s[i]===' ')i++;if(s[i]==='['){i++;idx=row(']');i++;}return {t:'sqrt',c:group(),idx};}
       if(['text','mathrm','textrm','mbox','textbf'].includes(n)){while(s[i]===' ')i++;let v='';if(s[i]==='{'){i++;let dep=1;while(i<s.length){if(s[i]==='{')dep++;else if(s[i]==='}'&&!--dep)break;v+=s[i++];}i++;}return {t:'txt',v};}
-      if(['left','right','big','Big','bigg','displaystyle','textstyle'].includes(n))return null;
+      if(['left','right','big','Big','bigg','Bigg','displaystyle','textstyle','limits','nolimits','mathbf','mathit','boldsymbol','mathbb','mathcal','ce'].includes(n))return null;
+      if(MFUNC.includes(n))return {t:'txt',v:n};
+      if(MACC.includes(n))return {t:'acc',k:n,c:group()};
+      if(n==='xrightarrow'||n==='xleftarrow'||n==='xrightleftharpoons'){let lo=null;while(s[i]===' ')i++;if(s[i]==='['){i++;lo=row(']');i++;}return {t:'xarr',k:n,c:group(),lo};}
+      if(n==='binom'){const a=group(),b=group();return {t:'binom',n:a,d:b};}
+      if(n==='overset'||n==='stackrel'){const a=group(),b=group();return {t:'xarr',k:'over',c:a,base:b};}
+      if(n==='underset'){const a=group(),b=group();return {t:'xarr',k:'over',lo:a,c:{t:'row',c:[]},base:b};}
       const v=MCMD[n];if(v!=null)return MOPS.includes(v)?{t:'op',v}:{t:'sym',v};return {t:'sym',v:n};}
     i++;
     if(ch==='-'||ch==='−')return {t:'op',v:'−'};if(ch==='*')return {t:'op',v:'×'};
@@ -6123,6 +6162,28 @@ function mLayout(n,fs,x,rtl){
       return {w:b.w+sw+g,a:Math.max(b.a,sup?up+sup.a:0),d:Math.max(b.d,sub?dn+sub.d:0),draw(X,Y){
         const bx=rtl?X+sw+g:X,sx=rtl?X:X+b.w+g;b.draw(bx,Y);   // Arabic: the exponent sits to the left of its base
         if(sup)sup.draw(rtl?sx+sw-sup.w:sx,Y-up);if(sub)sub.draw(rtl?sx+sw-sub.w:sx,Y+dn);}};}
+    case 'acc':{const c=mLayout(n.c,fs,x,rtl),k=n.k,under=k==='underline',h=fs*.22,lw=Math.max(1,fs*.055);
+      return {w:c.w,a:under?c.a:c.a+h,d:under?c.d+h*.6:c.d,draw(X,Y){c.draw(X,Y);x.save();x.strokeStyle=x.fillStyle;x.lineWidth=lw;x.lineCap='round';x.lineJoin='round';
+        const x0=X+fs*.05,x1=X+c.w-fs*.05,y=under?Y+c.d+h*.35:Y-c.a-h*.3,mid=(x0+x1)/2;x.beginPath();
+        if(k==='bar'||k==='overline'||under){x.moveTo(x0,y);x.lineTo(x1,y);}
+        else if(k==='hat'||k==='widehat'){const hw=Math.min((x1-x0)/2,fs*.5);x.moveTo(mid-hw,y+h*.25);x.lineTo(mid,y-h*.35);x.lineTo(mid+hw,y+h*.25);}
+        else if(k==='tilde'){const hw=Math.min((x1-x0)/2,fs*.45);x.moveTo(mid-hw,y+h*.1);x.bezierCurveTo(mid-hw/2,y-h*.5,mid+hw/2,y+h*.5,mid+hw,y-h*.1);}
+        else if(k==='dot'||k==='ddot'){x.fillStyle=x.strokeStyle;const r=fs*.055;for(const dx of k==='dot'?[0]:[-fs*.12,fs*.12]){x.moveTo(mid+dx+r,y);x.arc(mid+dx,y,r,0,7);}x.fill();x.restore();return;}
+        else{ // vector arrows: in Arabic the arrow points left, as the textbooks draw it
+          const left=(k==='overleftarrow')!==!!rtl,tip=left?x0:x1,back=left?1:-1,ah=fs*.14;x.moveTo(x0,y);x.lineTo(x1,y);x.moveTo(tip+back*ah,y-ah*.7);x.lineTo(tip,y);x.lineTo(tip+back*ah,y+ah*.7);}
+        x.stroke();x.restore();}};}
+    case 'xarr':{const ss=Math.max(fs*.62,7),up=n.c?mLayout(n.c,ss,x,rtl):null,lo=n.lo?mLayout(n.lo,ss,x,rtl):null,base=n.base?mLayout(n.base,fs,x,rtl):null;
+      const w=Math.max(base?base.w:fs*1.7,(up?up.w:0)+fs*.7,(lo?lo.w:0)+fs*.7),ax=fs*.3,g=fs*.12,lw=Math.max(1,fs*.055);
+      return {w:w+fs*.3,a:Math.max(base?base.a:0,ax+g+(up?up.a+up.d:0)),d:Math.max(base?base.d:0,lo?g+lo.a+lo.d-ax:0),draw(X,Y){X+=fs*.15;const y=Y-ax;
+        if(base)base.draw(X+(w-base.w)/2,Y);else{x.save();x.strokeStyle=x.fillStyle;x.lineWidth=lw;x.lineCap='round';x.lineJoin='round';const ah=fs*.16;
+          const head=(tip,dir,yy,half)=>{x.moveTo(tip-dir*ah,yy-ah*.7);x.lineTo(tip,yy);if(!half)x.lineTo(tip-dir*ah,yy+ah*.7);};x.beginPath();
+          if(n.k==='xrightleftharpoons'){const o=fs*.07;x.moveTo(X,y-o);x.lineTo(X+w,y-o);head(rtl?X:X+w,rtl?-1:1,y-o,true);x.moveTo(X,y+o);x.lineTo(X+w,y+o);x.moveTo(rtl?X+w-ah:X+ah,y+o+ah*.7);x.lineTo(rtl?X+w:X,y+o);}
+          else{const right=(n.k==='xrightarrow')!==!!rtl;x.moveTo(X,y);x.lineTo(X+w,y);head(right?X+w:X,right?1:-1,y);}
+          x.stroke();x.restore();}
+        const top=base?Y-base.a-g:y-g;if(up)up.draw(X+(w-up.w)/2,top-up.d);if(lo)lo.draw(X+(w-lo.w)/2,(base?Y+base.d:y)+g+lo.a);}};}
+    case 'binom':{const s2=Math.max(fs*.82,8),nb=mLayout(n.n,s2,x,rtl),db=mLayout(n.d,s2,x,rtl),w=Math.max(nb.w,db.w),pw=fs*.34,axis=fs*.3,gap=fs*.1;
+      return {w:w+pw*2,a:axis+gap+nb.d+nb.a,d:Math.max(0,-axis+gap+db.a+db.d),draw(X,Y){const ly=Y-axis;nb.draw(X+pw+(w-nb.w)/2,ly-gap-nb.d);db.draw(X+pw+(w-db.w)/2,ly+gap+db.a);
+        x.save();x.strokeStyle=x.fillStyle;x.lineWidth=Math.max(1,fs*.055);const t=Y-this.a,b=Y+this.d;x.beginPath();x.moveTo(X+pw*.85,t);x.quadraticCurveTo(X+pw*.1,(t+b)/2,X+pw*.85,b);x.moveTo(X+w+pw*1.15,t);x.quadraticCurveTo(X+w+pw*1.9,(t+b)/2,X+w+pw*1.15,b);x.stroke();x.restore();}};}
     case 'sqrt':{const c=mLayout(n.c,fs,x,rtl),ib=n.idx?mLayout(n.idx,Math.max(fs*.5,7),x,rtl):null;
       const sw=fs*.6,g=fs*.12,rule=Math.max(1,fs*.06),top=c.a+g+rule,w=sw+c.w+fs*.14,extra=ib?Math.max(0,ib.w-sw*.45):0;
       return {w:w+extra,a:top+(ib?Math.max(0,fs*.42+ib.a-top):0),d:c.d+fs*.06,draw(X,Y){
@@ -6567,6 +6628,77 @@ function drawResult(cv,type,v,rtl){
   else{c.font=`500 ${fs*.8}px ${FONT}`;c.direction='rtl';c.textAlign='right';c.textBaseline='top';lines.forEach((l,i)=>c.fillText(l,W-12,8+i*fs*1.2));}
 }
 // one sheet for every conversion: selected ink, a region of the page, or editing a converted result
+/* ---------- symbols and constants: mathematics, physics, chemistry ---------- */
+// each entry: [what the button shows, LaTeX for an equation, plain characters for text]  — «|» marks where the cursor lands
+const SYM_TABS=[
+ ['أساسي',[['كسر','\\frac{|}{}','/'],['أس','^{|}','^'],['سفلي','_{|}','_'],['√','\\sqrt{|}','√'],['∛','\\sqrt[3]{|}','∛'],['ⁿ√','\\sqrt[|]{}','√'],['×','\\times ','×'],['÷','\\div ','÷'],['±','\\pm ','±'],['∓','\\mp ','∓'],['·','\\cdot ','·'],['=','=','='],['≠','\\ne ','≠'],['≈','\\approx ','≈'],['<','<','<'],['>','>','>'],['≤','\\le ','≤'],['≥','\\ge ','≥'],['( )','(|)','()'],['[ ]','[|]','[]'],['| |','\\vert |\\vert ','||'],['%','\\%','%'],['‰','\\permil ','‰'],['π','\\pi ','π'],['∞','\\infty ','∞'],['°','\\degree ','°'],['!','!','!'],['نص','\\text{|}','']]],
+ ['يوناني',[...'αβγδεζηθικλμνξπρστυφχψω'].map(c=>[c,null,c]).concat([...'ΓΔΘΛΞΠΣΦΨΩ'].map(c=>[c,null,c]))],
+ ['علاقات وأسهم',[['≡','\\equiv ','≡'],['∼','\\sim ','∼'],['≃','\\simeq ','≃'],['≅','\\cong ','≅'],['∝','\\propto ','∝'],['≪','\\ll ','≪'],['≫','\\gg ','≫'],['→','\\to ','→'],['←','\\leftarrow ','←'],['↔','\\leftrightarrow ','↔'],['⇒','\\Rightarrow ','⇒'],['⇐','\\Leftarrow ','⇐'],['⇔','\\Leftrightarrow ','⇔'],['↑','\\uparrow ','↑'],['↓','\\downarrow ','↓'],['↦','\\mapsto ','↦'],['∴','\\therefore ','∴'],['∵','\\because ','∵'],['⋯','\\cdots ','⋯'],['…','\\ldots ','…']]],
+ ['مجموعات ومنطق',[['∈','\\in ','∈'],['∉','\\notin ','∉'],['∋','\\ni ','∋'],['⊂','\\subset ','⊂'],['⊆','\\subseteq ','⊆'],['⊄','\\notsubset ','⊄'],['⊃','\\supset ','⊃'],['⊇','\\supseteq ','⊇'],['∪','\\cup ','∪'],['∩','\\cap ','∩'],['∖','\\setminus ','∖'],['∅','\\emptyset ','∅'],['{ }','\\{|\\}','{}'],['ℕ','\\N ','ℕ'],['ℤ','\\Z ','ℤ'],['ℚ','\\Q ','ℚ'],['ℝ','\\R ','ℝ'],['ℂ','\\C ','ℂ'],['∀','\\forall ','∀'],['∃','\\exists ','∃'],['∄','\\nexists ','∄'],['¬','\\neg ','¬'],['∧','\\land ','∧'],['∨','\\lor ','∨'],['⊕','\\oplus ','⊕'],['ط','\\text{ط}','ط'],['ص','\\text{ص}','ص'],['ن','\\text{ن}','ن'],['ح','\\text{ح}','ح']]],
+ ['دوال وتفاضل',[['sin','\\sin ','sin'],['cos','\\cos ','cos'],['tan','\\tan ','tan'],['جا','\\text{جا}','جا'],['جتا','\\text{جتا}','جتا'],['ظا','\\text{ظا}','ظا'],['ظتا','\\text{ظتا}','ظتا'],['قا','\\text{قا}','قا'],['قتا','\\text{قتا}','قتا'],['sin⁻¹','\\sin^{-1}','sin⁻¹'],['log','\\log ','log'],['logₐ','\\log_{|}','log'],['ln','\\ln ','ln'],['لو','\\text{لو}','لو'],['eˣ','e^{|}','e^'],['lim','\\lim_{|\\to }','lim'],['نهـا','\\text{نهـا}_{|\\to }','نهـا'],['∑','\\sum_{|}^{}','∑'],['∏','\\prod_{|}^{}','∏'],['∫','\\int ','∫'],['∫ₐᵇ','\\int_{|}^{}','∫'],['∬','\\iint ','∬'],['∮','\\oint ','∮'],['d/dx','\\frac{d}{dx}','d/dx'],['dy/dx','\\frac{dy}{dx}','dy/dx'],['∂','\\partial ','∂'],['∇','\\nabla ','∇'],['f′','f\\prime ','f′'],['Δ','\\Delta ','Δ'],['|x|','\\vert |\\vert ','|x|'],['(ⁿᵣ)','\\binom{|}{}','C'],['ⁿPᵣ','{}^{|}P_{}','P'],['x̄','\\bar{|}','x̄'],['→ فوق','\\vec{|}','⃗'],['^','\\hat{|}','̂'],['⌊ ⌋','\\lfloor |\\rfloor ','⌊⌋'],['⌈ ⌉','\\lceil |\\rceil ','⌈⌉']]],
+ ['هندسة',[['∠','\\angle ','∠'],['∡','\\measuredangle ','∡'],['△','\\triangle ','△'],['□','\\square ','□'],['○','\\bigcirc ','○'],['⊥','\\perp ','⊥'],['∥','\\parallel ','∥'],['∦','\\nparallel ','∦'],['≅','\\cong ','≅'],['∼','\\sim ','∼'],['°','\\degree ','°'],['′','\\prime ','′'],['″','\\prime\\prime ','″'],['قطعة','\\overline{|}','̅'],['شعاع','\\overrightarrow{|}','⃗'],['قوس','\\overset{\\arc}{|}','⌒'],['π','\\pi ','π'],['نق','\\text{نق}','نق'],['ق','\\text{ق}','ق'],['م','\\text{م}','م'],['سم','\\text{سم}','سم'],['سم²','\\text{سم}^{2}','سم²'],['سم³','\\text{سم}^{3}','سم³'],['م²','\\text{م}^{2}','م²'],['م³','\\text{م}^{3}','م³'],['rad','\\text{rad}','rad']]],
+ ['فيزياء',[['Δ','\\Delta ','Δ'],['λ','\\lambda ','λ'],['ρ','\\rho ','ρ'],['ω','\\omega ','ω'],['θ','\\theta ','θ'],['μ','\\mu ','μ'],['ε₀','\\varepsilon_{0}','ε₀'],['μ₀','\\mu_{0}','μ₀'],['ℏ','\\hbar ','ℏ'],['Ω','\\Omega ','Ω'],['Å','\\angstrom ','Å'],['℃','\\celsius ','℃'],['متجه','\\vec{|}','⃗'],['∝','\\propto ','∝'],['×10ⁿ','\\times10^{|}','×10^'],['v₀','v_{0}','v₀'],['m/s','\\ \\text{m/s}',' m/s'],['m/s²','\\ \\text{m/s²}',' m/s²'],['km/h','\\ \\text{km/h}',' km/h'],['kg','\\ \\text{kg}',' kg'],['g','\\ \\text{g}',' g'],['N','\\ \\text{N}',' N'],['J','\\ \\text{J}',' J'],['W','\\ \\text{W}',' W'],['Pa','\\ \\text{Pa}',' Pa'],['Hz','\\ \\text{Hz}',' Hz'],['C','\\ \\text{C}',' C'],['V','\\ \\text{V}',' V'],['A','\\ \\text{A}',' A'],['Ω','\\ \\Omega ',' Ω'],['F','\\ \\text{F}',' F'],['T','\\ \\text{T}',' T'],['Wb','\\ \\text{Wb}',' Wb'],['H','\\ \\text{H}',' H'],['K','\\ \\text{K}',' K'],['°C','\\ \\text{°C}',' °C'],['eV','\\ \\text{eV}',' eV'],['kW·h','\\ \\text{kW·h}',' kW·h'],['N·m','\\ \\text{N·m}',' N·m'],['N/m','\\ \\text{N/m}',' N/m'],['N/C','\\ \\text{N/C}',' N/C'],['kg/m³','\\ \\text{kg/m³}',' kg/m³'],['J/kg·K','\\ \\text{J/kg·K}',' J/kg·K'],['kg·m/s','\\ \\text{kg·m/s}',' kg·m/s'],['m','\\ \\text{m}',' m'],['cm','\\ \\text{cm}',' cm'],['mm','\\ \\text{mm}',' mm'],['km','\\ \\text{km}',' km'],['nm','\\ \\text{nm}',' nm'],['μm','\\ \\text{μm}',' μm'],['s','\\ \\text{s}',' s'],['ms','\\ \\text{ms}',' ms'],['mol','\\ \\text{mol}',' mol'],['cd','\\ \\text{cd}',' cd'],['dB','\\ \\text{dB}',' dB']]],
+ ['كيمياء',[['→','\\to ','→'],['⇌','\\rightleftharpoons ','⇌'],['Δ→','\\xrightarrow{\\Delta}','→'],['شرط→','\\xrightarrow{\\text{|}}','→'],['↑','\\uparrow ','↑'],['↓','\\downarrow ','↓'],['(s)','\\text{(s)}','(s)'],['(l)','\\text{(l)}','(l)'],['(g)','\\text{(g)}','(g)'],['(aq)','\\text{(aq)}','(aq)'],['₂','_{2}','₂'],['₃','_{3}','₃'],['₄','_{4}','₄'],['ₙ','_{|}','ₙ'],['⁺','^{+}','⁺'],['⁻','^{-}','⁻'],['²⁺','^{2+}','²⁺'],['³⁺','^{3+}','³⁺'],['²⁻','^{2-}','²⁻'],['³⁻','^{3-}','³⁻'],['e⁻','e^{-}','e⁻'],['H⁺','\\text{H}^{+}','H⁺'],['OH⁻','\\text{OH}^{-}','OH⁻'],['H₂O','\\text{H}_{2}\\text{O}','H₂O'],['CO₂','\\text{CO}_{2}','CO₂'],['O₂','\\text{O}_{2}','O₂'],['H₂','\\text{H}_{2}','H₂'],['N₂','\\text{N}_{2}','N₂'],['NaCl','\\text{NaCl}','NaCl'],['HCl','\\text{HCl}','HCl'],['NaOH','\\text{NaOH}','NaOH'],['H₂SO₄','\\text{H}_{2}\\text{SO}_{4}','H₂SO₄'],['HNO₃','\\text{HNO}_{3}','HNO₃'],['NH₃','\\text{NH}_{3}','NH₃'],['CH₄','\\text{CH}_{4}','CH₄'],['CaCO₃','\\text{CaCO}_{3}','CaCO₃'],['C₆H₁₂O₆','\\text{C}_{6}\\text{H}_{12}\\text{O}_{6}','C₆H₁₂O₆'],['SO₄²⁻','\\text{SO}_{4}^{2-}','SO₄²⁻'],['NO₃⁻','\\text{NO}_{3}^{-}','NO₃⁻'],['CO₃²⁻','\\text{CO}_{3}^{2-}','CO₃²⁻'],['NH₄⁺','\\text{NH}_{4}^{+}','NH₄⁺'],['PO₄³⁻','\\text{PO}_{4}^{3-}','PO₄³⁻'],['ΔH','\\Delta H','ΔH'],['pH','\\text{pH}','pH'],['[ ]','[|]','[]'],['mol','\\ \\text{mol}',' mol'],['mol/L','\\ \\text{mol/L}',' mol/L'],['M','\\ \\text{M}',' M'],['g/mol','\\ \\text{g/mol}',' g/mol'],['L','\\ \\text{L}',' L'],['mL','\\ \\text{mL}',' mL'],['atm','\\ \\text{atm}',' atm'],['kJ/mol','\\ \\text{kJ/mol}',' kJ/mol'],['°C','\\ \\text{°C}',' °C'],['نسّق الصيغة','@chem','@chem']]],
+ ['العناصر','H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' ').map((e,i)=>[e,'\\text{'+e+'}',e,i+1])],
+ ['الثوابت',null]];
+// physical, chemical and mathematical constants: [symbol, Arabic name, value as LaTeX, value as text]
+const CONSTS=[
+ ['c','سرعة الضوء في الفراغ','c = 3\\times10^{8}\\ \\text{m/s}','c = 3×10⁸ m/s'],
+ ['g','عجلة الجاذبية الأرضية','g = 9.8\\ \\text{m/s²}','g = 9.8 m/s²'],
+ ['G','ثابت الجذب العام','G = 6.67\\times10^{-11}\\ \\text{N·m²/kg²}','G = 6.67×10⁻¹¹ N·m²/kg²'],
+ ['h','ثابت بلانك','h = 6.626\\times10^{-34}\\ \\text{J·s}','h = 6.626×10⁻³⁴ J·s'],
+ ['e','شحنة الإلكترون (الشحنة الأولية)','e = 1.6\\times10^{-19}\\ \\text{C}','e = 1.6×10⁻¹⁹ C'],
+ ['mₑ','كتلة الإلكترون','m_{e} = 9.11\\times10^{-31}\\ \\text{kg}','mₑ = 9.11×10⁻³¹ kg'],
+ ['mₚ','كتلة البروتون','m_{p} = 1.673\\times10^{-27}\\ \\text{kg}','mₚ = 1.673×10⁻²⁷ kg'],
+ ['mₙ','كتلة النيوترون','m_{n} = 1.675\\times10^{-27}\\ \\text{kg}','mₙ = 1.675×10⁻²⁷ kg'],
+ ['k','ثابت كولوم','k = 9\\times10^{9}\\ \\text{N·m²/C²}','k = 9×10⁹ N·m²/C²'],
+ ['ε₀','سماحية الفراغ','\\varepsilon_{0} = 8.85\\times10^{-12}\\ \\text{C²/N·m²}','ε₀ = 8.85×10⁻¹² C²/N·m²'],
+ ['μ₀','نفاذية الفراغ','\\mu_{0} = 4\\pi\\times10^{-7}\\ \\text{T·m/A}','μ₀ = 4π×10⁻⁷ T·m/A'],
+ ['Nₐ','عدد أفوجادرو','N_{A} = 6.022\\times10^{23}\\ \\text{mol⁻¹}','Nₐ = 6.022×10²³ mol⁻¹'],
+ ['R','ثابت الغازات العام','R = 8.314\\ \\text{J/mol·K}','R = 8.314 J/mol·K'],
+ ['R','ثابت الغازات (باللتر والضغط الجوي)','R = 0.0821\\ \\text{L·atm/mol·K}','R = 0.0821 L·atm/mol·K'],
+ ['k_B','ثابت بولتزمان','k_{B} = 1.38\\times10^{-23}\\ \\text{J/K}','k_B = 1.38×10⁻²³ J/K'],
+ ['σ','ثابت ستيفان – بولتزمان','\\sigma = 5.67\\times10^{-8}\\ \\text{W/m²·K⁴}','σ = 5.67×10⁻⁸ W/m²·K⁴'],
+ ['F','ثابت فاراداي','F = 96485\\ \\text{C/mol}','F = 96485 C/mol'],
+ ['u','وحدة الكتل الذرية','u = 1.66\\times10^{-27}\\ \\text{kg}','u = 1.66×10⁻²⁷ kg'],
+ ['R_H','ثابت ريدبرج','R_{H} = 1.097\\times10^{7}\\ \\text{m⁻¹}','R_H = 1.097×10⁷ m⁻¹'],
+ ['eV','الإلكترون فولت','1\\ \\text{eV} = 1.6\\times10^{-19}\\ \\text{J}','1 eV = 1.6×10⁻¹⁹ J'],
+ ['atm','الضغط الجوي المعياري','1\\ \\text{atm} = 1.013\\times10^{5}\\ \\text{Pa}','1 atm = 1.013×10⁵ Pa'],
+ ['Vₘ','الحجم المولي للغاز (STP)','V_{m} = 22.4\\ \\text{L/mol}','Vₘ = 22.4 L/mol'],
+ ['K_w','ثابت تأين الماء عند 25°C','K_{w} = 1\\times10^{-14}','K_w = 1×10⁻¹⁴'],
+ ['0 K','الصفر المطلق','0\\ \\text{K} = -273.15\\ \\text{°C}','0 K = −273.15 °C'],
+ ['ρ','كثافة الماء','\\rho = 1000\\ \\text{kg/m³}','ρ = 1000 kg/m³'],
+ ['c','الحرارة النوعية للماء','c = 4186\\ \\text{J/kg·K}','c = 4186 J/kg·K'],
+ ['v','سرعة الصوت في الهواء (20°C)','v = 343\\ \\text{m/s}','v = 343 m/s'],
+ ['R_E','نصف قطر الأرض','R_{E} = 6.37\\times10^{6}\\ \\text{m}','R_E = 6.37×10⁶ m'],
+ ['M_E','كتلة الأرض','M_{E} = 5.97\\times10^{24}\\ \\text{kg}','M_E = 5.97×10²⁴ kg'],
+ ['π','النسبة التقريبية','\\pi \\approx 3.14159','π ≈ 3.14159'],
+ ['e','العدد النيبيري (أساس اللوغاريتم الطبيعي)','e \\approx 2.71828','e ≈ 2.71828'],
+ ['√2','الجذر التربيعي للعدد ٢','\\sqrt{2} \\approx 1.414','√2 ≈ 1.414'],
+ ['√3','الجذر التربيعي للعدد ٣','\\sqrt{3} \\approx 1.732','√3 ≈ 1.732'],
+ ['φ','النسبة الذهبية','\\varphi \\approx 1.618','φ ≈ 1.618']];
+const GREEK_TEX={α:'alpha',β:'beta',γ:'gamma',δ:'delta',ε:'epsilon',ζ:'zeta',η:'eta',θ:'theta',ι:'iota',κ:'kappa',λ:'lambda',μ:'mu',ν:'nu',ξ:'xi',π:'pi',ρ:'rho',σ:'sigma',τ:'tau',υ:'upsilon',φ:'phi',χ:'chi',ψ:'psi',ω:'omega',Γ:'Gamma',Δ:'Delta',Θ:'Theta',Λ:'Lambda',Ξ:'Xi',Π:'Pi',Σ:'Sigma',Φ:'Phi',Ψ:'Psi',Ω:'Omega'};
+// H2SO4 + 2NaOH -> Na2SO4 + 2H2O  →  real subscripts, charges and arrows
+function chemFormat(t){const SB='₀₁₂₃₄₅₆₇₈₉',SP='⁰¹²³⁴⁵⁶⁷⁸⁹',sg=c=>c==='+'?'⁺':'⁻';
+  return String(t).replace(/<=>|<->|⇄/g,'⇌').replace(/-+>|=>/g,'→')
+    .replace(/([A-Za-z\)\]])(\d)(\d)([+\-])(?=\s|$|\))/g,(m,a,d1,d2,c)=>a+SB[d1]+SP[d2]+sg(c))          // SO42-  →  SO₄²⁻
+    .replace(/([A-Za-z\)\]])\^?(\d?)([+\-])(?=\s|$|\))/g,(m,a,d,c)=>a+(d?SP[d]:'')+sg(c))                 // Fe3+ , Na+ , OH-
+    .replace(/([A-Za-z\)\]])(\d+)/g,(m,a,d)=>a+[...d].map(x=>SB[x]).join(''));}
+const SYMP={el:null,type:null,tab:store.get('safahat-symtab',0)};
+function symPalette(el,T,getType,changed){if(!el)return;SYMP.el=el;SYMP.type=getType();
+  const math=SYMP.type==='math',tab=SYM_TABS[SYMP.tab]?SYMP.tab:0,[name,list]=SYM_TABS[tab];
+  const btns=name==='الثوابت'?`<div class="symc">${CONSTS.map((c,i)=>`<button type="button" data-ci="${i}"><b dir="ltr">${esc(c[0])}</b><span>${c[1]}</span><small dir="ltr">${esc(c[3].replace(/^[^=≈]*[=≈]\s*/,''))}</small></button>`).join('')}</div>`
+    :`<div class="symg${name==='العناصر'?' el':''}">${list.map((it,i)=>`<button type="button" data-si="${i}" ${it[0].length>3&&!it[3]?'class="wide"':''} dir="${/[\u0600-\u06FF]/.test(it[0])?'rtl':'ltr'}">${it[3]?`<i>${it[3]}</i>`:''}${esc(it[0])}</button>`).join('')}</div>`;
+  el.innerHTML=`<div class="symt" role="tablist">${SYM_TABS.map((t,i)=>`<button type="button" data-st="${i}" class="${i===tab?'on':''}">${t[0]}</button>`).join('')}</div>${btns}`;
+  const on=el.querySelector('.symt .on');if(on&&on.scrollIntoView)try{on.scrollIntoView({block:'nearest',inline:'center'});}catch(e){}
+  const put=str=>{if(str==null)return;const a=T.selectionStart??T.value.length,b=T.selectionEnd??a,at=str.indexOf('|'),ins=str.replace('|','');
+    T.value=T.value.slice(0,a)+ins+T.value.slice(b);const pos=a+(at>=0?at:ins.length);T.focus({preventScroll:true});try{T.setSelectionRange(pos,pos);}catch(e){}changed();};
+  el.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{SYMP.tab=+b.dataset.st;store.set('safahat-symtab',SYMP.tab);symPalette(el,T,getType,changed);});
+  el.querySelectorAll('[data-si]').forEach(b=>b.onclick=()=>{const it=list[+b.dataset.si],m=getType()==='math';
+    if(it[1]==='@chem'){T.value=m?T.value:chemFormat(T.value);if(m)toast('تنسيق الصيغة يعمل في وضع «نص». في المعادلة استخدم أزرار ₂ و⁺',3200);changed();return;}
+    put(m?(it[1]!=null?it[1]:'\\'+GREEK_TEX[it[0]]+' '):it[2]);});
+  el.querySelectorAll('[data-ci]').forEach(b=>b.onclick=()=>{const c=CONSTS[+b.dataset.ci];put(getType()==='math'?c[2]:c[3]);});
+}
 function openConvert(o){
   const p=byId(o.id);if(!p)return;
   const st={type:'text',rtl:true,val:{text:'',math:''},res:{}};
@@ -6574,11 +6706,13 @@ function openConvert(o){
   openSheet(`<h3>${ic('hw')} ${o.editA?'تعديل':'تحويل الكتابة اليدوية'}</h3>
     ${o.editA?'':'<div class="eprev"><canvas id="cvSrc"></canvas><span>الأصل</span></div>'}
     <div class="erow"><div class="pgroup"><span class="plabel">التحويل إلى</span><div class="seg" id="cvType"><button type="button" data-v="text">نص</button><button type="button" data-v="math">معادلة رياضية</button></div></div>
-      <div class="pgroup" id="cvDirG"><span class="plabel">كتابة المعادلة</span><div class="seg" id="cvDir"><button type="button" data-v="rtl">عربية (س، ٣)</button><button type="button" data-v="ltr">لاتينية (x، 3)</button></div></div></div>
+      <div class="pgroup" id="cvDirG"><span class="plabel">كتابة المعادلة</span><div class="seg" id="cvDir"><button type="button" data-v="rtl">عربية (س، ٣)</button><button type="button" data-v="ltr">لاتينية (x، 3)</button></div></div>
+      <div class="pgroup" id="cvLangG" hidden><span class="plabel">لغة الكتابة</span><div class="seg" id="cvLang"><button type="button" data-v="ar">عربي</button><button type="button" data-v="en">English ورموز</button></div></div></div>
     <div class="eprev mprev"><canvas id="cvOut"></canvas><span>الناتج</span></div>
     <div class="calcrow" id="cvCalcRow" hidden><span class="cres"><b>الحل:</b> <canvas id="cvRes"></canvas></span><label class="cbx"><input type="checkbox" id="cvCalc" ${calcOn()?'checked':''}>كتابة الناتج على الصفحة</label></div>
     <label class="cbx" id="cvStepsL"><input type="checkbox" id="cvSteps" ${store.get('safahat-steps',false)?'checked':''}>عرض الحل بالخطوات بعد التحويل (رياضيات، فيزياء، كيمياء)</label>
     <label><span id="cvLab">النص</span><textarea id="cvT" dir="auto" rows="3" placeholder="${o.shot?'جارٍ التعرّف على الكتابة…':''}"></textarea></label>
+    <div class="symp" id="cvSym"></div>
     <p class="hint" id="cvHelp" style="margin:0" hidden>الكسر: \\frac{١}{٢} · الأس: س^{٢} · الجذر: \\sqrt{س} · الجذر النوني: \\sqrt[٣]{س} · الضرب \\times والقسمة \\div وπ: \\pi</p>
     <div class="locnote" id="cvLocal" hidden><span>${ic('check')}</span><small>تعرّف فوري على الجهاز دون إنترنت. راجع الصيغة وصحّحها إن لزم${AI?'، أو اضغط «بالمساعد» لتعرّف أدق':''}. كل تصحيح تكتبه يتعلّم منه التطبيق خطك.</small><button class="hbtn" id="cvTrain">${ic('hw')} درّبه على خطك</button>${AI?`<button class="hbtn" id="cvAi">${ic('spark')} بالمساعد</button>`:''}</div>
     <div class="noai" id="cvNoAI" hidden><span>${ic('spark')}</span><div><b>لم يُحوَّل تلقائياً</b><small>${aiHelpText()}</small></div>${window.SAFAHAT_NATIVE?`<button class="hbtn primary" id="cvAiOn">تفعيل المساعد</button>`:''}</div>
@@ -6594,16 +6728,33 @@ function openConvert(o){
   const sync=()=>{if(!$('#cvT'))return;
     sheet.querySelectorAll('#cvType button').forEach(b=>b.classList.toggle('on',b.dataset.v===st.type));
     sheet.querySelectorAll('#cvDir button').forEach(b=>b.classList.toggle('on',b.dataset.v===(st.rtl?'rtl':'ltr')));
-    $('#cvDirG').hidden=st.type!=='math';$('#cvHelp').hidden=st.type!=='math';$('#cvLab').textContent=st.type==='math'?'صيغة المعادلة':'النص';
+    $('#cvDirG').hidden=st.type!=='math';$('#cvHelp').hidden=st.type!=='math';
+    const lg=$('#cvLangG');if(lg){lg.hidden=!(st.type==='text'&&o.ltext);sheet.querySelectorAll('#cvLang button').forEach(b=>b.classList.toggle('on',b.dataset.v===hwLang()));}
+    if(SYMP.el!==$('#cvSym')||SYMP.type!==st.type)symPalette($('#cvSym'),T,()=>st.type,()=>{edited=true;st.val[st.type]=T.value;drawOut();});$('#cvLab').textContent=st.type==='math'?'صيغة المعادلة':'النص';
     T.dir=st.type==='math'?'ltr':'auto';T.value=st.val[st.type];drawOut();};
   let blobP=null;const getBlob=()=>blobP||(blobP=o.shot());
   const run=async mode=>{if(!o.shot)return;T.value='';T.placeholder='جارٍ التعرّف على الكتابة…';
     try{const blob=await getBlob();
       if(!srcDone&&blob){try{const im=await loadImg(URL.createObjectURL(blob));const c=mkCanvas(im.naturalWidth,im.naturalHeight);c.getContext('2d').drawImage(im,0,0);showSrc(c);}catch(e){}}
       const r=await recognizeImg(blob,mode);if(edited)return;st.res[r.type]=true;st.val[r.type]=r.value;st.src='ai';if(r.type==='math')st.rtl=r.rtl;if(mode==='auto'||mode===r.type)st.type=r.type;const ln=$('#cvLocal');if(ln)ln.hidden=true;}
-    catch(e){if(!$('#cvT'))return;if(st.src==='local'){sync();return;}T.placeholder=e&&e.code==='unreadable'?'لم تُقرأ الكتابة بوضوح، اكتب بنفسك':e&&e.code==='no_ai'?aiHelpText()+' أو اكتب بنفسك':aiErr(e);}
+    catch(e){if(!$('#cvT'))return;if(st.src==='local'){sync();return;}
+      if(mode!=='math'&&(await localTextRun()))return;
+      T.placeholder=e&&e.code==='unreadable'?'لم تُقرأ الكتابة بوضوح، اكتب بنفسك':e&&e.code==='no_ai'?aiHelpText()+' أو اكتب بنفسك':aiErr(e);}
     sync();};
-  sheet.querySelectorAll('#cvType button').forEach(b=>b.onclick=()=>{st.type=b.dataset.v;sync();if(!st.res[st.type]&&o.shot&&AI){st.res[st.type]=true;run(st.type);}
+  // the device's own reading of the handwriting as text: the offline ink model for pen strokes, the local OCR engine for a picked area
+  const localTextRun=async()=>{if(!o.shot)return false;T.placeholder='جارٍ التعرّف على الجهاز…';
+    try{const r=o.ltext?await o.ltext(hwLang()):await localOcrText(await getBlob());if(!$('#cvT'))return true;
+      if(r&&r.value){st.val.text=r.value;st.res.text=true;st.srcT='local';if(!edited){st.type='text';sync();}const ln=$('#cvLocal');if(ln&&o.ltext)ln.hidden=false;return true;}
+      T.placeholder='لم تُقرأ الكتابة بوضوح، اكتب بنفسك';}
+    catch(e){if(!$('#cvT'))return true;
+      if(e&&e.code==='no_model'){if(!edited&&!st.val.text){st.type='text';sync();}T.placeholder='يُنزَّل نموذج اللغة لأول مرة (يحتاج الإنترنت مرة واحدة فقط). أعد المحاولة بعد لحظات';return true;}
+      T.placeholder='تعذّر التعرّف على الجهاز، اكتب النص بنفسك';}
+    return false;};
+  const online=()=>navigator.onLine!==false;
+  sheet.querySelectorAll('#cvLang button').forEach(b=>b.onclick=()=>{store.set('safahat-hwlang',b.dataset.v);edited=false;st.res.text=false;sync();localTextRun();});
+  sheet.querySelectorAll('#cvType button').forEach(b=>b.onclick=()=>{st.type=b.dataset.v;sync();
+    if(st.type==='text'&&!st.res.text&&o.shot&&(o.ltext||!AI||!online())){st.res.text=true;localTextRun().then(ok=>{if(!ok&&AI&&online()){run('text');}else if(!ok&&!st.val.text){const nb=$('#cvNoAI');if(nb&&!AI)nb.hidden=false;}});return;}
+    if(!st.res[st.type]&&o.shot&&AI){st.res[st.type]=true;run(st.type);}
     else if(st.type==='text'&&!AI&&!st.val.text){T.placeholder='تحويل الكتابة العربية إلى نص يحتاج المساعد الذكي. اكتب النص بنفسك هنا';const nb=$('#cvNoAI');if(nb)nb.hidden=false;}});
   sheet.querySelectorAll('#cvDir button').forEach(b=>b.onclick=()=>{const r=b.dataset.v==='rtl';if(r!==st.rtl){store.set('safahat-mathdir',r?'rtl':'ltr');
       const again=o.local&&!edited&&st.src==='local'?o.local(r?'rtl':'ltr'):null;
@@ -6636,7 +6787,11 @@ function openConvert(o){
   const loc=o.shot&&!o.init&&o.local?o.local():null;
   if(loc){st.val.math=loc.value;st.rtl=loc.rtl;st.res.math=true;st.type='math';st.src='local';st.loc=loc;const ln=$('#cvLocal');if(ln)ln.hidden=false;}
   sync();
-  if(o.shot&&!o.init){if(AI&&!loc)run('auto');else if(!AI&&!loc){T.placeholder='أو اكتب النص أو المعادلة بنفسك هنا';const nb=$('#cvNoAI');if(nb)nb.hidden=false;}}
+  if(o.shot&&!o.init){const sure=loc&&loc.conf>=.6;
+    if(AI&&online()){if(!sure)run('auto');}
+    else if(!sure){ // no assistant or no connection: read it as text on the device
+      st.res.text=true;localTextRun().then(ok=>{if(ok||!$('#cvT'))return;if(loc){st.type='math';sync();}else{T.placeholder='أو اكتب النص أو المعادلة بنفسك هنا';const nb=$('#cvNoAI');if(nb&&!AI)nb.hidden=false;}});}
+    else if(o.ltext)o.ltext(hwLang()).then(r=>{if(r&&$('#cvT')&&!st.val.text){st.val.text=r.value;st.res.text=true;}}).catch(()=>{});}
 }
 const INK_SRC=new WeakMap();
 const TRAIN_SETS={ar:[['٢','٢'],['٣','٣'],['٤','٤'],['٥','0'],['٦','٦'],['٧','٧'],['٨','٨'],['٩','9'],['س','س'],['ص','ص'],['×','x'],['+','+'],['(','('],[')',')']],
@@ -6797,10 +6952,30 @@ function bgSheet(id,a){const src=S.imgs[a.origKey||a.key];if(!src)return;let tol
     pushUndo('مسح الخلفية');if(!a.origKey)a.origKey=a.key;a.key=key;markDirty();closeSheet();drawOverlay(id);toast('مُسحت الخلفية. للتراجع اضغط تراجع أو «استعادة الخلفية»',3000);};
   const rs=$('#bgRestore');if(rs)rs.onclick=()=>{pushUndo('استعادة الخلفية');a.key=a.origKey;delete a.origKey;markDirty();closeSheet();drawOverlay(id);toast('أُعيدت الخلفية');};
   requestAnimationFrame(draw);}
+// handwriting to text on the device itself (the installed apps): strokes go to the offline ink model, one written line at a time
+const NINK=()=>{const N=window.SAFAHAT_NATIVE&&window.SAFAHAT_NATIVE.ink;return N&&N.available?N:null;};
+const hwLang=()=>store.get('safahat-hwlang','ar')==='en'?'en':'ar';
+function inkLines(p,items){
+  const r=pageRatio(p),K=1000,st=items.filter(a=>a.type==='pen'&&a.pts&&a.pts.length).map(a=>{const pts=a.pts.map(([x,y])=>[x*K,y/r*K]);let y0=1e9,y1=-1e9,x0=1e9,x1=-1e9;for(const q of pts){y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1]);x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);}return {pts,y0,y1,x0,x1};});
+  if(!st.length)return [];
+  const hs=st.map(s=>s.y1-s.y0).sort((a,b)=>a-b),big=hs[Math.floor(hs.length*.75)]||1,gap=Math.max(2,big*.35);
+  // bands of ink down the page: a clear horizontal gap starts a new line; dots and marks join the nearest line
+  const tall=st.filter(s=>s.y1-s.y0>=big*.3).sort((a,b)=>a.y0-b.y0),lines=[];
+  for(const s of tall){const L=lines[lines.length-1];if(L&&s.y0<L.y1-Math.min(L.y1-L.y0,s.y1-s.y0)*.25+gap*.2){L.s.push(s);L.y1=Math.max(L.y1,s.y1);}else lines.push({y0:s.y0,y1:s.y1,s:[s]});}
+  if(!lines.length)lines.push({y0:st[0].y0,y1:st[0].y1,s:[]});
+  for(const s of st){if(tall.includes(s))continue;const c=(s.y0+s.y1)/2;let best=lines[0],bd=1e9;for(const L of lines){const d=c<L.y0?L.y0-c:c>L.y1?c-L.y1:0;if(d<bd){bd=d;best=L;}}best.s.push(s);}
+  const order=new Map(st.map((s,i)=>[s,i]));
+  return lines.map(L=>{let t=0;return L.s.sort((a,b)=>order.get(a)-order.get(b)).map(s=>{t+=180;return s.pts.map(q=>{t+=12;return [Math.round(q[0]*10)/10,Math.round(q[1]*10)/10,t];});});});
+}
+async function localText(p,items,lang){const N=NINK();if(!N)return null;const lines=inkLines(p,items);if(!lines.length)return null;
+  const out=[];for(const L of lines){const r=await N.recognize(L,lang||hwLang());if(r&&r.text)out.push(String(r.text).trim());}
+  const text=out.filter(Boolean).join('\n');return text?{type:'text',value:text,rtl:/[\u0600-\u06FF]/.test(text)}:null;}
+// printed or photographed text without the assistant: the local OCR engine
+async function localOcrText(blob){const w=await getLocalOcrWorker();const r=await w.recognize(blob);const t=((r&&r.data&&r.data.text)||'').replace(/\n{2,}/g,'\n').trim();return t?{type:'text',value:t,rtl:/[\u0600-\u06FF]/.test(t)}:null;}
 function inkToText(id,items){
   if(!items.length)return;const p=byId(id);const src=renderInk(p,items);
   const hasPen=items.some(a=>a.type==='pen');
-  openConvert({id,items,box:unionBox(items,pageRatio(p)),src,shot:()=>canvasBlob(src),local:hasPen?pref=>localMath(p,items,pref):null});
+  openConvert({id,items,box:unionBox(items,pageRatio(p)),src,shot:()=>canvasBlob(src),local:hasPen?pref=>localMath(p,items,pref):null,ltext:hasPen&&NINK()?lang=>localText(p,items,lang):null});
 }
 // the "write to text" pen: strokes are converted after a short pause
 const HW={id:null,items:[],timer:null};
@@ -6814,7 +6989,13 @@ async function hwFlush(){
       pushUndo();p.annots=p.annots.filter(a=>!live.includes(a));const out=fitAnnot(p,'math',r.value,r.rtl,box,color);p.annots.push(out);const base=out.tex;
       const autoSt=store.get('safahat-autosteps',false)?stepsLocal(r.value,r.rtl):null;if(autoSt)writeSteps(p,bbox(out,pageRatio(p)),autoSt.slice(1),{rtl:r.rtl,size:out.size,color:'#1d4ed8'});else if(calcOn())applyCalc(p,out);INK_SRC.set(out,{res:r,sfx:out.tex.slice(base.length)});markDirty();drawOverlay(id);
       toast('تحوّلت إلى معادلة على الجهاز. للتصحيح: حدّدها واضغط «تعديل»'+(r.conf<.6?' — راجعها، فالكتابة غير واضحة تماماً':''),3800);return;}}
-  if(!AI){toast(mode==='text'?'تحويل الكتابة إلى نص يحتاج المساعد الذكي. '+aiHelpText():'بقيت الكتابة كما هي. '+aiHelpText(),5500);return;}toast(mode==='math'?'جارٍ تحويل الكتابة إلى معادلة…':'جارٍ تحويل الكتابة…',9000);
+  if(!AI||navigator.onLine===false){
+    if(NINK()){try{const r=await localText(p,live);const still=live.filter(a=>p.annots.includes(a));
+        if(r&&still.length){const box=unionBox(still,pageRatio(p)),color=(still.find(a=>a.color)||{}).color||'#111111';pushUndo();p.annots=p.annots.filter(a=>!still.includes(a));p.annots.push(fitAnnot(p,'text',r.value,true,box,color));markDirty();drawOverlay(id);
+          toast('تحوّلت إلى نص على الجهاز. للتعديل: حدّدها واضغط «تعديل»',3200);return;}
+        toast('لم تُقرأ الكتابة بوضوح، فبقيت كما هي',3200);return;}
+      catch(e){toast(e&&e.code==='no_model'?'يُنزَّل نموذج الكتابة لأول مرة ويحتاج الإنترنت مرة واحدة. أعد المحاولة بعد لحظات':'تعذّر التحويل على الجهاز، فبقيت الكتابة كما هي',4200);return;}}
+    if(!AI){toast(mode==='text'?'تحويل الكتابة إلى نص يحتاج المساعد الذكي. '+aiHelpText():'بقيت الكتابة كما هي. '+aiHelpText(),5500);return;}}toast(mode==='math'?'جارٍ تحويل الكتابة إلى معادلة…':'جارٍ تحويل الكتابة…',9000);
   try{const r=await recognizeImg(await canvasBlob(renderInk(p,live)),mode);const still=live.filter(a=>p.annots.includes(a));if(!still.length)return;
     const box=unionBox(still,pageRatio(p)),color=(still.find(a=>a.color)||{}).color||'#111111';
     pushUndo();p.annots=p.annots.filter(a=>!still.includes(a));const out2=fitAnnot(p,r.type,r.value,r.rtl,box,color);p.annots.push(out2);if(calcOn())applyCalc(p,out2);markDirty();drawOverlay(id);
