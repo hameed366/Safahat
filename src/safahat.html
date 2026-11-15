@@ -1325,7 +1325,8 @@ async function openFiles(files,{append=false,quiet=false,noLib=false}={}){
 
 /* ---------- viewer ---------- */
 const viewer=$('#viewer');const views=new Map();
-const io=new IntersectionObserver(es=>{for(const e of es){const v=views.get(e.target.dataset.id);if(!v)continue;v.vis=e.isIntersecting;if(v.vis)renderView(e.target.dataset.id);}},{root:viewer,rootMargin:'600px 0px'});
+function releaseView(v){if(!v)return;v.key='';if(v.c.width>1){v.c.width=1;v.c.height=1;}if(v.o.width>1){v.o.width=1;v.o.height=1;}}
+const io=new IntersectionObserver(es=>{for(const e of es){const v=views.get(e.target.dataset.id);if(!v)continue;v.vis=e.isIntersecting;if(v.vis)renderView(e.target.dataset.id);else releaseView(v);}},{root:viewer,rootMargin:'1200px 0px'});
 function buildViewer(){
   io.disconnect();views.clear();viewer.innerHTML='';
   S.pages.forEach((p,i)=>{
@@ -1374,7 +1375,7 @@ async function renderView(id){
 }
 function redrawAll(){for(const p of S.pages)drawOverlay(p.id);}
 function drawOverlay(id){railRefreshSoon(id);
-  const v=views.get(id),p=byId(id);if(!v||!p)return;
+  const v=views.get(id),p=byId(id);if(!v||!p)return;if(!v.vis&&v.c.width<=1)return; // drawn when it scrolls into view
   const vk=vdpr(v),W=Math.round(v.cssW*vk),H=Math.round(v.cssH*vk);
   if(v.o.width!==W||v.o.height!==H){v.o.width=W;v.o.height=H;}
   const x=v.o.getContext('2d');x.clearRect(0,0,W,H);
@@ -2677,16 +2678,23 @@ const needsOverlay=p=>p.annots.length||S.settings.wm||S.settings.pn;
 async function buildPdf({pages=S.pages,raster=null,onProgress}={}){
   const {PDFDocument,degrees}=PDFLib;const out=await PDFDocument.create();const libs={};const total=pages.length;const made=[];
   out.setTitle(baseName());out.setCreator('صفحات PDF');
+  // first decide which pages are copied as they are, then copy each source's pages in ONE call so that
+  // fonts and images shared between pages are stored once (copying page by page duplicated them every time)
+  const rast=[];for(let i=0;i<pages.length;i++){const p=pages[i],s=p.src;
+    let r=(!!raster&&!(raster.smart&&s.kind==='pdf'&&(await pageText(p)).trim().length>20))||!!p.filter||p.annots.some(a=>a.type==='redact')||(s.kind==='pdf'&&S.sources[s.doc].encrypted);
+    if(!r&&s.kind==='pdf'&&libs[s.doc]===undefined){try{libs[s.doc]=await PDFDocument.load(S.sources[s.doc].bytes,{ignoreEncryption:true});}catch(e){libs[s.doc]=null;}}
+    if(s.kind==='pdf'&&libs[s.doc]===null)r=true;rast.push(r);}
+  const copied={};for(const doc of Object.keys(libs)){if(!libs[doc])continue;const idx=[];pages.forEach((p,i)=>{if(!rast[i]&&p.src.kind==='pdf'&&String(p.src.doc)===doc)idx.push(p.src.n-1);});
+    if(idx.length){const got=await out.copyPages(libs[doc],idx);copied[doc]=idx.map((n,k)=>({n,pg:got[k]}));}}
+  const takeCopy=s=>{const L=copied[String(s.doc)];const k=L.findIndex(x=>x.n===s.n-1);const o=L[k];L.splice(k,1);return o.pg;};
   for(let i=0;i<pages.length;i++){const p=pages[i];onProgress&&onProgress(i/total);
     const d=dims(p),s=p.src;const gi=S.pages.indexOf(p),gt=S.pages.length;
-    let rasterize=(!!raster&&!(raster.smart&&s.kind==='pdf'&&(await pageText(p)).trim().length>20))||!!p.filter||p.annots.some(a=>a.type==='redact')||(s.kind==='pdf'&&S.sources[s.doc].encrypted);
-    if(!rasterize&&s.kind==='pdf'&&libs[s.doc]===undefined){try{libs[s.doc]=await PDFDocument.load(S.sources[s.doc].bytes,{ignoreEncryption:true});}catch(e){libs[s.doc]=null;}}
-    if(s.kind==='pdf'&&libs[s.doc]===null)rasterize=true;
+    const rasterize=rast[i];
     if(rasterize){const dpi=raster?raster.dpi:170,k=dpi/72;const c=await renderFull(p,gi,gt,d.w*k,d.h*k);
       const im=await out.embedJpg(b64bytes(c.toDataURL('image/jpeg',raster?raster.q:.88)));const pg=out.addPage([d.w,d.h]);pg.drawImage(im,{x:0,y:0,width:d.w,height:d.h});
       made.push({p,pg,R:0,box:{x:0,y:0,width:d.w,height:d.h},raster:true});continue;}
     let pg,R,box;
-    if(s.kind==='pdf'){const [cp]=await out.copyPages(libs[s.doc],[s.n-1]);pg=out.addPage(cp);R=(s.inh+p.rot)%360;pg.setRotation(degrees(R));box=pg.getCropBox();}
+    if(s.kind==='pdf'){const cp=takeCopy(s);pg=out.addPage(cp);R=(s.inh+p.rot)%360;pg.setRotation(degrees(R));box=pg.getCropBox();}
     else{pg=out.addPage([s.bw,s.bh]);if(s.kind==='img'){const im=await out.embedJpg(b64bytes(S.imgs[s.key].url));pg.drawImage(im,{x:0,y:0,width:s.bw,height:s.bh});}
       R=p.rot%360;pg.setRotation(degrees(R));box={x:0,y:0,width:s.bw,height:s.bh};}
     if(needsOverlay(p)){const k=2.6,oc=mkCanvas(d.w*k,d.h*k);paintAnnots(oc.getContext('2d'),p,oc.width,oc.height,gi,gt);
@@ -2742,14 +2750,18 @@ function buildRail(){
   S.pages.forEach((p,i)=>{const b=document.createElement('button');b.className='rt';b.dataset.id=p.id;b.setAttribute('aria-label','الصفحة '+ar(i+1));
     b.innerHTML=`<span class="rc"><canvas></canvas></span><span>${ar(i+1)}</span>`;let tp=null;b.addEventListener('pointerdown',e=>{tp=[e.clientX,e.clientY];});b.addEventListener('pointerup',e=>{if(tp&&Math.hypot(e.clientX-tp[0],e.clientY-tp[1])<12){tp=null;scrollToPage(S.pages.indexOf(p));}});b.onclick=()=>scrollToPage(S.pages.indexOf(p));r.appendChild(b);});
   railActive();
-  (async()=>{for(const p of S.pages){if(tok!==railToken)return;await paintRailThumb(p.id);}})();
+  if(railIO)railIO.disconnect();
+  railIO=new IntersectionObserver(es=>{for(const e of es){const id=e.target.dataset.id;if(e.isIntersecting){railQ.add(id);railPump(tok);}else{railQ.delete(id);const c=e.target.querySelector('canvas');if(c&&c.width>1){c.width=1;c.height=1;c.dataset.p='';}}}},{root:r,rootMargin:'400px 0px'});
+  r.querySelectorAll('.rt').forEach(b=>railIO.observe(b));
 }
+let railIO=null;const railQ=new Set();let railBusy=false;
+async function railPump(tok){if(railBusy)return;railBusy=true;try{while(railQ.size&&tok===railToken){const id=railQ.values().next().value;railQ.delete(id);await paintRailThumb(id);}}finally{railBusy=false;}}
 async function paintRailThumb(id){
-  const p=byId(id);const b=document.querySelector(`.rt[data-id="${id}"] canvas`);if(!p||!b)return;
+  const p=byId(id);const b=document.querySelector(`.rt[data-id="${id}"] canvas`);if(!p||!b||!b.offsetParent)return;
   const d=dims(p),W=240,H=W*d.h/d.w;
-  try{const c=await renderFull(p,S.pages.indexOf(p),S.pages.length,W,H);b.width=c.width;b.height=c.height;b.style.width='120px';b.getContext('2d').drawImage(c,0,0);}catch(e){}
+  try{const c=await renderFull(p,S.pages.indexOf(p),S.pages.length,W,H);b.width=c.width;b.height=c.height;b.style.width='120px';b.getContext('2d').drawImage(c,0,0);c.width=c.height=0;}catch(e){}
 }
-function railRefreshSoon(id){clearTimeout(railTimers[id]);railTimers[id]=setTimeout(()=>paintRailThumb(id),700);}
+function railRefreshSoon(id){const b=document.querySelector(`.rt[data-id="${id}"] canvas`);if(!b||b.width<=1)return;clearTimeout(railTimers[id]);railTimers[id]=setTimeout(()=>paintRailThumb(id),700);}
 function railActive(){railActiveSet=true;const cur=S.pages[S.cur];document.querySelectorAll('.rt').forEach(b=>{const on=cur&&b.dataset.id===cur.id;b.classList.toggle('on',on);
   if(on){const r=$('#rail');const t=b.offsetTop;if(t<r.scrollTop||t+b.offsetHeight>r.scrollTop+r.clientHeight)r.scrollTop=t-60;}});}
 function refreshAll(){S.msel=null;$('#selbar').hidden=true;buildViewer();$('#goto').value=S.pages.length?ar(Math.min(S.cur,S.pages.length-1)+1):'';buildRail();if(S.tab==='pages')renderGrid();if(S.tab==='tools')renderTools();updSize();}
@@ -2798,6 +2810,7 @@ function pgDragStart(e,p,card){if(e.button>0)return;const touch=e.pointerType!==
       markDirty();refreshAll();toast(moving.length>1?'نُقلت '+cnt(moving.length,'page'):'نُقلت الصفحة إلى الموضع '+ar(S.pages.indexOf(moving[0])+1),1800);}};
   const noMenu=ev=>ev.preventDefault();card.addEventListener('contextmenu',noMenu);
   addEventListener('pointermove',move,{passive:false});addEventListener('pointerup',up);addEventListener('pointercancel',up);}
+let gridIO=null;
 function renderGrid(){
   const g=$('#grid');g.innerHTML='';const tok=++gridToken;
   S.pages.forEach((p,i)=>{
@@ -2825,8 +2838,11 @@ function renderGrid(){
       markDirty();refreshAll();}));
     g.appendChild(card);
   });
-  (async()=>{const cs=g.querySelectorAll('.thumb canvas');for(let i=0;i<S.pages.length;i++){if(tok!==gridToken)return;const p=S.pages[i],d=dims(p);
-    const W=260,H=W*d.h/d.w;try{const c=await renderFull(p,i,S.pages.length,W,H);const t=cs[i];if(!t)return;t.width=c.width;t.height=c.height;t.getContext('2d').drawImage(c,0,0);}catch(e){}}})();
+  if(gridIO)gridIO.disconnect();const q=new Set();let busy=false;
+  const pump=async()=>{if(busy)return;busy=true;try{while(q.size&&tok===gridToken){const card=q.values().next().value;q.delete(card);const p=byId(card.dataset.pid);const t=card.querySelector('.thumb canvas');if(!p||!t)continue;
+      const i=S.pages.indexOf(p),d=dims(p),W=260,H=W*d.h/d.w;try{const c=await renderFull(p,i,S.pages.length,W,H);if(tok!==gridToken)return;t.width=c.width;t.height=c.height;t.getContext('2d').drawImage(c,0,0);c.width=c.height=0;}catch(e){}}}finally{busy=false;}};
+  gridIO=new IntersectionObserver(es=>{for(const e of es){if(e.isIntersecting){q.add(e.target);pump();}else{q.delete(e.target);const t=e.target.querySelector('.thumb canvas');if(t&&t.width>1){t.width=1;t.height=1;}}}},{root:$('#p-pages'),rootMargin:'600px 0px'});
+  g.querySelectorAll('.card').forEach(c=>gridIO.observe(c));
 }
 
 /* ---------- sheets ---------- */
@@ -3307,9 +3323,11 @@ async function compressBytes(bytes,lv,onProgress){
   const {PDFDocument}=PDFLib;const pdf=await pdfjsLib.getDocument({data:bytes.slice(0)}).promise;let src=null;
   if(lv.smart){try{src=await PDFDocument.load(bytes,{ignoreEncryption:true});}catch(e){src=null;}}
   const out=await PDFDocument.create();out.setCreator('صفحات PDF');
-  for(let n=1;n<=pdf.numPages;n++){onProgress&&onProgress((n-1)/pdf.numPages);const pg=await pdf.getPage(n);
-    if(src){let txt='';try{txt=(await pg.getTextContent()).items.map(t=>t.str).join('');}catch(e){}
-      if(txt.trim().length>20){const [cp]=await out.copyPages(src,[n-1]);out.addPage(cp);continue;}}
+  // text pages are copied together in one call so shared fonts and images are stored once
+  const keep=new Set();if(src){for(let n=1;n<=pdf.numPages;n++){let txt='';try{txt=(await (await pdf.getPage(n)).getTextContent()).items.map(t=>t.str).join('');}catch(e){}if(txt.trim().length>20)keep.add(n);}}
+  const kept=keep.size?await out.copyPages(src,[...keep].map(n=>n-1)):[];const keptAt=new Map([...keep].map((n,k)=>[n,kept[k]]));
+  for(let n=1;n<=pdf.numPages;n++){onProgress&&onProgress((n-1)/pdf.numPages);
+    if(keptAt.has(n)){out.addPage(keptAt.get(n));continue;}const pg=await pdf.getPage(n);
     const vp1=pg.getViewport({scale:1}),k=lv.dpi/72,vp=pg.getViewport({scale:k}),c=mkCanvas(Math.ceil(vp.width),Math.ceil(vp.height)),x=c.getContext('2d');
     x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);await pg.render({canvasContext:x,viewport:vp}).promise;
     const im=await out.embedJpg(b64bytes(c.toDataURL('image/jpeg',lv.q)));c.width=c.height=0;const op=out.addPage([vp1.width,vp1.height]);op.drawImage(im,{x:0,y:0,width:vp1.width,height:vp1.height});}
