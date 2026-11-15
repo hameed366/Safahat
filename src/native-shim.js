@@ -106,7 +106,7 @@ sample.json = async (input, opts) => { const r = await sample(input, opts); cons
 /* ---------- capability entry point (same shape as inside Claude) ---------- */
 window.claude = {
   use: async name => {
-    if (name === 'downloads') return downloads;
+    if (name === 'downloads') return Capacitor.isNativePlatform() ? downloads : null; // on the web the page saves files itself
     if (name === 'sample') return store.get(KEY) ? sample : null;
     return null;
   },
@@ -129,6 +129,7 @@ if (ink.available) setTimeout(() => { ink.prepare('ar'); ink.prepare('en'); }, 4
 window.SAFAHAT_NATIVE = {
   ink,
   platform: Capacitor.getPlatform(),
+  web: !Capacitor.isNativePlatform(),
   getKey: () => store.get(KEY),
   setKey: v => store.set(KEY, v),
   models: MODELS,

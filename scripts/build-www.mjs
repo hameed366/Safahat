@@ -66,5 +66,40 @@ const head = `<!doctype html>
 </head>
 <body>
 `;
-fs.writeFileSync(path.join(www, 'index.html'), head + html + '\n</body>\n</html>\n');
+// 5) web edition (node scripts/build-www.mjs --web): an installable app for "Add to Home Screen" on iPhone/iPad,
+//    with a service worker that keeps everything on the device so it opens without internet
+const WEB = process.argv.includes('--web');
+let pageHead = head;
+if (WEB) {
+  for (const f of fs.readdirSync(path.join(root, 'web'))) fs.copyFileSync(path.join(root, 'web', f), path.join(www, f));
+  pageHead = head.replace('<meta name="theme-color" content="#0f1b1e">', `<meta name="theme-color" content="#0f1b1e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="صفحات">
+<script>window.SAFAHAT_WEB=true;if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>`);
+  const walk = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(d, e.name)) : [path.relative(www, path.join(d, e.name)).split(path.sep).join('/')]);
+  const all = walk(www).concat(['index.html']);
+  // the core is stored on first visit; fonts files, cmaps and the rest are stored the first time they are used
+  const core = ['./', 'index.html', 'native-shim.js', 'manifest.webmanifest', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png']
+    .concat(all.filter(f => /^lib\/[^/]+\.js$/.test(f) || /^fonts\/[^/]+\/\d+\.css$/.test(f)));
+  const crypto = await import('node:crypto');
+  const ver = crypto.createHash('sha1').update(html).update(String(Date.now())).digest('hex').slice(0, 10);
+  fs.writeFileSync(path.join(www, 'sw.js'), `const V='safahat-${ver}',CORE=${JSON.stringify([...new Set(core)])};
+self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k!=='safahat-cdn').map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
+const CDN=/^https:\\/\\/(cdn\\.jsdelivr\\.net|tessdata\\.projectnaptha\\.com|fonts\\.googleapis\\.com|fonts\\.gstatic\\.com)\\//;
+self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET')return;const u=new URL(r.url);
+  if(u.origin===location.origin){
+    if(r.mode==='navigate'){e.respondWith(fetch(r).then(res=>{const c=res.clone();caches.open(V).then(x=>x.put('index.html',c));return res;}).catch(()=>caches.match('index.html')));return;}
+    e.respondWith(caches.match(r,{ignoreSearch:true}).then(hit=>hit||fetch(r).then(res=>{if(res.ok){const c=res.clone();caches.open(V).then(x=>x.put(r,c));}return res;})));return;}
+  if(CDN.test(r.url))e.respondWith(caches.open('safahat-cdn').then(x=>x.match(r).then(hit=>hit||fetch(r).then(res=>{if(res.ok||res.type==='opaque')x.put(r,res.clone());return res;}))));
+});
+`);
+  console.log('web edition: manifest + service worker (' + core.length + ' core files)');
+}
+fs.writeFileSync(path.join(www, 'index.html'), pageHead + html + '\n</body>\n</html>\n');
 console.log('www built:', fs.readdirSync(path.join(www, 'lib')).join(', '));
