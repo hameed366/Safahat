@@ -4619,7 +4619,7 @@ async function getLocalOcrWorker(onProgress,lang){
   lang=lang||ocrLangPref();
   if(OCR_LOCAL.worker&&OCR_LOCAL.lang===lang)return OCR_LOCAL.worker;
   if(OCR_LOCAL.worker){try{await OCR_LOCAL.worker.terminate();}catch(e){}OCR_LOCAL.worker=null;}
-  const make=async cfg=>{if(!window.Tesseract)await loadScript(cfg.src);if(!window.Tesseract||!Tesseract.createWorker)throw new Error('ocr-library-unavailable');
+  const make=async cfg=>{if(!window.Tesseract){try{await loadScript(cfg.src);}catch(e){throw new Error('ocr-library-unavailable');}}if(!window.Tesseract||!Tesseract.createWorker)throw new Error('ocr-library-unavailable');
     return Tesseract.createWorker(lang,1,{logger:m=>{if(m&&m.status==='recognizing text'&&onProgress)onProgress(m.progress||0);},workerPath:cfg.workerPath,corePath:cfg.corePath,langPath:cfg.langPath});};
   const b=OCR_LOCAL.base;
   if(b){try{OCR_LOCAL.worker=await make({src:b+'tesseract.min.js',workerPath:b+'worker.min.js',corePath:b+'core',langPath:b+'lang'});}catch(e){console.warn('bundled OCR failed, trying the CDN',e);OCR_LOCAL.worker=null;}}
