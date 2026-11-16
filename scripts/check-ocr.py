@@ -7,10 +7,12 @@ time.sleep(1.5)
 JS = r"""async () => {
   const base = new URL(window.SAFAHAT_OCR_BASE, location.href).href;
   await new Promise((ok, no) => { const s = document.createElement('script'); s.src = base + 'tesseract.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+  // an Arabic font shipped with the app (the test machine has none of its own)
+  const ff = new FontFace('TArabic', 'url(fonts/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-700-normal.woff2)'); await ff.load(); document.fonts.add(ff);
   const c = document.createElement('canvas'); c.width = 900; c.height = 260; const x = c.getContext('2d');
   x.fillStyle = '#fff'; x.fillRect(0, 0, 900, 260); x.fillStyle = '#000';
-  x.font = '48px sans-serif'; x.fillText('Hello Safahat 2026', 40, 90);
-  x.font = '56px serif'; x.direction = 'rtl'; x.textAlign = 'right'; x.fillText('مرحبا بكم في صفحات', 860, 200);
+  x.font = '60px sans-serif'; x.fillText('Hello Safahat 2026', 40, 90);
+  x.font = '64px TArabic'; x.direction = 'rtl'; x.textAlign = 'right'; x.fillText('مرحبا بكم في صفحات', 860, 200);
   const blob = await new Promise(r => c.toBlob(r, 'image/png'));
   const w = await Tesseract.createWorker('ara+eng', 1, { workerPath: base + 'worker.min.js', corePath: base + 'core', langPath: base + 'lang' });
   const r = await w.recognize(blob); await w.terminate();
