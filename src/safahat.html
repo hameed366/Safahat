@@ -2556,7 +2556,7 @@ function setTool(t){
   if(tips[t])toast(tips[t],3200);
 }
 function setTab(t){
-  const M=MODE[t]||MODE.view;t=M.id;const fromTab=S.tab;S.tab=t;
+  const M=MODE[t]||MODE.view;t=M.id;const fromTab=S.tab;if(fromTab&&!['pages','tools','ai','files'].includes(fromTab))S.lastView=fromTab;S.tab=t;
   if(t==='edit'&&fromTab!=='edit'&&S.tool!=='edittext'&&inViewer())setTool('edittext');
   $('#modeName').textContent=M.label;$('#modeIc').innerHTML=ic(M.icon);$('#modeIc').style.color=M.c;
   const VW=inViewer();
@@ -2586,9 +2586,11 @@ function openMenu(anchor,html,onPick){
   pop._close=close;
 }
 const mrow=(k,icon,c,label,sub,on)=>`<button class="mrow${on?' on':''}" role="menuitem" data-k="${k}" style="--c:${c}"><span class="mic">${ic(icon)}</span><span class="mt"><b>${label}</b>${sub?`<small>${sub}</small>`:''}</span>${on?`<span class="chk">${ic('check')}</span>`:''}</button>`;
+// choosing the panel that is already open closes it (back to the page view you came from)
+function toggleTab(k){if(k===S.tab&&['pages','tools','ai','files'].includes(k))setTab(S.lastView||'view');else setTab(k);}
 function openModeMenu(){
   const a=MODES.slice(0,7),b=MODES.slice(7);
-  openMenu($('#modeBtn'),a.map(m=>mrow(m.id,m.icon,m.c,m.label,m.sub,m.id===S.tab)).join('')+'<div class="msep"></div>'+b.map(m=>mrow(m.id,m.icon,m.c,m.label,m.sub,m.id===S.tab)).join(''),k=>setTab(k));
+  openMenu($('#modeBtn'),a.map(m=>mrow(m.id,m.icon,m.c,m.label,m.sub,m.id===S.tab)).join('')+'<div class="msep"></div>'+b.map(m=>mrow(m.id,m.icon,m.c,m.label,m.sub,m.id===S.tab)).join(''),k=>toggleTab(k));
 }
 function openMoreMenu(){
   openMenu($('#moreBtn'),`<div class="mhead">الملف</div>`+
@@ -2598,7 +2600,7 @@ function openMoreMenu(){
     mrow('xlsx','excel','#15803d','تحويل إلى Excel','الجداول إلى خلايا')+mrow('pptx','ppt','#c0362c','تحويل إلى PowerPoint','شريحة لكل صفحة')+mrow('toPdf','merge','#0f8a74','تحويل ملف إلى PDF','نص، جدول، Word، صور')+mrow('redline','list','#334155','مقارنة ملفين','الفروق بين نسختين')+
     mrow('compress','compress','#a95a06','ضغط الحجم','')+mrow('tools','tools','#a95a06','كل الأدوات','')+'<div class="msep"></div>'+mrow('pencil','pen','#7c3aed','قلم Apple والإيباد','الكتابة بالقلم فقط، الضغط، الإيماءات')+mrow('theme',isDark()?'sun':'moon','#5b6b6e',isDark()?'المظهر الفاتح':'المظهر الداكن','لواجهة التطبيق')+mrow('shareApp','share','#2459d6','مشاركة التطبيق','أرسله لزملائك')+mrow('contact','send','#0f8a74','تواصل مع المطوّر',APP_INFO.email),
     k=>({clear:()=>clearAnnotsSheet('page'),shareApp:shareAppSheet,contact:contactSheet,aikey:()=>{const N=window.SAFAHAT_NATIVE;if(!N)return;if(N.getKey())confirmSheet('إزالة مفتاح المساعد؟','سيتوقف المساعد الذكي في التطبيق حتى تُدخل مفتاحاً جديداً من قسم المساعد.','إزالة',()=>{N.setKey('');location.reload();});else setTab('ai');},history:historySheet,share:shareSheet,open:openFlow,scan:()=>openScanner('docs'),idcard:()=>openScanner('id'),rename:openRename,save:savePdf,
-      print:printDoc,toimg:()=>runTool('toimg'),word:()=>runTool('word'),compress:()=>runTool('compress'),tools:()=>setTab('tools'),pencil:openPencilSheet,
+      print:printDoc,toimg:()=>runTool('toimg'),word:()=>runTool('word'),compress:()=>runTool('compress'),tools:()=>toggleTab('tools'),pencil:openPencilSheet,
       files:()=>setTab('files'),library:()=>{if(DB)showLibrary();else toast('المكتبة غير متاحة في هذا المتصفح');},lib:saveToLibrary,protect:()=>runTool('protect'),xlsx:()=>runTool('xlsx'),pptx:()=>runTool('pptx'),toPdf:()=>runTool('anypdf'),redline:()=>runTool('redline'),
       theme:()=>{const t=isDark()?'light':'dark';store.set('safahat-theme',t);applyTheme(t);}})[k]());
 }
