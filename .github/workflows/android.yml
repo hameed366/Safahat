@@ -27,6 +27,12 @@ jobs:
       - name: Install packages
         run: npm install --no-audit --no-fund
 
+      - name: OCR language data (Arabic + English, for offline text recognition)
+        run: |
+          mkdir -p tessdata
+          for l in ara eng; do curl -fsSL --retry 3 -o tessdata/$l.traineddata.gz https://tessdata.projectnaptha.com/4.0.0/$l.traineddata.gz || rm -f tessdata/$l.traineddata.gz; done
+          ls -la tessdata
+
       - name: Build web app
         run: npm run build
 

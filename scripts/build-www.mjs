@@ -50,6 +50,23 @@ for (const f of FONTS) {
 }
 html = html.replace(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com\/css2\?family=Amiri[^"]*">/, fontLinks);
 
+// 2b) text recognition (OCR) on the device: the Tesseract engine and the Arabic/English data, so it works offline.
+//     The language data is downloaded by the workflow into tessdata/ (see .github/workflows); without it the app uses the CDN.
+{
+  const tj = nm('tesseract.js/dist'), core = nm('tesseract.js-core'), langDir = path.join(root, 'tessdata');
+  const langs = fs.existsSync(langDir) ? fs.readdirSync(langDir).filter(f => /\.traineddata\.gz$/.test(f)) : [];
+  if (fs.existsSync(tj) && fs.existsSync(core) && langs.length) {
+    const out = path.join(www, 'lib', 'tesseract');
+    fs.mkdirSync(path.join(out, 'core'), { recursive: true }); fs.mkdirSync(path.join(out, 'lang'), { recursive: true });
+    for (const f of ['tesseract.min.js', 'worker.min.js']) fs.copyFileSync(path.join(tj, f), path.join(out, f));
+    const cores = fs.readdirSync(core).filter(f => /^tesseract-core.*\.(wasm\.js|wasm)$/.test(f) && /lstm/.test(f));
+    for (const f of cores) fs.copyFileSync(path.join(core, f), path.join(out, 'core', f));
+    for (const f of langs) fs.copyFileSync(path.join(langDir, f), path.join(out, 'lang', f));
+    html = html.replace('<script src="lib/pdf.min.js"></script>', '<script>window.SAFAHAT_OCR_BASE="lib/tesseract/";</script>\n<script src="lib/pdf.min.js"></script>');
+    console.log('OCR bundled:', cores.join(', '), '|', langs.join(', '));
+  } else console.log('OCR not bundled (missing tesseract files or tessdata/), the CDN will be used');
+}
+
 // 3) native capability layer, loaded before the app
 await build({ entryPoints: [path.join(root, 'src/native-shim.js')], bundle: true, format: 'iife', target: ['safari15', 'chrome100'], minify: true, outfile: path.join(www, 'native-shim.js') });
 html = html.replace('<script src="lib/pdf.min.js"></script>', '<script src="native-shim.js"></script>\n<script src="lib/pdf.min.js"></script>');

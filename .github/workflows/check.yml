@@ -1,0 +1,33 @@
+name: Check offline OCR (no app build)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install packages
+        run: npm install --no-audit --no-fund
+      - name: OCR language data
+        run: |
+          mkdir -p tessdata
+          for l in ara eng; do curl -fsSL --retry 3 -o tessdata/$l.traineddata.gz https://tessdata.projectnaptha.com/4.0.0/$l.traineddata.gz; done
+          ls -la tessdata
+      - name: Build www
+        run: node scripts/build-www.mjs --web
+      - name: Bundle size
+        run: du -sh www www/lib/tesseract && ls -la www/lib/tesseract www/lib/tesseract/core www/lib/tesseract/lang
+      - name: Read Arabic and English offline
+        run: |
+          pip install -q playwright
+          python -m playwright install --with-deps chromium
+          python scripts/check-ocr.py
