@@ -888,7 +888,10 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 
 .ghsteps{display:grid;gap:4px;padding:10px 12px;border-radius:12px;background:var(--raise);border:1px solid var(--line);font-size:12.8px;line-height:1.7}
 .ghsteps p{margin:0;color:var(--muted)}.ghsteps b{color:var(--ink)}
-.tbgrid{display:grid;gap:5px;max-height:58vh;overflow:auto;padding:2px}
+.tbgrid{display:grid;gap:5px;padding:2px}
+.tbgrid textarea{display:block;min-width:0;width:100%;box-sizing:border-box;min-height:42px;padding:9px 6px;font:inherit;font-size:15px;line-height:1.45;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:#111;text-align:center;resize:none;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap}
+.tbgrid.dense textarea{font-size:12.5px;padding:7px 3px}
+.tbgrid textarea.h{font-weight:700;background:#e3f2ee}.tbgrid textarea.sel{outline:2px solid var(--blue);outline-offset:-2px;box-shadow:0 0 0 3px var(--blue-soft)}.tbgrid.multi textarea{cursor:pointer;caret-color:transparent}
 .tbgrid input{min-width:0;width:100%;box-sizing:border-box;padding:9px 6px;font:inherit;font-size:15px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink);text-align:center}
 .tbgrid input.h{font-weight:700;background:#e3f2ee}
 .tbgrid input{background:#fff;color:#111}.tbgrid input.sel{outline:2px solid var(--blue);outline-offset:-2px;box-shadow:0 0 0 3px var(--blue-soft)}.tbgrid.multi input{cursor:pointer;caret-color:transparent}
@@ -3318,19 +3321,21 @@ function tableSheet(id,a,fresh){const p=byId(id);if(!p||!a)return;if(!fresh)push
     el.querySelectorAll('[data-tc]').forEach(b=>b.onclick=()=>apply(c=>{c.c=b.dataset.tc;}));
     el.querySelectorAll('[data-tf]').forEach(b=>b.onclick=()=>apply(c=>{c.bg=b.dataset.tf||null;}));
     const tc=$('#tbTc');tc.onchange=()=>apply(c=>{c.c=tc.value;});const tf=$('#tbTf');tf.onchange=()=>apply(c=>{c.bg=tf.value;});};
-  const grid=()=>{const g=$('#tbG');if(!g)return;const R=a.rows,C=a.cols,own=tblOwn(a),M=a.merge||[];g.style.gridTemplateColumns=`repeat(${C},minmax(64px,1fr))`;g.dir=a.ltr?'ltr':'rtl';
+  // each cell grows to show all its text
+  const fit=t=>{t.style.height='auto';t.style.height=t.scrollHeight+2+'px';};
+  const grid=()=>{const g=$('#tbG');if(!g)return;const R=a.rows,C=a.cols,own=tblOwn(a),M=a.merge||[];g.style.gridTemplateColumns=tblFr(a,'c').map(f=>`minmax(0,${(f*C).toFixed(3)}fr)`).join(' ');g.classList.toggle('dense',C>5);g.dir=a.ltr?'ltr':'rtl';
     let h='';for(let i=0;i<R;i++)for(let j=0;j<C;j++){const k=own[i][j];if(k>=0&&(M[k][0]!==i||M[k][1]!==j))continue;const rs=k>=0?M[k][2]:1,cs=k>=0?M[k][3]:1,f=tblFmt(a,i,j),v=(a.cells[i]&&a.cells[i][j])||'';
       const on=i>=sel.r0&&i<=sel.r1&&j>=sel.c0&&j<=sel.c1,bold=f.b!=null?f.b:(a.head&&i===0);
       const st=`grid-row:${i+1}/span ${rs};grid-column:${j+1}/span ${cs};${f.f?`font-family:${fontStack(f.f).replace(/"/g,"'")};`:''}${f.c?`color:${f.c};`:''}${f.bg?`background:${f.bg};`:''}${bold?'font-weight:700;':''}text-align:${f.al==='r'?'right':f.al==='l'?'left':'center'}`;
-      h+=`<input type="text" dir="auto" data-ij="${i},${j}" class="${a.head&&i===0&&!f.bg?'h':''}${on?' sel':''}" style="${st}" value="${esc(v)}" ${multi?'readonly':''} aria-label="الصف ${ar(i+1)} العمود ${ar(j+1)}">`;}
-    g.innerHTML=h;g.classList.toggle('multi',multi);$('#tbR').textContent=ar(R);$('#tbC').textContent=ar(C);
+      h+=`<textarea rows="1" dir="auto" data-ij="${i},${j}" class="${a.head&&i===0&&!f.bg?'h':''}${on?' sel':''}" style="${st}" ${multi?'readonly':''} aria-label="الصف ${ar(i+1)} العمود ${ar(j+1)}">${esc(v)}</textarea>`;}
+    g.innerHTML=h;g.classList.toggle('multi',multi);requestAnimationFrame(()=>g.querySelectorAll('textarea').forEach(fit));$('#tbR').textContent=ar(R);$('#tbC').textContent=ar(C);
     sheet.querySelectorAll('#tbH button').forEach(b=>b.classList.toggle('on',(b.dataset.v==='1')===!!a.head));
     sheet.querySelectorAll('#tbD button').forEach(b=>b.classList.toggle('on',(b.dataset.v==='ltr')===!!a.ltr));
-    g.querySelectorAll('input').forEach(inp=>{const [i,j]=inp.dataset.ij.split(',').map(Number);
-      inp.oninput=()=>{(a.cells[i]=a.cells[i]||[])[j]=inp.value;redraw();};
-      inp.onfocus=()=>{if(multi)return;if(sel.r0===i&&sel.c0===j&&sel.r1===sel.r0&&sel.c1===sel.c0&&!isAll())return;setSel(i,j,i,j);g.querySelectorAll('input').forEach(x=>x.classList.toggle('sel',x===inp));fbar();};
+    g.querySelectorAll('textarea').forEach(inp=>{const [i,j]=inp.dataset.ij.split(',').map(Number);
+      inp.oninput=()=>{(a.cells[i]=a.cells[i]||[])[j]=inp.value;fit(inp);redraw();};
+      inp.onfocus=()=>{if(multi)return;if(sel.r0===i&&sel.c0===j&&sel.r1===sel.r0&&sel.c1===sel.c0&&!isAll())return;setSel(i,j,i,j);g.querySelectorAll('textarea').forEach(x=>x.classList.toggle('sel',x===inp));fbar();};
       inp.onclick=()=>{if(!multi)return;if(!anchor){anchor=[i,j];setSel(i,j,i,j);}else{setSel(anchor[0],anchor[1],i,j);anchor=null;}grid();fbar();};
-      inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const all=[...g.querySelectorAll('input')],k=all.indexOf(inp);if(all[k+1])all[k+1].focus();}};});};
+      inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const all=[...g.querySelectorAll('textarea')],k=all.indexOf(inp);if(all[k+1])all[k+1].focus();}};});};
   sheet.querySelectorAll('[data-tk]').forEach(b=>b.onclick=()=>{const [k,d]=b.dataset.tk.split(':'),dv=+d;
     if(k==='rows'){const R=a.rows,n=Math.max(1,Math.min(30,R+dv));if(n===R)return;
       // each row keeps its height: the table grows or shrinks downward, staying on the page
@@ -3349,7 +3354,7 @@ function tableSheet(id,a,fresh){const p=byId(id);if(!p||!a)return;if(!fresh)push
   sheet.querySelectorAll('#tbD button').forEach(b=>b.onclick=()=>{if(b.dataset.v==='ltr')a.ltr=1;else delete a.ltr;redraw();grid();});
   $('#tbOk').onclick=()=>{closeSheet();if(S.tool!=='lasso')setTool('lasso');if(S.msel&&S.msel.id===id&&S.msel.items[0]===a)renderSelbar();else selectItems(id,[a]);drawOverlay(id);};
   grid();fbar();
-  if(fresh)setTimeout(()=>{const f=$('#tbG input');if(f)try{f.focus({preventScroll:true});}catch(e){}},250);
+  if(fresh)setTimeout(()=>{const f=$('#tbG textarea');if(f)try{f.focus({preventScroll:true});}catch(e){}},250);
 }
 function axesSheet(items){
   const P=S.props.shape,A=items&&items.find(a=>a.type==='axes'),COLS=['#111111','#4b5563','#c0362c','#d97706','#0f8a74','#2459d6','#7c3aed','#94a3b8'];
