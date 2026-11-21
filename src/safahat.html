@@ -895,7 +895,7 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .tbgrid input{min-width:0;width:100%;box-sizing:border-box;padding:9px 6px;font:inherit;font-size:15px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink);text-align:center}
 .tbgrid input.h{font-weight:700;background:#e3f2ee}
 .tbgrid input{background:#fff;color:#111}.tbgrid input.sel{outline:2px solid var(--blue);outline-offset:-2px;box-shadow:0 0 0 3px var(--blue-soft)}.tbgrid.multi input{cursor:pointer;caret-color:transparent}
-.tbprev{position:sticky;top:-2px;z-index:3;box-shadow:0 6px 14px -8px rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:12px;background:var(--raise);border:1px solid var(--line)}.tbprev canvas{max-width:100%;border-radius:6px;box-shadow:var(--shadow-sm)}.tbprev span{font-size:11.5px;color:var(--muted)}
+.tbprev{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:12px;background:var(--raise);border:1px solid var(--line)}.tbprev canvas{max-width:100%;border-radius:6px;box-shadow:var(--shadow-sm)}.tbprev span{font-size:11.5px;color:var(--muted)}
 .tbfb{display:flex;flex-direction:column;gap:10px}.tbfmt{display:flex;flex-direction:column;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--raise)}
 .tbsel{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.tbsel>b{margin-inline-end:auto;font-size:13px}.tbsel .hbtn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-strong)}.tbsel .hbtn[disabled]{opacity:.45}
 .tbsw{display:flex;flex-wrap:wrap;gap:7px;align-items:center}.tbsw button,.tbpick{width:30px;height:30px;border-radius:50%;border:2px solid var(--line-strong);padding:0;flex:none;cursor:pointer}.tbsw button.on{outline:2px solid var(--accent);outline-offset:2px}
@@ -3297,8 +3297,8 @@ function tableSheet(id,a,fresh){const p=byId(id);if(!p||!a)return;if(!fresh)push
       <div class="pgroup"><span class="plabel">الصف الأول</span><div class="seg" id="tbH"><button type="button" data-v="1">عنوان مظلّل</button><button type="button" data-v="0">عادي</button></div></div>
       <div class="pgroup"><span class="plabel">ترتيب الأعمدة</span><div class="seg" id="tbD"><button type="button" data-v="rtl">من اليمين</button><button type="button" data-v="ltr">من اليسار</button></div></div>
       <div class="pgroup"><span class="plabel">المقاسات</span><button type="button" class="hbtn" id="tbEq">${ic('table')}توزيع متساوٍ</button></div></div>
-    <div class="tbprev"><canvas id="tbPv"></canvas><span>معاينة كما يظهر على الصفحة</span></div>
     <div class="tbgrid" id="tbG"></div>
+    <div class="tbprev"><canvas id="tbPv"></canvas><span>معاينة كما يظهر على الصفحة</span></div>
     <div class="tbfmt" id="tbF"></div>
     <p class="hint" style="margin:0">اضغط خانة لتكتب فيها وتنسّقها. لتنسيق أو دمج عدة خانات اضغط «تحديد عدة خانات» ثم اضغط الخانات واحدة واحدة أو اسحب عليها. <b>لتغيير عرض عمود أو ارتفاع صف</b> اضغط «تم» ثم اسحب الخط الذي بينهما على الصفحة (عليه علامة زرقاء).</p>
     <div class="acts"><button class="hbtn primary" id="tbOk">تم</button></div>`);
