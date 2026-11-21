@@ -889,7 +889,7 @@ a.hbtn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .ghsteps{display:grid;gap:4px;padding:10px 12px;border-radius:12px;background:var(--raise);border:1px solid var(--line);font-size:12.8px;line-height:1.7}
 .ghsteps p{margin:0;color:var(--muted)}.ghsteps b{color:var(--ink)}
 .tbgrid{display:grid;gap:5px;padding:2px}
-.tbgrid textarea{display:block;min-width:0;width:100%;box-sizing:border-box;min-height:42px;padding:9px 6px;font:inherit;font-size:15px;line-height:1.45;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:#111;text-align:center;resize:none;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap}
+.tbgrid textarea{display:block;min-width:0;width:100%;box-sizing:border-box;min-height:34px;padding:4px 4px;font:inherit;font-size:15px;line-height:1.45;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:#111;text-align:center;resize:none;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap}
 .tbgrid.dense textarea{font-size:12.5px;padding:7px 3px}
 .tbgrid textarea.h{font-weight:700;background:#e3f2ee}.tbgrid textarea.sel{outline:2px solid var(--blue);outline-offset:-2px;box-shadow:0 0 0 3px var(--blue-soft)}.tbgrid.multi{touch-action:none}.tbgrid.multi textarea{cursor:pointer;caret-color:transparent;user-select:none;-webkit-user-select:none}
 .tbgrid input{min-width:0;width:100%;box-sizing:border-box;padding:9px 6px;font:inherit;font-size:15px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink);text-align:center}
@@ -3298,7 +3298,6 @@ function tableSheet(id,a,fresh){const p=byId(id);if(!p||!a)return;if(!fresh)push
       <div class="pgroup"><span class="plabel">ترتيب الأعمدة</span><div class="seg" id="tbD"><button type="button" data-v="rtl">من اليمين</button><button type="button" data-v="ltr">من اليسار</button></div></div>
       <div class="pgroup"><span class="plabel">المقاسات</span><button type="button" class="hbtn" id="tbEq">${ic('table')}توزيع متساوٍ</button></div></div>
     <div class="tbgrid" id="tbG"></div>
-    <div class="tbprev"><canvas id="tbPv"></canvas><span>معاينة كما يظهر على الصفحة</span></div>
     <div class="tbfmt" id="tbF"></div>
     <p class="hint" style="margin:0">اضغط خانة لتكتب فيها وتنسّقها. لتنسيق أو دمج عدة خانات اضغط «تحديد عدة خانات» ثم اضغط الخانات واحدة واحدة أو اسحب عليها. <b>لتغيير عرض عمود أو ارتفاع صف</b> اضغط «تم» ثم اسحب الخط الذي بينهما على الصفحة (عليه علامة زرقاء).</p>
     <div class="acts"><button class="hbtn primary" id="tbOk">تم</button></div>`);
@@ -3338,11 +3337,13 @@ function tableSheet(id,a,fresh){const p=byId(id);if(!p||!a)return;if(!fresh)push
     el.querySelectorAll('[data-tf]').forEach(b=>b.onclick=()=>apply(c=>{c.bg=b.dataset.tf||null;}));
     const tc=$('#tbTc');tc.onchange=()=>apply(c=>{c.c=tc.value;});const tf=$('#tbTf');tf.onchange=()=>apply(c=>{c.bg=tf.value;});};
   // each cell grows to show all its text
-  const fit=t=>{t.style.height='auto';t.style.height=t.scrollHeight+2+'px';};
-  const grid=()=>{const g=$('#tbG');if(!g)return;const R=a.rows,C=a.cols,own=tblOwn(a),M=a.merge||[];g.style.gridTemplateColumns=tblFr(a,'c').map(f=>`minmax(0,${(f*C).toFixed(3)}fr)`).join(' ');g.classList.toggle('dense',C>5);g.dir=a.ltr?'ltr':'rtl';
-    let h='';for(let i=0;i<R;i++)for(let j=0;j<C;j++){const k=own[i][j];if(k>=0&&(M[k][0]!==i||M[k][1]!==j))continue;const rs=k>=0?M[k][2]:1,cs=k>=0?M[k][3]:1,f=tblFmt(a,i,j),v=(a.cells[i]&&a.cells[i][j])||'';
+  const fit=t=>{t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,parseFloat(t.style.minHeight)||0)+'px';};
+  const grid=()=>{const g=$('#tbG');if(!g)return;const R=a.rows,C=a.cols,own=tblOwn(a),M=a.merge||[];
+    // the cells look like the table on the page: same proportions, text at the same size relative to the table
+    const bx=tblBox(a),tw=Math.max(.01,bx.x1-bx.x0),th=(bx.y1-bx.y0)/pageRatio(p),rfr=tblFr(a,'r'),gw=Math.max(240,(g.clientWidth||sheet.clientWidth-40||480)-(C-1)*5),u=gw/tw;g.style.gridTemplateColumns=tblFr(a,'c').map(f=>`minmax(0,${(f*C).toFixed(3)}fr)`).join(' ');g.classList.toggle('dense',C>5);g.dir=a.ltr?'ltr':'rtl';
+    let h='';for(let i=0;i<R;i++)for(let j=0;j<C;j++){const k=own[i][j];if(k>=0&&(M[k][0]!==i||M[k][1]!==j))continue;const rs=k>=0?M[k][2]:1,cs=k>=0?M[k][3]:1,f=tblFmt(a,i,j),rhu=rfr.slice(i,i+rs).reduce((x,y)=>x+y,0)*th,fpx=Math.max(9,Math.min(44,Math.min(rfr[i]*th*.52,.032)*(f.s||1)*u)),hpx=Math.max(34,rhu*u+(rs-1)*5),v=(a.cells[i]&&a.cells[i][j])||'';
       const on=usePicks()?picks.has(i+','+j):!multi&&i>=sel.r0&&i<=sel.r1&&j>=sel.c0&&j<=sel.c1,bold=f.b!=null?f.b:(a.head&&i===0);
-      const st=`grid-row:${i+1}/span ${rs};grid-column:${j+1}/span ${cs};${f.f?`font-family:${fontStack(f.f).replace(/"/g,"'")};`:''}${f.c?`color:${f.c};`:''}${f.s&&f.s!==1?`font-size:${Math.round((C>5?12.5:15)*f.s)}px;`:''}${f.bg?`background:${f.bg};`:''}${bold?'font-weight:700;':''}text-align:${f.al==='r'?'right':f.al==='l'?'left':'center'}`;
+      const st=`grid-row:${i+1}/span ${rs};grid-column:${j+1}/span ${cs};${f.f?`font-family:${fontStack(f.f).replace(/"/g,"'")};`:''}${f.c?`color:${f.c};`:''}font-size:${fpx.toFixed(1)}px;min-height:${hpx.toFixed(0)}px;padding-block:${Math.max(3,(hpx-fpx*1.45)/2-1).toFixed(0)}px;${f.bg?`background:${f.bg};`:''}${bold?'font-weight:700;':''}text-align:${f.al==='r'?'right':f.al==='l'?'left':'center'}`;
       h+=`<textarea rows="1" dir="auto" data-ij="${i},${j}" class="${a.head&&i===0&&!f.bg?'h':''}${on?' sel':''}" style="${st}" ${multi?'readonly':''} aria-label="الصف ${ar(i+1)} العمود ${ar(j+1)}">${esc(v)}</textarea>`;}
     g.innerHTML=h;g.classList.toggle('multi',multi);
     const mark=()=>g.querySelectorAll('textarea').forEach(x=>x.classList.toggle('sel',picks.has(x.dataset.ij)));
